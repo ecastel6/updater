@@ -8,7 +8,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-class CopyControllerTest
+class FileSystemControllerTest
 {
     Path testSourcePath, testTargetPath;
     Path sampleFile;
@@ -31,12 +31,12 @@ class CopyControllerTest
 
     @Test
     void copyDirectory() {
-        CopyController.copyDirectory(testSourcePath, testTargetPath);
+        FileSystemController.copyDirectory(testSourcePath, testTargetPath);
     }
 
     @Test
     void copyFile() {
         System.out.println("Copying " + sampleFile.toString() + " to c:\\tmp");
-        CopyController.copyDirectory(sampleFile, Paths.get("c:\\tmp", ""));
+        FileSystemController.copyDirectory(sampleFile, Paths.get("c:\\tmp", ""));
     }
 }

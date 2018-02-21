@@ -7,12 +7,21 @@ import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 
-public class CopyController extends SimpleFileVisitor<Path>
+public class FileSystemController extends SimpleFileVisitor<Path>
 {
+    // todo rename dir
+    // todo move dir
+    // todo backup directory
+    // todo create directory
+    // todo delete directory
+    // todo copy file
+    // todo find directory
+    // todo directory size
+
     private Path sourceDir;
     private Path targetDir;
 
-    public CopyController(Path sourceDir, Path targetDir) {
+    public FileSystemController(Path sourceDir, Path targetDir) {
         this.sourceDir = sourceDir;
         this.targetDir = targetDir;
     }
@@ -46,15 +55,16 @@ public class CopyController extends SimpleFileVisitor<Path>
 
     public static void copyDirectory(Path sourceDir, Path targetDir) {
         try {
-            Files.walkFileTree(sourceDir, new CopyController(sourceDir, targetDir));
+            Files.walkFileTree(sourceDir, new FileSystemController(sourceDir, targetDir));
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
     public static void copyFileOrDirectory(Path sourceDir, Path targetDir) {
+        // todo check file or dir check source & target
         try {
-            Files.walkFileTree(sourceDir, new CopyController(sourceDir, targetDir));
+            Files.walkFileTree(sourceDir, new FileSystemController(sourceDir, targetDir));
         } catch (IOException e) {
             e.printStackTrace();
         }

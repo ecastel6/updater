@@ -7,13 +7,13 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ProcessControllerTest
 {
-    ProcessController sysController = new ProcessController();
+    ProcessController processController = new ProcessController();
     String command;
 
     @org.junit.jupiter.api.BeforeEach
     void setUp() {
 
-        switch (sysController.osType) {
+        switch (processController.osType) {
             case "Linux":
                 command = "uname";
                 break;
@@ -26,19 +26,29 @@ class ProcessControllerTest
 
     @Test
     void runCommand() {
-        assertTrue((sysController.runCommand(command)).u.toString().contains(sysController.osType));
+        assertTrue((processController.runCommand(command)).u.toString().contains(processController.osType));
     }
 
     @Test
     void serviceAction() {
-        assertEquals(-1,sysController.serviceAction("invalidService","invalidAction").t);
-        assertEquals(0,(sysController.serviceAction("cron","status").t));
-        assertTrue(sysController.serviceAction("cron","status").u.toString().contains("Loaded"));
-        assertEquals(0,sysController.serviceAction("cron","restart").t);
+        assertEquals(-1, processController.serviceAction("invalidService", "invalidAction").t);
+        assertEquals(0, (processController.serviceAction("cron", "status").t));
+        assertTrue(processController.serviceAction("cron", "status").u.toString().contains("Loaded"));
+        assertEquals(0, processController.serviceAction("cron", "restart").t);
     }
 
     @Test
     void serviceAlive() {
-
+        String testService = "";
+        switch (processController.osType) {
+            case "Linux":
+                testService = "network";
+                break;
+            case "Windows":
+                testService = "net";
+                break;
+        }
+        System.out.println("Testing service " + testService);
+        assertTrue(processController.serviceAlive(testService));
     }
 }
