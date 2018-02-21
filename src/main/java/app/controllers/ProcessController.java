@@ -9,22 +9,38 @@ import java.util.Arrays;
 import java.util.List;
 
 
-public class ProcessController
-{
-
-    public String osType;
-
-    public ProcessController() {
-        this.osType = getOsType();
+public class ProcessController {
+    public enum OS {
+        WINDOWS,
+        LINUX,
+        OTHER;
     }
 
-    public String getOsType() {
-        String sysOp = System.getProperty("os.name");
-        if (sysOp.contains("Linux")) {
-            return "Linux";
-        } else {
-            return "Windows";
+    public OS os;
+
+    public ProcessController() {
+        this.os = getOs();
+    }
+
+    public OS getOs() {
+        String osName = System.getProperty("os.name");
+        return osStringToEnum(osName);
+
+    }
+
+    public OS osStringToEnum(String osName) {
+        try {
+            if (osName.contains("Linux")) {
+                return OS.LINUX;
+            } else if (osName.contains("Windows")) {
+                return OS.WINDOWS;
+            } else if (osName == null) {
+                throw new IOException("os.name not found");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
+        return OS.OTHER;
     }
 
     public ReturnValues runCommand(String command) {
@@ -52,11 +68,11 @@ public class ProcessController
     public ReturnValues serviceAction(String serviceName, String command) {
         String msg;
         ReturnValues returnedValues;
-        switch (this.osType) {
-            case "Linux":
-                final List<String> availableActions = Arrays.asList("start", "stop", "restart", "status");
-                if (!availableActions.contains(command))
-                    return new ReturnValues(-1, "Invalid Action");
+        final List<String> availableActions = Arrays.asList("start", "stop", "restart", "status");
+        if (!availableActions.contains(command))
+            return new ReturnValues(-1, "Invalid Action");
+        switch (this.os) {
+            case LINUX:
                 switch (command) {
                     case "restart":
                         returnedValues = this.runCommand("service " + serviceName + " stop");
@@ -69,8 +85,16 @@ public class ProcessController
                         return returnedValues;
                 }
 
-            case "Windows":
-                System.out.println("Operating system is Wintendo");
+            case WINDOWS:
+                switch (command){
+                    case "stop":
+                        //String [] command =
+                        break;
+
+                }
+                break;
+            case OTHER:
+                System.out.println("Unhandled OS");
                 break;
         }
         return new ReturnValues(0, "Ok");
@@ -81,7 +105,7 @@ public class ProcessController
         Process p;
         try {
             String line;
-            if (this.osType == "Windows") {
+            if (this.os.equals(OS.WINDOWS)) {
                 p = Runtime.getRuntime().exec
                         (System.getenv("windir") + "\\system32\\" + "tasklist.exe /SVC");
             } else {

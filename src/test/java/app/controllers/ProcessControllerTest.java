@@ -13,12 +13,13 @@ class ProcessControllerTest
     @org.junit.jupiter.api.BeforeEach
     void setUp() {
 
-        switch (processController.osType) {
-            case "Linux":
-                command = "uname";
+        switch (processController.os) {
+            case LINUX:
+                command = "echo 1";
                 break;
-            case "Windows":
-                command = "ver";
+            case WINDOWS:
+                //System.getenv("windir") + "\\system32\\" + "ver.exe /SVC");
+                command = "cmd.exe /C echo 1";
                 break;
         }
 
@@ -26,26 +27,32 @@ class ProcessControllerTest
 
     @Test
     void runCommand() {
-        assertTrue((processController.runCommand(command)).u.toString().contains(processController.osType));
+        assertEquals("1",processController.runCommand(command).u.toString().trim());
     }
 
     @Test
     void serviceAction() {
+        System.out.println(processController.serviceAction("invalidService", "invalidAction").t);
         assertEquals(-1, processController.serviceAction("invalidService", "invalidAction").t);
+        System.out.println(processController.serviceAction("cron", "status").t);
         assertEquals(0, (processController.serviceAction("cron", "status").t));
+        System.out.println (processController.serviceAction("cron", "status").u.toString().contains("Loaded"));
         assertTrue(processController.serviceAction("cron", "status").u.toString().contains("Loaded"));
+        System.out.println(processController.serviceAction("cron", "restart").t);
         assertEquals(0, processController.serviceAction("cron", "restart").t);
     }
 
     @Test
     void serviceAlive() {
         String testService = "";
-        switch (processController.osType) {
-            case "Linux":
+        switch (processController.os) {
+            case LINUX:
                 testService = "network";
                 break;
-            case "Windows":
+            case WINDOWS:
                 testService = "net";
+                break;
+            case OTHER:
                 break;
         }
         System.out.println("Testing service " + testService);
