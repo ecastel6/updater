@@ -1,10 +1,13 @@
-package app;
+package app.controllers;
 
-import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.Test;
 
-class SysControllerTest
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+class ProcessControllerTest
 {
-    SysController sysController = new SysController();
+    ProcessController sysController = new ProcessController();
     String command;
 
     @org.junit.jupiter.api.BeforeEach
@@ -21,16 +24,21 @@ class SysControllerTest
 
     }
 
-    @org.junit.jupiter.api.Test
+    @Test
     void runCommand() {
         assertTrue((sysController.runCommand(command)).u.toString().contains(sysController.osType));
     }
 
-    @org.junit.jupiter.api.Test
+    @Test
     void serviceAction() {
         assertEquals(-1,sysController.serviceAction("invalidService","invalidAction").t);
         assertEquals(0,(sysController.serviceAction("cron","status").t));
         assertTrue(sysController.serviceAction("cron","status").u.toString().contains("Loaded"));
         assertEquals(0,sysController.serviceAction("cron","restart").t);
+    }
+
+    @Test
+    void serviceAlive() {
+
     }
 }

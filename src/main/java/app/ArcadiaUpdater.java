@@ -16,8 +16,8 @@ public class ArcadiaUpdater {
     // backup directory
     // create directory
     // delete directory
-    // copy directory
     // copy file
+    // patch custom
 
     public static void main(String[] args) {
         if ((args.length < 1) || (args.length > 3)) {

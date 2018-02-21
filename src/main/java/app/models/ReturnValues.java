@@ -1,4 +1,4 @@
-package app;
+package app.models;
 
 public class ReturnValues<T, U> {
     public final T t;
