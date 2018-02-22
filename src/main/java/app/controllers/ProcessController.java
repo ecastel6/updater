@@ -43,7 +43,7 @@ public class ProcessController {
         return OS.OTHER;
     }
 
-    public ReturnValues runCommand(String command) {
+    public ReturnValues runCommand(String[] command) {
         StringBuffer stdOut = new StringBuffer();
         Process process;
         int exitStatus = 0;
@@ -56,7 +56,7 @@ public class ProcessController {
 
             String line = "";
             while ((line = reader.readLine()) != null)
-                stdOut.append(line + "\n");
+                stdOut.append(line);// + "\n");
         } catch (IOException e) {
             e.printStackTrace();
         } catch (InterruptedException e) {
@@ -67,7 +67,7 @@ public class ProcessController {
 
     public ReturnValues serviceAction(String serviceName, String command) {
         String msg;
-        ReturnValues returnedValues;
+        ReturnValues returnedValues = new ReturnValues(0, "");
         final List<String> availableActions = Arrays.asList("start", "stop", "restart", "status");
         if (!availableActions.contains(command))
             return new ReturnValues(-1, "Invalid Action");
@@ -75,29 +75,38 @@ public class ProcessController {
             case LINUX:
                 switch (command) {
                     case "restart":
-                        returnedValues = this.runCommand("service " + serviceName + " stop");
-                        if (!returnedValues.t.equals(0)) return returnedValues;
-                        returnedValues = this.runCommand("service " + serviceName + " start");
-                        if (!returnedValues.t.equals(0)) return returnedValues;
-                        return returnedValues;
+                        returnedValues = this.runCommand(new String[]{"service", serviceName, "stop"});
+                        //if (!returnedValues.t.equals(0)) return returnedValues;
+                        returnedValues = this.runCommand(new String[]{"service", serviceName, "start"});
+                        //if (!returnedValues.t.equals(0)) return returnedValues;
+                        break;
                     default:
-                        returnedValues = this.runCommand("service " + serviceName + " " + command);
-                        return returnedValues;
+                        returnedValues = this.runCommand(new String[]{"service", serviceName, command});
+                        break;
                 }
 
             case WINDOWS:
-                switch (command){
-                    case "stop":
-                        //String [] command =
+                String[] windowsScript;
+                switch (command) {
+                    case "status":
+                        windowsScript = new String[]{"cmd.exe", "/c", "sc", "query", serviceName, "|", "find", "/C", "\"RUNNING\""};
+                        returnedValues = this.runCommand(windowsScript);
                         break;
-
+                    case "start":
+                        windowsScript = new String[]{"cmd.exe", "/c", "sc", "start", serviceName};
+                        returnedValues = this.runCommand(windowsScript);
+                        break;
+                    case "stop":
+                        windowsScript = new String[]{"cmd.exe", "/c", "sc", "stop", serviceName};
+                        returnedValues = this.runCommand(windowsScript);
+                        break;
                 }
                 break;
             case OTHER:
                 System.out.println("Unhandled OS");
                 break;
         }
-        return new ReturnValues(0, "Ok");
+        return returnedValues;
     }
 
     // TODO Check process exists
