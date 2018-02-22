@@ -9,7 +9,7 @@ import java.util.Arrays;
 import java.util.List;
 
 
-public class ProcessController {
+public class ServiceController {
     public enum OS {
         WINDOWS,
         LINUX,
@@ -18,7 +18,7 @@ public class ProcessController {
 
     public OS os;
 
-    public ProcessController() {
+    public ServiceController() {
         this.os = getOs();
     }
 
@@ -133,7 +133,7 @@ public class ProcessController {
     }
 
     public static void main(String[] args) {
-        ProcessController sc = new ProcessController();
+        ServiceController sc = new ServiceController();
         /*ReturnValues rv = sc.serviceAction("apache2", "status");
         System.out.println("Return code: " + rv.t);
         System.out.println("stdOut: " + rv.u);
