@@ -32,9 +32,9 @@ class ProcessControllerTest
 
     @Test
     void serviceAction() {
-        /*assertEquals(-1, processController.serviceAction("invalidService", "invalidAction").t);
+        assertEquals(-1, processController.serviceAction("invalidService", "invalidAction").t);
         assertEquals(0, (processController.serviceAction("cron", "status").t));
-        assertTrue(processController.serviceAction("cron", "status").u.toString().contains("Loaded"));*/
+        assertTrue(processController.serviceAction("cron", "status").u.toString().contains("Loaded"));
         //System.out.println("cron restart:" +processController.serviceAction("cron", "restart").t);
         assertEquals(0, processController.serviceAction("cron", "restart").t);
     }
