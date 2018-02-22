@@ -32,13 +32,10 @@ class ProcessControllerTest
 
     @Test
     void serviceAction() {
-        System.out.println(processController.serviceAction("invalidService", "invalidAction").t);
-        assertEquals(-1, processController.serviceAction("invalidService", "invalidAction").t);
-        System.out.println(processController.serviceAction("cron", "status").t);
+        /*assertEquals(-1, processController.serviceAction("invalidService", "invalidAction").t);
         assertEquals(0, (processController.serviceAction("cron", "status").t));
-        System.out.println (processController.serviceAction("cron", "status").u.toString().contains("Loaded"));
-        assertTrue(processController.serviceAction("cron", "status").u.toString().contains("Loaded"));
-        System.out.println(processController.serviceAction("cron", "restart").t);
+        assertTrue(processController.serviceAction("cron", "status").u.toString().contains("Loaded"));*/
+        //System.out.println("cron restart:" +processController.serviceAction("cron", "restart").t);
         assertEquals(0, processController.serviceAction("cron", "restart").t);
     }
 
@@ -47,7 +44,7 @@ class ProcessControllerTest
         String testService = "";
         switch (processController.os) {
             case LINUX:
-                testService = "network";
+                testService = "acpid";
                 break;
             case WINDOWS:
                 testService = "net";

@@ -13,7 +13,7 @@ public class ProcessController {
     public enum OS {
         WINDOWS,
         LINUX,
-        OTHER;
+        OTHER
     }
 
     public OS os;
@@ -76,9 +76,9 @@ public class ProcessController {
                 switch (command) {
                     case "restart":
                         returnedValues = this.runCommand("service " + serviceName + " stop");
-                        if (!returnedValues.u.equals(0)) return returnedValues;
+                        if (!returnedValues.t.equals(0)) return returnedValues;
                         returnedValues = this.runCommand("service " + serviceName + " start");
-                        if (!returnedValues.u.equals(0)) return returnedValues;
+                        if (!returnedValues.t.equals(0)) return returnedValues;
                         return returnedValues;
                     default:
                         returnedValues = this.runCommand("service " + serviceName + " " + command);
