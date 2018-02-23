@@ -9,14 +9,6 @@ import java.nio.file.attribute.BasicFileAttributes;
 
 public class FileSystemController extends SimpleFileVisitor<Path>
 {
-    // todo rename dir
-    // todo move dir
-    // todo backup directory
-    // todo create directory
-    // todo delete directory
-    // todo copy file
-    // todo find directory
-    // todo directory size
 
     private Path sourceDir;
     private Path targetDir;

@@ -2,29 +2,35 @@ package app;
 
 import app.controllers.Finder;
 
-import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.ArrayList;
+
+// todo rename dir
+// todo move dir
+// todo backup directory
+// todo create directory
+// todo delete directory
+// todo copy file
+// todo find directory
+// todo directory size
 
 public class ArcadiaUpdater {
 
-    public static ArrayList<Path> testFinder(String sd, String pat) throws IOException {
-        Finder finder = new Finder(pat);
-        Files.walkFileTree(Paths.get(sd), finder);
-        return finder.getResults();
-    }
-
     public static void main(String[] args) {
-        try {
-            ArrayList<Path> result = testFinder("/", "acpi*");
-            if (!result.isEmpty()) {
-                for (Path p : result) System.out.println(p);
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
+
+        Finder f = Finder.doit("/", "system*", 1);
+        if (f.getNumMatches() > 0) {
+            System.out.printf("Total matches %s", f.getNumMatches());
+            for (Path p : f.getResults()) System.out.println(p);
         }
+
+//        try {
+//            ArrayList<Path> result = testFinder("/", "acpi*");
+//            if (!result.isEmpty()) {
+//                for (Path p : result) System.out.println(p);
+//            }
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
         /*if ((args.length < 1) || (args.length > 3)) {
             System.out.println(
                     "Two or three parameters required. \n Usage: merger ActualConfig.properties NewConfig.properties <dry>");

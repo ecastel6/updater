@@ -69,8 +69,21 @@ public class Finder
     @Override
     public FileVisitResult visitFileFailed(Path file,
                                            IOException exc) {
-        System.err.println(exc);
+        //System.err.println(exc);
         return CONTINUE;
+    }
+
+    public static Finder doit(String startPath, String pattern, int what) {
+        // what =0 all
+        // what =1 files
+        // what =2 dirs
+        Finder finder = new Finder(pattern);
+        try {
+            Files.walkFileTree(Paths.get(startPath), finder);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return finder;
     }
 
     public static void main(String[] args) throws IOException {
