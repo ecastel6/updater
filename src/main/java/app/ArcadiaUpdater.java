@@ -1,7 +1,11 @@
 package app;
 
-import javax.swing.filechooser.FileSystemView;
-import java.io.File;
+import java.io.IOException;
+import java.nio.file.FileStore;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
 
 // todo rename dir
 // todo move dir
@@ -15,26 +19,16 @@ import java.io.File;
 public class ArcadiaUpdater
 {
 
-    public static void main(String[] args) {
-
-
-        /*Iterable<Path> p=FileSystems.getDefault().getRootDirectories();
-        for (Path path:p) {
-            System.out.println(path.toString());
-        }*/
-        File[] paths;
-        FileSystemView fsv = FileSystemView.getFileSystemView();
-
-        // returns pathnames for files and directory
-        paths = File.listRoots();
-
-        // for each pathname in pathname array
-        for (File path : paths) {
-            // prints file and directory paths
-            System.out.println("Drive Name: " + path);
-            System.out.println("Description: " + fsv.getSystemTypeDescription(path));
+    public static void main(String[] args) throws IOException {
+        ArrayList<Path> driveList = null;
+        for (Path root : FileSystems.getDefault().getRootDirectories()) {
+            if (Files.isWritable(root)) {
+                FileStore fileStore = Files.getFileStore(root);
+                if ((!fileStore.isReadOnly()) && (!fileStore.getAttribute("volume:isRemovable").equals(true))) {
+                    driveList.add(root);
+                }
+            }
         }
-
 
 //        FileFinderController f = FileFinderController.done("/var", "lib/mysql", 2);
 //        if (f.getNumMatches() > 0) {
