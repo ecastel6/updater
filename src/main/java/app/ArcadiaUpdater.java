@@ -1,8 +1,7 @@
 package app;
 
-import app.controllers.Finder;
-
-import java.nio.file.Path;
+import javax.swing.filechooser.FileSystemView;
+import java.io.File;
 
 // todo rename dir
 // todo move dir
@@ -13,15 +12,35 @@ import java.nio.file.Path;
 // todo find directory
 // todo directory size
 
-public class ArcadiaUpdater {
+public class ArcadiaUpdater
+{
 
     public static void main(String[] args) {
 
-        Finder f = Finder.doit("/", "system*", 1);
-        if (f.getNumMatches() > 0) {
-            System.out.printf("Total matches %s", f.getNumMatches());
-            for (Path p : f.getResults()) System.out.println(p);
+
+        /*Iterable<Path> p=FileSystems.getDefault().getRootDirectories();
+        for (Path path:p) {
+            System.out.println(path.toString());
+        }*/
+        File[] paths;
+        FileSystemView fsv = FileSystemView.getFileSystemView();
+
+        // returns pathnames for files and directory
+        paths = File.listRoots();
+
+        // for each pathname in pathname array
+        for (File path : paths) {
+            // prints file and directory paths
+            System.out.println("Drive Name: " + path);
+            System.out.println("Description: " + fsv.getSystemTypeDescription(path));
         }
+
+
+//        FileFinderController f = FileFinderController.done("/var", "lib/mysql", 2);
+//        if (f.getNumMatches() > 0) {
+//            System.out.printf("Total matches %s\n", f.getNumMatches());
+//            for (Path p : f.getResults()) System.out.println(p);
+//        } else System.out.println("No results found");
 
 //        try {
 //            ArrayList<Path> result = testFinder("/", "acpi*");

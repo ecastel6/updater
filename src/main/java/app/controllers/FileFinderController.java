@@ -7,20 +7,22 @@ import java.util.ArrayList;
 
 import static java.nio.file.FileVisitResult.CONTINUE;
 
-public class Finder
+public class FileFinderController
         extends SimpleFileVisitor<Path>
 {
     private final PathMatcher matcher;
     private double numMatches = 0;
-
+    private int searchType;
     ArrayList<Path> results = new ArrayList<Path>();
 
-    public Finder(String pattern) {
-        matcher = FileSystems.getDefault().getPathMatcher("glob:" + pattern);
+    public FileFinderController(String pattern, int searchType) {
+        matcher = FileSystems.getDefault().getPathMatcher("glob:{" + pattern + "}");
+        this.searchType = searchType;
     }
 
     void find(Path file) {
-        Path name = file.getFileName();
+        Path name = file.toAbsolutePath();//getFileName();
+        System.out.println(name.toString());
         if (name != null && matcher.matches(name)) {
             results.add(file);
             numMatches++;
@@ -48,7 +50,9 @@ public class Finder
             System.out.format("Other: %s ", file);
         }
         System.out.println("(" + attr.size() + "bytes)");*/
-        find(file);
+
+        // searchtype=0 all searchtype=1 only files
+        if (this.searchType < 2) find(file);
         return CONTINUE;
     }
 
@@ -56,7 +60,8 @@ public class Finder
     @Override
     public FileVisitResult postVisitDirectory(Path dir,
                                               IOException exc) {
-        find(dir);
+        // searchtype=0 all searchtype=2 only dirs
+        if ((this.searchType == 0) || (this.searchType == 2)) find(dir);
         //System.out.format("Directory: %s%n", dir);
         return CONTINUE;
     }
@@ -73,31 +78,16 @@ public class Finder
         return CONTINUE;
     }
 
-    public static Finder doit(String startPath, String pattern, int what) {
+    public static FileFinderController done(String startPath, String pattern, int searchType) {
         // what =0 all
         // what =1 files
         // what =2 dirs
-        Finder finder = new Finder(pattern);
+        FileFinderController finder = new FileFinderController(pattern, searchType);
         try {
             Files.walkFileTree(Paths.get(startPath), finder);
         } catch (IOException e) {
             e.printStackTrace();
         }
         return finder;
-    }
-
-    public static void main(String[] args) throws IOException {
-        String startDir = "/";
-        String pattern = "acp*";
-
-        Finder finder = new Finder(pattern);
-        Files.walkFileTree(Paths.get(startDir), finder);
-        if (finder.getNumMatches() > 0) {
-            for (Path path : finder.getResults()) {
-                System.out.println(path);
-            }
-
-        }
-
     }
 }
