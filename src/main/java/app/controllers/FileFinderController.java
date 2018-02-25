@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 import static java.nio.file.FileVisitResult.CONTINUE;
 
@@ -16,13 +18,13 @@ public class FileFinderController
     ArrayList<Path> results = new ArrayList<Path>();
 
     public FileFinderController(String pattern, int searchType) {
-        matcher = FileSystems.getDefault().getPathMatcher("glob:{" + pattern + "}");
+        matcher = FileSystems.getDefault().getPathMatcher("glob:" + pattern);
         this.searchType = searchType;
     }
 
     void find(Path file) {
-        Path name = file.toAbsolutePath();//getFileName();
-        System.out.println(name.toString());
+        Path name = file.getFileName();
+        //System.out.printf("full path: %s\tname:%s\n",file.toAbsolutePath().toString(),name.toString());
         if (name != null && matcher.matches(name)) {
             results.add(file);
             numMatches++;
@@ -52,7 +54,10 @@ public class FileFinderController
         System.out.println("(" + attr.size() + "bytes)");*/
 
         // searchtype=0 all searchtype=1 only files
-        if (this.searchType < 2) find(file);
+        if (this.searchType < 2) {
+            System.out.printf("Checking file %s", file.toString());
+            find(file);
+        }
         return CONTINUE;
     }
 
@@ -61,8 +66,10 @@ public class FileFinderController
     public FileVisitResult postVisitDirectory(Path dir,
                                               IOException exc) {
         // searchtype=0 all searchtype=2 only dirs
-        if ((this.searchType == 0) || (this.searchType == 2)) find(dir);
-        //System.out.format("Directory: %s%n", dir);
+        if ((this.searchType == 0) || (this.searchType == 2)) {
+            System.out.printf("Checking dir %s", dir.toString());
+            find(dir);
+        }
         return CONTINUE;
     }
 
@@ -78,16 +85,44 @@ public class FileFinderController
         return CONTINUE;
     }
 
+    public static ArrayList<String> getDriveList() {
+        ArrayList<String> driveList = null;
+        for (Path root : FileSystems.getDefault().getRootDirectories()) {
+            if (Files.isWritable(root)) {
+                try {
+                    FileStore fileStore = Files.getFileStore(root);
+                    if ((!fileStore.isReadOnly()) && (!fileStore.getAttribute("volume:isRemovable").equals(true))) {
+                        driveList.add(root.toString());
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+        return driveList;
+    }
+
     public static FileFinderController done(String startPath, String pattern, int searchType) {
         // what =0 all
         // what =1 files
         // what =2 dirs
+        //for (Path p: getDriveList()) System.out.println(p.toString());
         FileFinderController finder = new FileFinderController(pattern, searchType);
-        try {
-            Files.walkFileTree(Paths.get(startPath), finder);
-        } catch (IOException e) {
-            e.printStackTrace();
+        ServiceController sc = new ServiceController();
+
+        List<String> driveList;
+        if (sc.os.equals(ServiceController.OS.LINUX)) {
+            //List<String> driveList = Arrays.asList("");
+            driveList = Collections.singletonList("");
+        } else {
+            driveList = getDriveList();
         }
+        for (String everyDrive : driveList)
+            try {
+                Files.walkFileTree(Paths.get(everyDrive, startPath), finder);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         return finder;
     }
 }

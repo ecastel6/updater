@@ -76,9 +76,7 @@ public class ServiceController {
                 switch (command) {
                     case "restart":
                         returnedValues = this.runCommand(new String[]{"service", serviceName, "stop"});
-                        //if (!returnedValues.t.equals(0)) return returnedValues;
                         returnedValues = this.runCommand(new String[]{"service", serviceName, "start"});
-                        //if (!returnedValues.t.equals(0)) return returnedValues;
                         break;
                     default:
                         returnedValues = this.runCommand(new String[]{"service", serviceName, command});
