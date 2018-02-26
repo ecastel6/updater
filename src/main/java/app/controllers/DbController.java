@@ -1,5 +1,7 @@
 package app.controllers;
 
+import org.apache.commons.configuration2.ex.ConfigurationException;
+
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -22,10 +24,11 @@ public class DbController
 
     // Root database directory e.g. /opt/pgsql
     Path serverDir;
-    int serverPort;
+    String serverPort;
     // Database status
     byte status;
     ArrayList<String> databaseList;
+    String serverConfFilename;
     String serverVersion;
     String adminUser;
     String adminPasswd;
@@ -33,6 +36,7 @@ public class DbController
     private DbController() throws IOException {
         this.serverDir = getServerDir();
         this.serverPort = getServerPort();
+        this.serverConfFilename = getServerConfFilename();
         this.status = getStatus();
         this.databaseList = getDatabaseList();
         this.serverVersion = getServerVersion();
@@ -49,8 +53,24 @@ public class DbController
     }
 
 
-    public int getServerPort() {
-        return serverPort;
+    public String getServerPort() {
+        // todo getServerPort other database servers
+        try {
+            FileBasedConfigurationHandler fbch = new FileBasedConfigurationHandler(this.serverConfFilename);
+            if (fbch.isKeyPresent("port")) {
+                return fbch.getKeyValue("port");
+            } else
+                return "5432";
+        } catch (ConfigurationException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    public String getServerConfFilename() {
+        //todo getServerConf other database servers
+        FileFinderController postgresConf = FileFinderController.doit("/", "postgres.conf", 1);
+        return postgresConf.getResults().get(0).toString();
     }
 
     public byte getStatus() {

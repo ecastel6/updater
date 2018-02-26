@@ -1,5 +1,6 @@
 package app;
 
+import app.controllers.DbController;
 import app.controllers.FileBasedConfigurationHandler;
 import org.apache.commons.configuration2.ex.ConfigurationException;
 
@@ -22,10 +23,20 @@ public class ArcadiaUpdater
         } catch (IOException e) {
             e.printStackTrace();
         }*/
+
+        DbController dbc = DbController.getInstance();
+        System.out.println(dbc.getServerConfFilename());
+
         try {
             FileBasedConfigurationHandler fbch = new FileBasedConfigurationHandler("C:/prop/rabbitmq_old.properties");
-            Object value = fbch.getConfig().getString("rabbitmq.addresses");
-            System.out.println(value.toString());
+            if (fbch.isKeyPresent("rabbitmq.addresses"))
+                System.out.printf("valor es %s", fbch.getKeyValue("rabbitmq.addresses"));
+            else
+                System.out.println("No está");
+            /*if (fbch.getArrayList().contains("rabbitmq.addresses")) {
+                System.out.printf("Clave presente: Valor %s \n",fbch.getConfig().getString("rabbitmq.addresses"));
+            } else
+                System.out.println("Clave no encontrada");*/
         } catch (ConfigurationException e) {
             e.printStackTrace();
         }

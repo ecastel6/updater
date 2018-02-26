@@ -58,6 +58,17 @@ public class FileBasedConfigurationHandler {
         return keyList;
     }
 
+    public boolean isKeyPresent(String key) {
+        return this.getArrayList().contains(key);
+    }
+
+    public String getKeyValue(String key) throws ConfigurationException {
+
+        if (this.isKeyPresent(key)) {
+            return this.getConfig().getString(key);
+        } else throw new ConfigurationException("Key not present");
+    }
+
     // newConfigurationHandler FileBasedConfigurationHandler pointing to the new
     // properties file
     // dryRun write this file or printout json to stdout
