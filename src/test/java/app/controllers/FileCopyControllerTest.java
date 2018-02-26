@@ -8,8 +8,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-class FileCopyControllerTest
-{
+class FileCopyControllerTest {
     Path testSourcePath, testTargetPath;
     Path sampleFile;
 
@@ -26,7 +25,6 @@ class FileCopyControllerTest
         } catch (IOException e) {
             e.printStackTrace();
         }
-
     }
 
     @Test

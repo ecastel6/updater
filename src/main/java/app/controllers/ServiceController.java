@@ -11,11 +11,15 @@ import java.util.List;
 
 
 public class ServiceController {
+    private static ServiceController ourInstance = new ServiceController();
 
+    public static ServiceController getInstance() {
+        return ourInstance;
+    }
 
     public OS os;
 
-    public ServiceController() {
+    private ServiceController() {
         this.os = getOs();
     }
 

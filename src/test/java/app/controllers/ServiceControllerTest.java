@@ -5,9 +5,9 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
 class ServiceControllerTest {
-    ServiceController serviceController = new ServiceController();
-    String[] command;
-    String testSVC, testSVCString;
+    ServiceController serviceController = ServiceController.getInstance();
+    private String[] command;
+    private String testSVC, testSVCString;
 
     @org.junit.jupiter.api.BeforeEach
     void setUp() {

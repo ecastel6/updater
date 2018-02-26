@@ -41,7 +41,7 @@ public class DbController
     }
 
     public Path getServerDir() throws IOException {
-        FileFinderController rootDB = FileFinderController.done("/home/ecastel/opt", "pgsql", 2);
+        FileFinderController rootDB = FileFinderController.doit("/home/ecastel/opt", "pgsql", 2);
         if (rootDB.getNumMatches() == 0) {
             throw new IOException("No Postgres installation detected");
         }

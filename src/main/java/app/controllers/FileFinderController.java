@@ -1,5 +1,7 @@
 package app.controllers;
 
+import app.models.OS;
+
 import java.io.IOException;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
@@ -85,7 +87,7 @@ public class FileFinderController
     }
 
     public static ArrayList<String> getDriveList() {
-        ArrayList<String> driveList = null;
+        ArrayList<String> driveList = new ArrayList<>();
         for (Path root : FileSystems.getDefault().getRootDirectories()) {
             if (Files.isWritable(root)) {
                 try {
@@ -101,16 +103,16 @@ public class FileFinderController
         return driveList;
     }
 
-    public static FileFinderController done(String startPath, String pattern, int searchType) {
+    public static FileFinderController doit(String startPath, String pattern, int searchType) {
         // what =0 all
         // what =1 files
         // what =2 dirs
         //for (Path p: getDriveList()) System.out.println(p.toString());
         FileFinderController finder = new FileFinderController(pattern, searchType);
-        ServiceController sc = new ServiceController();
+        ServiceController serviceController = ServiceController.getInstance();
 
         List<String> driveList;
-        if (sc.os.equals(ServiceController.OS.LINUX)) {
+        if (serviceController.os.equals(OS.LINUX)) {
             //List<String> driveList = Arrays.asList("");
             driveList = Collections.singletonList("");
         } else {
