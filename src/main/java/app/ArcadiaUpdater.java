@@ -1,8 +1,8 @@
 package app;
 
-import app.controllers.FileFinderController;
+import app.controllers.DbController;
 
-import java.nio.file.Path;
+import java.io.IOException;
 
 // todo rename dir
 // todo move dir
@@ -17,14 +17,19 @@ public class ArcadiaUpdater
 {
 
     public static void main(String[] args) {
+        try {
+            DbController dbController = DbController.getInstance();
+            System.out.printf("DB dir : %s\n", dbController.getServerDir());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
-
-        FileFinderController f = FileFinderController.done("/tmp", "data", 2);
+            /*FileFinderController f = FileFinderController.done("/tmp", "data", 2);
         if (f.getNumMatches() > 0) {
             System.out.printf("Total matches %s\n", f.getNumMatches());
             for (Path p : f.getResults()) System.out.println(p);
         } else System.out.println("No results found");
-
+*/
         /*if ((args.length < 1) || (args.length > 3)) {
             System.out.println(
                     "Two or three parameters required. \n Usage: merger ActualConfig.properties NewConfig.properties <dry>");

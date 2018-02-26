@@ -1,10 +1,25 @@
 package app.controllers;
 
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 
 public class DbController
 {
+    private static DbController ourInstance;
+
+    static {
+        try {
+            ourInstance = new DbController();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static DbController getInstance() {
+        return ourInstance;
+    }
+
     // Root database directory e.g. /opt/pgsql
     Path serverDir;
     int serverPort;
@@ -15,7 +30,7 @@ public class DbController
     String adminUser;
     String adminPasswd;
 
-    public DbController(Path serverDir, int serverPort, byte status, ArrayList<String> databaseList, String serverVersion) {
+    private DbController() throws IOException {
         this.serverDir = getServerDir();
         this.serverPort = getServerPort();
         this.status = getStatus();
@@ -25,9 +40,14 @@ public class DbController
         this.adminPasswd = getAdminPasswd();
     }
 
-    public Path getServerDir() {
-        return serverDir;
+    public Path getServerDir() throws IOException {
+        FileFinderController rootDB = FileFinderController.done("/home/ecastel/opt", "pgsql", 2);
+        if (rootDB.getNumMatches() == 0) {
+            throw new IOException("No Postgres installation detected");
+        }
+        return rootDB.results.get(0);
     }
+
 
     public int getServerPort() {
         return serverPort;
@@ -54,7 +74,7 @@ public class DbController
     }
 
 
-    // todo check database online
-    // todo  search postgres enabled port
-    // todo search postgres dir
+// todo check database online
+// todo  search postgres enabled port
+// todo search postgres dir
 }

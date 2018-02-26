@@ -24,7 +24,6 @@ public class FileFinderController
 
     void find(Path file) {
         Path name = file.getFileName();
-        //System.out.printf("full path: %s\tname:%s\n",file.toAbsolutePath().toString(),name.toString());
         if (name != null && matcher.matches(name)) {
             results.add(file);
             numMatches++;
@@ -55,7 +54,7 @@ public class FileFinderController
 
         // searchtype=0 all searchtype=1 only files
         if (this.searchType < 2) {
-            System.out.printf("Checking file %s", file.toString());
+            //System.out.printf("Checking file %s", file.toString());
             find(file);
         }
         return CONTINUE;
@@ -67,7 +66,7 @@ public class FileFinderController
                                               IOException exc) {
         // searchtype=0 all searchtype=2 only dirs
         if ((this.searchType == 0) || (this.searchType == 2)) {
-            System.out.printf("Checking dir %s", dir.toString());
+            //System.out.printf("Checking dir %s", dir.toString());
             find(dir);
         }
         return CONTINUE;
