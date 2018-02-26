@@ -1,5 +1,6 @@
 package app.controllers;
 
+import app.models.OS;
 import app.models.ReturnValues;
 
 import java.io.BufferedReader;
@@ -10,11 +11,7 @@ import java.util.List;
 
 
 public class ServiceController {
-    public enum OS {
-        WINDOWS,
-        LINUX,
-        OTHER
-    }
+
 
     public OS os;
 
