@@ -7,10 +7,11 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 
 class FileCopyControllerTest {
     Path testSourcePath, testTargetPath;
-    Path sampleFile;
+    Path sampleFile1, sampleFile2;
 
     @BeforeEach
     void setUp() {
@@ -20,8 +21,9 @@ class FileCopyControllerTest {
 
             System.out.println(testSourcePath.toString());
             System.out.println(testTargetPath.toString());
-            sampleFile = Files.createTempFile(testSourcePath, "sample", "file");
-            System.out.println(sampleFile.toString());
+            Path sampleFile1 = Files.createTempFile(testSourcePath, "sample", "file");
+            Path sampleFile2 = Files.createTempFile(testSourcePath, "sample", "file");
+            System.out.printf("Samplefile1 %s. Samplefile2 %s \n", sampleFile1.toString(), sampleFile2.toString());
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -34,7 +36,15 @@ class FileCopyControllerTest {
 
     @Test
     void copyFile() {
-        System.out.println("Copying " + sampleFile.toString() + " to c:\\tmp");
-        FileCopyController.copyDirectory(sampleFile, Paths.get("c:\\tmp", ""));
+        System.out.printf("Copying %s to %s\n", sampleFile1.toString(), testTargetPath.toString());
+        FileCopyController.copyDirectory(sampleFile1, testTargetPath);
+    }
+
+    @Test
+    void rename() {
+        System.out.printf("Renaming directory %s to %s",
+                testSourcePath.toString(),
+                testTargetPath.toString());
+        FileCopyController.rename(testSourcePath, testTargetPath, StandardCopyOption.REPLACE_EXISTING);
     }
 }

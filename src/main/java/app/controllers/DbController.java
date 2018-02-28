@@ -5,10 +5,10 @@ import org.apache.commons.configuration2.ex.ConfigurationException;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 
-public class DbController
-{
+public class DbController {
     private static DbController ourInstance;
 
     static {
@@ -46,11 +46,14 @@ public class DbController
     }
 
     public Path getServerDir() throws IOException {
+        Path serverConf = Paths.get(getServerConfFilename());
+        return (serverConf.getParent().getParent());
+        /*
         FileFinderController rootDB = FileFinderController.doit("/", "pgsql", 2);
         if (rootDB.getNumMatches() == 0) {
             throw new IOException("No Postgres installation detected");
         }
-        return rootDB.results.get(0);
+        return rootDB.results.get(0);*/
     }
 
 
@@ -68,9 +71,22 @@ public class DbController
         }
     }
 
-    public String getServerConfFilename() {
+    public String getServerConfFilename() throws IOException {
         //todo getServerConf other database servers
-        FileFinderController postgresConf = FileFinderController.doit("/home/ecastel", "postgresql.conf", 1);
+        FileFinderController postgresConf = FileFinderController.doit("/", "postgresql.conf", 1);
+        if (postgresConf.getNumMatches() == 0) {
+            throw new IOException("Unable to find out postgres conf file!!!!");
+        } else if (postgresConf.getNumMatches() > 1) {
+            //System.out.println("Multiple postgres conf file detected. Guessing correct one");
+            for (Path path : postgresConf.getResults()) {
+                //System.out.printf("Path: %s. depth=%d\n",path.toString(),path.getNameCount());
+                if ((path.toString().contains("opt")) && (path.getNameCount() < 5)) {
+                    //      System.out.printf("Guessed dir: %s ",path.toString());
+                    return path.toString();
+                }
+            }
+            //System.out.println("Unable to guess returning the first one.");
+        }
         return postgresConf.getResults().get(0).toString();
     }
 
@@ -126,5 +142,19 @@ public class DbController
         ServiceController serviceController = ServiceController.getInstance();
         ReturnValues returnValues = serviceController.runCommand(command);
         return (int) returnValues.t;
+    }
+
+    @Override
+    public String toString() {
+        return "DbController{" +
+                "serverDir=" + serverDir +
+                ", serverPort='" + serverPort + '\'' +
+                ", status=" + status +
+                ", databaseList=" + databaseList +
+                ", serverConfFilename='" + serverConfFilename + '\'' +
+                ", serverVersion='" + serverVersion + '\'' +
+                ", adminUser='" + adminUser + '\'' +
+                ", adminPasswd='" + adminPasswd +
+                '}';
     }
 }

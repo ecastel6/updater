@@ -1,10 +1,7 @@
 package app.controllers;
 
 import java.io.IOException;
-import java.nio.file.FileVisitResult;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.SimpleFileVisitor;
+import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 
 public class FileCopyController extends SimpleFileVisitor<Path>
@@ -61,5 +58,17 @@ public class FileCopyController extends SimpleFileVisitor<Path>
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    public static Path rename(Path source, Path target, StandardCopyOption mode) {
+        // StandardCopyOption REPLACE_EXISTING or ATOMIC_MOVE
+        Path newTarget;
+        try {
+            newTarget = Files.move(source, target, mode);
+            return newTarget;
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 }

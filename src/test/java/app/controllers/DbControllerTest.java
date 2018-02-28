@@ -10,8 +10,7 @@ import java.nio.file.Path;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-class DbControllerTest
-{
+class DbControllerTest {
 
     @BeforeEach
     void setUp() {
@@ -22,12 +21,7 @@ class DbControllerTest
     @Test
     void getServerDir() {
         DbController dbController = DbController.getInstance();
-        try {
-            Path serverDir = dbController.getServerDir();
-            assertTrue(serverDir.endsWith("pgsql"));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        assertTrue(dbController.serverDir.endsWith("pgsql"));
     }
 
     @Test
@@ -39,7 +33,11 @@ class DbControllerTest
     @Test
     void getServerConfFilename() {
         DbController dbController = DbController.getInstance();
-        assertTrue(dbController.getServerConfFilename().toString().contains("postgresql.conf"));
+        try {
+            assertTrue(dbController.getServerConfFilename().toString().contains("postgresql.conf"));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
 
@@ -60,7 +58,9 @@ class DbControllerTest
     @Test
     void getServerVersion() {
         DbController dbController = DbController.getInstance();
-        assertTrue(dbController.getServerVersion().contains("PostgreSQL"));
+        String serverVersion = dbController.getServerVersion();
+        System.out.printf("Server version: \n %s\n", serverVersion);
+        assertTrue(serverVersion.contains("PostgreSQL"));
     }
 
     @Test

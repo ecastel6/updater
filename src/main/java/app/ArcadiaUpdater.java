@@ -1,7 +1,7 @@
 package app;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 // todo rename dir
 // todo move dir
@@ -22,8 +22,11 @@ public class ArcadiaUpdater
         } catch (IOException e) {
             e.printStackTrace()
         }*/
-
-        String username = "postgres";
+        Path p = Paths.get("C:\\Users\\minisergio\\Documents\\CAMPUSDELASALUD\\opt\\pgsql\\data\\postgresql.conf");
+        System.out.println(p.getNameCount());
+        //DbController db=DbController.getInstance();
+        //db.getFilenameDepth(p);
+        /*String username = "postgres";
         String database = "template1";
         //String executeCmd = "pg_dump -U " + username + " -w -c -f " + database + ".sql " + database;
         String[] executeCmd = new String[]{"psql", "-U", "postgres", "-l"};
@@ -47,7 +50,7 @@ public class ArcadiaUpdater
 
         } catch (Exception ex) {
             ex.printStackTrace();
-        }
+        }*/
 
         /*
         DbController dbc = DbController.getInstance();
