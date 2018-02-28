@@ -6,9 +6,9 @@ import app.models.ReturnValues;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-
 
 public class ServiceController {
     private static ServiceController ourInstance = new ServiceController();
@@ -45,7 +45,8 @@ public class ServiceController {
     }
 
     public ReturnValues runCommand(String[] command) {
-        StringBuffer stdOut = new StringBuffer();
+        //StringBuffer stdOut = new StringBuffer();
+        ArrayList<String> stdOut = new ArrayList<>();
         Process process;
         int exitStatus = 0;
         try {
@@ -54,16 +55,16 @@ public class ServiceController {
             exitStatus = process.exitValue();
             BufferedReader reader =
                     new BufferedReader(new InputStreamReader(process.getInputStream()));
-
             String line = "";
+
             while ((line = reader.readLine()) != null)
-                stdOut.append(line);// + "\n");
+                stdOut.add(line);
         } catch (IOException e) {
             e.printStackTrace();
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        return new ReturnValues(exitStatus, stdOut.toString());
+        return new ReturnValues(exitStatus, stdOut);
     }
 
     public ReturnValues serviceAction(String serviceName, String command) {

@@ -1,5 +1,6 @@
 package app.controllers;
 
+import app.models.ReturnValues;
 import org.apache.commons.configuration2.ex.ConfigurationException;
 
 import java.io.IOException;
@@ -26,7 +27,7 @@ public class DbController
     Path serverDir;
     String serverPort;
     // Database status
-    byte status;
+    boolean status;
     ArrayList<String> databaseList;
     String serverConfFilename;
     String serverVersion;
@@ -45,7 +46,7 @@ public class DbController
     }
 
     public Path getServerDir() throws IOException {
-        FileFinderController rootDB = FileFinderController.doit("/home/ecastel/opt", "pgsql", 2);
+        FileFinderController rootDB = FileFinderController.doit("/", "pgsql", 2);
         if (rootDB.getNumMatches() == 0) {
             throw new IOException("No Postgres installation detected");
         }
@@ -69,20 +70,38 @@ public class DbController
 
     public String getServerConfFilename() {
         //todo getServerConf other database servers
-        FileFinderController postgresConf = FileFinderController.doit("/", "postgres.conf", 1);
+        FileFinderController postgresConf = FileFinderController.doit("/home/ecastel", "postgresql.conf", 1);
         return postgresConf.getResults().get(0).toString();
     }
 
-    public byte getStatus() {
-        return status;
+    public boolean getStatus() {
+        ServiceController serviceController = ServiceController.getInstance();
+        return serviceController.serviceAlive("postgres");
     }
 
     public ArrayList<String> getDatabaseList() {
-        return databaseList;
+        String[] command = new String[]{"psql", "-U", "postgres", "-c", "SELECT datname AS result FROM pg_database;"};
+        ArrayList<String> databaseList = new ArrayList<>();
+        ServiceController serviceController = ServiceController.getInstance();
+        ReturnValues returnValues = serviceController.runCommand(command);
+        if (returnValues.t != "0") {
+            ArrayList<String> listHandler = ((ArrayList<String>) returnValues.u);
+            databaseList.addAll(listHandler.subList(2, listHandler.size() - 2));
+            return databaseList;
+        }
+        return null;
     }
 
     public String getServerVersion() {
-        return serverVersion;
+        String[] command = new String[]{"psql", "-U", "postgres", "-c", "SELECT version();"};
+        ServiceController serviceController = ServiceController.getInstance();
+        ReturnValues returnValues = serviceController.runCommand(command);
+        if (returnValues.t != "0") {
+            return ((ArrayList<String>) returnValues.u)
+                    .subList(2, ((ArrayList<String>) returnValues.u).size() - 2)
+                    .toString();
+        }
+        return null;
     }
 
     public String getAdminUser() {
@@ -93,8 +112,19 @@ public class DbController
         return adminPasswd;
     }
 
-
-// todo check database online
-// todo  search postgres enabled port
-// todo search postgres dir
+    public int databaseBackup(String database, Path targetFolder) {
+        String[] command = new String[]{
+                "pg_dump",
+                "-U",
+                "postgres",
+                "-Fd",
+                "-b",
+                "-f",
+                targetFolder.toString(),
+                database
+        };
+        ServiceController serviceController = ServiceController.getInstance();
+        ReturnValues returnValues = serviceController.runCommand(command);
+        return (int) returnValues.t;
+    }
 }
