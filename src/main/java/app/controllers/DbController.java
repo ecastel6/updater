@@ -82,11 +82,11 @@ public class DbController {
         } else {
             ArrayList<Path> results = postgresConf.getResults();
             if (postgresConf.getNumMatches() > 1) {
-                System.out.println("Multiple postgres conf file detected. Guessing correct one");
+                //System.out.println("Multiple postgres conf file detected. Guessing correct one");
                 for (Path path : results) {
-                    System.out.printf("Path: %s. depth=%d\n", path.toString(), path.getNameCount());
+                    //System.out.printf("Path: %s. depth=%d\n", path.toString(), path.getNameCount());
                     if ((path.toString().contains("opt")) && (path.getNameCount() < 5)) {
-                        System.out.printf("Guessed dir: %s ", path.toString());
+                        // System.out.printf("Guessed dir: %s ", path.toString());
                         return path.toString();
                     }
                 }

@@ -4,8 +4,7 @@ import java.io.IOException;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 
-public class FileCopyController extends SimpleFileVisitor<Path>
-{
+public class FileCopyController extends SimpleFileVisitor<Path> {
 
     private Path sourceDir;
     private Path targetDir;
@@ -22,7 +21,7 @@ public class FileCopyController extends SimpleFileVisitor<Path>
 
         try {
             Path targetFile = targetDir.resolve(sourceDir.relativize(file));
-            Files.copy(file, targetFile);
+            Files.copy(file, targetFile, StandardCopyOption.COPY_ATTRIBUTES);
         } catch (IOException ex) {
             System.err.println(ex);
         }
@@ -70,5 +69,27 @@ public class FileCopyController extends SimpleFileVisitor<Path>
             e.printStackTrace();
         }
         return null;
+    }
+
+    public static void delete(Path deletePath) throws IOException {
+        Files.walkFileTree(deletePath,
+                new SimpleFileVisitor<Path>() {
+                    @Override
+                    public FileVisitResult postVisitDirectory(
+                            Path dir, IOException exc) throws IOException {
+                        //System.out.printf("Delete dir: %s\n", dir.toString());
+                        Files.delete(dir);
+                        return FileVisitResult.CONTINUE;
+                    }
+
+                    @Override
+                    public FileVisitResult visitFile(
+                            Path file, BasicFileAttributes attrs)
+                            throws IOException {
+                        //System.out.printf("Delete file: %s\n", file.toString());
+                        Files.delete(file);
+                        return FileVisitResult.CONTINUE;
+                    }
+                });
     }
 }

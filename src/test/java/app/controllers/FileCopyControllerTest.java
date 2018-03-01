@@ -10,20 +10,20 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 
 class FileCopyControllerTest {
-    Path testSourcePath, testTargetPath;
-    Path sampleFile1, sampleFile2;
+    Path testSourcePath, testTargetPath, testEmptyTargetPath;
+    Path testFile1, testFile2;
 
     @BeforeEach
     void setUp() {
         try {
             testSourcePath = Files.createTempDirectory("junitSource");
-            testTargetPath = Paths.get(testSourcePath.getParent().toString(), "junitTarget");
+            testTargetPath = Files.createTempDirectory("junitTarget");
+            testEmptyTargetPath = Paths.get(testSourcePath.getParent().toString(), "junitTarget");
 
-            System.out.println(testSourcePath.toString());
-            System.out.println(testTargetPath.toString());
-            Path sampleFile1 = Files.createTempFile(testSourcePath, "sample", "file");
-            Path sampleFile2 = Files.createTempFile(testSourcePath, "sample", "file");
-            System.out.printf("Samplefile1 %s. Samplefile2 %s \n", sampleFile1.toString(), sampleFile2.toString());
+            testFile1 = Files.createTempFile(testSourcePath, "sample", "file");
+            testFile2 = Files.createTempFile(testSourcePath, "sample", "file");
+            System.out.printf("testSourcePath: %s\ntestTargetPath:%s\n", testSourcePath, testTargetPath);
+            System.out.printf("testFile1: %s\ntestFile2: %s\n\n", testFile1, testFile2);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -31,20 +31,41 @@ class FileCopyControllerTest {
 
     @Test
     void copyDirectory() {
-        FileCopyController.copyDirectory(testSourcePath, testTargetPath);
+        System.out.printf("%s:\nSource: %s\nTarget: %s\n", this.getClass(), testSourcePath, testEmptyTargetPath);
+        FileCopyController.copyDirectory(testSourcePath, testEmptyTargetPath);
+        FileCopyController.copyDirectory(Paths.get("C:", "tmp"), testEmptyTargetPath);
     }
 
     @Test
     void copyFile() {
-        System.out.printf("Copying %s to %s\n", sampleFile1.toString(), testTargetPath.toString());
-        FileCopyController.copyDirectory(sampleFile1, testTargetPath);
+        System.out.printf("%s: Source: %s\nTarget: %s\n", this.getClass(), testFile1, testTargetPath);
+        try {
+            Files.copy(testFile1, testTargetPath, StandardCopyOption.REPLACE_EXISTING);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     @Test
     void rename() {
         System.out.printf("Renaming directory %s to %s",
                 testSourcePath.toString(),
-                testTargetPath.toString());
-        FileCopyController.rename(testSourcePath, testTargetPath, StandardCopyOption.REPLACE_EXISTING);
+                testEmptyTargetPath.toString());
+        FileCopyController.rename(testSourcePath, testEmptyTargetPath, StandardCopyOption.REPLACE_EXISTING);
     }
+
+    /*@AfterEach
+    void Cleanup() {
+        try {
+            System.out.printf("Deleting temp dir: %s\n",testSourcePath);
+            FileCopyController.delete(testSourcePath);
+            System.out.printf("Deleting temp dir: %s\n",testTargetPath);
+            FileCopyController.delete(testTargetPath);
+
+//            FileUtils.deleteDirectory(new File(testSourcePath.toString()));
+//            FileUtils.deleteDirectory(new File(testTargetPath.toString()));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }*/
 }
