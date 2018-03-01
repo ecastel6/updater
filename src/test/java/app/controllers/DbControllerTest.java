@@ -21,6 +21,7 @@ class DbControllerTest {
     @Test
     void getServerDir() {
         DbController dbController = DbController.getInstance();
+        System.out.println(dbController.serverDir.toString());
         assertTrue(dbController.serverDir.endsWith("pgsql"));
     }
 

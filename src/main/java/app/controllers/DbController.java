@@ -47,6 +47,8 @@ public class DbController {
 
     public Path getServerDir() throws IOException {
         Path serverConf = Paths.get(getServerConfFilename());
+        System.out.println(serverConf);
+        System.out.println(serverConf.getParent().getParent());
         return (serverConf.getParent().getParent());
         /*
         FileFinderController rootDB = FileFinderController.doit("/", "pgsql", 2);
@@ -74,20 +76,28 @@ public class DbController {
     public String getServerConfFilename() throws IOException {
         //todo getServerConf other database servers
         FileFinderController postgresConf = FileFinderController.doit("/", "postgresql.conf", 1);
+
         if (postgresConf.getNumMatches() == 0) {
             throw new IOException("Unable to find out postgres conf file!!!!");
-        } else if (postgresConf.getNumMatches() > 1) {
-            //System.out.println("Multiple postgres conf file detected. Guessing correct one");
-            for (Path path : postgresConf.getResults()) {
-                //System.out.printf("Path: %s. depth=%d\n",path.toString(),path.getNameCount());
-                if ((path.toString().contains("opt")) && (path.getNameCount() < 5)) {
-                    //      System.out.printf("Guessed dir: %s ",path.toString());
-                    return path.toString();
+        } else {
+            ArrayList<Path> results = postgresConf.getResults();
+            if (postgresConf.getNumMatches() > 1) {
+                System.out.println("Multiple postgres conf file detected. Guessing correct one");
+                for (Path path : results) {
+                    System.out.printf("Path: %s. depth=%d\n", path.toString(), path.getNameCount());
+                    if ((path.toString().contains("opt")) && (path.getNameCount() < 5)) {
+                        System.out.printf("Guessed dir: %s ", path.toString());
+                        return path.toString();
+                    }
+                }
+                //System.out.println("Unable to guess returning the first one.");
+            } else {
+                if ((results.get(0).toString().contains("opt")) && (results.get(0).getNameCount() < 5)) {
+                    return results.get(0).toString();
                 }
             }
-            //System.out.println("Unable to guess returning the first one.");
         }
-        return postgresConf.getResults().get(0).toString();
+        throw new IOException("Unable to find out postgres conf file!!!!");
     }
 
     public boolean getStatus() {
