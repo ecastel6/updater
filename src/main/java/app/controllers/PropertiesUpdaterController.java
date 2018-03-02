@@ -116,14 +116,10 @@ public class PropertiesUpdaterController {
         // main method
         // takes source and target from class
         // Generate new custom directory with changes from release
-        PropertiesUpdaterController puc = new PropertiesUpdaterController();
-
-        puc.updatePropertyFile(
-                FileUtils.getFile("/tmp/rabbitmq_old.properties"),
-                FileUtils.getFile("/tmp/rabbitmq_new.properties"),
-                true);
-
+        //https://examples.javacodegeeks.com/core-java/apache/commons/io-commons/fileutils/org-apache-commons-io-fileutils-example/
+        //FileFilter filterNames=new FileFilter()
         // todo add copying all non properties files
+        // Fileutils filter on .properties
         // process all properties but
         // find $currentDir/ -type f -iname "*.properties" | sed "s@$currentDir/@@g" | grep -v "jobs.properties" | grep -v "Templates.properties")
         // calls updatePropertyFile with every property file
