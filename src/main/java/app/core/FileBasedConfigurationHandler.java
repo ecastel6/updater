@@ -1,5 +1,6 @@
-package app.controllers;
+package app.core;
 
+import org.apache.commons.configuration2.CombinedConfiguration;
 import org.apache.commons.configuration2.Configuration;
 import org.apache.commons.configuration2.FileBasedConfiguration;
 import org.apache.commons.configuration2.PropertiesConfiguration;
@@ -72,6 +73,41 @@ public class FileBasedConfigurationHandler {
     // newConfigurationHandler FileBasedConfigurationHandler pointing to the new
     // properties file
     // dryRun write this file or printout json to stdout
+    public CombinedConfiguration patchPropertiesFile(FileBasedConfigurationHandler newConfigurationHandler) {
+
+        // Add only new properties
+        // Delete deprecated properties
+
+        List<String> oldProperties = this.getArrayList();
+        List<String> newProperties = newConfigurationHandler.getArrayList();
+
+        PropertiesOperators operator = new PropertiesOperators();
+        List<String> propertiesToDelete = operator.DiffList(oldProperties, newProperties);
+
+        // Join configurations
+        CombinedConfiguration combined = operator.mergeProperties(this.getConfig(),
+                newConfigurationHandler.getConfig());
+
+        // Deleting deprecated properties
+        for (int i = 0; i < propertiesToDelete.size(); i++) {
+            // TODO logger System.out.println("Borrando: " + propertiesToDelete.get(i));
+            combined.clearProperty(propertiesToDelete.get(i));
+            this.getConfig().clearProperty(propertiesToDelete.get(i));
+        }
+        return combined;
+        /*
+         * // Update old configuration file Iterator<String> keys = combined.getKeys();
+         * while (keys.hasNext()) { String key = keys.next(); if
+         * (!this.getConfig().containsKey(key)) { // key not present add it
+         * this.getConfig().addProperty(key, combined.getString(key)); } }
+         *
+         * try { if (dryRun) { // TODO logger System.out.println("Dry run.");
+         * System.out.println(this.toString()); } else {
+         * System.out.println("Patching file " + this.getFileName());
+         * this.builder.save(); } } catch (ConfigurationException e) { // TODO
+         * Auto-generated catch block e.printStackTrace(); }
+         */
+    }
 
     @Override
     public String toString() {

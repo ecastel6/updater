@@ -1,5 +1,6 @@
 package app.controllers;
 
+import app.core.FileBasedConfigurationHandler;
 import app.models.ReturnValues;
 import org.apache.commons.configuration2.ex.ConfigurationException;
 
