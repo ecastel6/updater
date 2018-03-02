@@ -1,5 +1,8 @@
 package app.controllers;
-
+//
+// DEPRECATED
+// Decided to go with apache commons-io
+//
 import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

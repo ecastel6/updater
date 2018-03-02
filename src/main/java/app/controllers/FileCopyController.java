@@ -1,5 +1,8 @@
 package app.controllers;
-
+//
+// DEPRECATED
+// Decided to go with apache commons-io
+//
 import java.io.IOException;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
