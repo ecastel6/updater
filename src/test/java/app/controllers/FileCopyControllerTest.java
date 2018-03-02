@@ -1,8 +1,10 @@
 package app.controllers;
 
+import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -31,9 +33,16 @@ class FileCopyControllerTest {
 
     @Test
     void copyDirectory() {
-        System.out.printf("%s:\nSource: %s\nTarget: %s\n", this.getClass(), testSourcePath, testEmptyTargetPath);
+        File sourceDir = new File("/home/ecastel/Música/");
+        File targetDir = new File("/tmp/target");
+        try {
+            FileUtils.copyDirectory(sourceDir, targetDir, true);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        /*System.out.printf("%s:\nSource: %s\nTarget: %s\n", this.getClass(), testSourcePath, testEmptyTargetPath);
         FileCopyController.copyDirectory(testSourcePath, testEmptyTargetPath);
-        FileCopyController.copyDirectory(Paths.get("C:", "tmp"), testEmptyTargetPath);
+        FileCopyController.copyDirectory(Paths.get("C:", "tmp"), testEmptyTargetPath);*/
     }
 
     @Test
