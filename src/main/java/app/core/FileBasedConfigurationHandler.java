@@ -13,7 +13,7 @@ import java.util.Iterator;
 import java.util.List;
 
 public class FileBasedConfigurationHandler {
-
+    //todo change property String propertiesFilename to File propertiesFilename
     private String fileName;
 
     FileBasedConfigurationBuilder<FileBasedConfiguration> builder;
@@ -72,7 +72,6 @@ public class FileBasedConfigurationHandler {
 
     // newConfigurationHandler FileBasedConfigurationHandler pointing to the new
     // properties file
-    // dryRun write this file or printout json to stdout
     public CombinedConfiguration patchPropertiesFile(FileBasedConfigurationHandler newConfigurationHandler) {
 
         // Add only new properties

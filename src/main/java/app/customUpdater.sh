@@ -32,6 +32,7 @@ patch_custom() {
 	newDir=$2
 	currentDir=$1
 
+# copy all new files
 	echo -e "\nCOPYING ONLY NEW FILES $newDir --> $currentDir"
 	echo n | cp -riv $newDir/* $currentDir/.
 	echo -e "\nPATCHING CUSTOM\n"
@@ -39,14 +40,14 @@ patch_custom() {
 
 # TODO CLEAN DEPRECATED NON .PROPERTIES FILES	
 	
-# process all files but .properties 
+# copy all files but .properties .jar .svn
 	echo "Copying non  .properties files ..."
 	while read FILE; do
 		echo "cp $newDir/$FILE $currentDir/$FILE"
 		cp $newDir/$FILE $currentDir/$FILE
-	done< <(find $currentDir/ -type f | sed "s@$currentDir/@@g" | grep -v "jobs.properties" | grep -v .svn | grep -v ".jar" | grep -v ".properties" | grep -v "urlrewrite.xml")
+	done< <(find $currentDir/ -type f | sed "s@$currentDir/@@g" | grep -v .svn | grep -v ".jar" | grep -v ".properties" | grep -v "urlrewrite.xml")
 	
-# process properties files 
+# process properties files
 	while read FILE; do
 		if [ -f "$newDir/$FILE" ]; then
 			/opt/java7/bin/java -jar /opt/tools/merger.20171122.jar $currentDir/$FILE $newDir/$FILE

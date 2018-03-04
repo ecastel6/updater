@@ -2,6 +2,7 @@ package app.controllers;
 
 import app.core.FileBasedConfigurationHandler;
 import app.models.ReturnValues;
+import app.models.SearchType;
 import org.apache.commons.configuration2.ex.ConfigurationException;
 
 import java.io.IOException;
@@ -76,7 +77,7 @@ public class DbController {
 
     public String getServerConfFilename() throws IOException {
         //todo getServerConf other database servers
-        FileFinderController postgresConf = FileFinderController.doit("/", "postgresql.conf", 1);
+        FileFinderController postgresConf = FileFinderController.doit("/", "postgresql.conf", SearchType.Files);
 
         if (postgresConf.getNumMatches() == 0) {
             throw new IOException("Unable to find out postgres conf file!!!!");

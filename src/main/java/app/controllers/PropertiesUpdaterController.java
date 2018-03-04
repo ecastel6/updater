@@ -5,6 +5,7 @@ import app.core.FileBasedConfigurationHandler;
 import org.apache.commons.configuration2.CombinedConfiguration;
 import org.apache.commons.configuration2.ex.ConfigurationException;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.filefilter.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -12,7 +13,7 @@ import java.io.PrintWriter;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.nio.file.StandardCopyOption;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -49,12 +50,13 @@ public class PropertiesUpdaterController {
         }
     }
 
-    public void updatePropertyFile(File oldPropertyFile, File newPropertyFile, boolean dryRun) {
+    public File updatePropertyFile(File oldPropertyFile, File newPropertyFile) {
         // parameters
         // old (actual) properties file
         // new (released) properties file
-        // DryRun whether should overwrite old(actual) file inplace or dump json in stdout
+        // Returns File handle to merged properties file
 
+        File tempFile = FileUtils.getFile(FileUtils.getTempDirectory(), "temp.properties");
         DiffMatchPatch patchObj = new DiffMatchPatch();
         LinkedList<DiffMatchPatch.Patch> patches = new LinkedList<DiffMatchPatch.Patch>();
         try {
@@ -64,9 +66,7 @@ public class PropertiesUpdaterController {
             patches = patchObj.patch_make(oldProps, newProps);
             Object[] results = patchObj.patch_apply(patches, oldProps);
 
-            File tempFile = FileUtils.getFile(FileUtils.getTempDirectory(), "temp.properties");
-            File targetFile = oldPropertyFile;
-            System.out.println("DiffPatch firstFile=" + oldPropertyFile + " newFile=" + newPropertyFile);
+            //System.out.println("DiffPatch firstFile=" + oldPropertyFile + " newFile=" + newPropertyFile);
             // System.out.println("Writing patched ...");
             writeFile(tempFile, results[0].toString(), StandardCharsets.UTF_8);
 
@@ -95,34 +95,76 @@ public class PropertiesUpdaterController {
                 }
             }
             targetConfigurationHandler.getFileHandler().save();
-            if (dryRun) {
-                System.out.printf("Dry run, output to %s.dryrun\n", oldPropertyFile.getName());
-                targetFile = FileUtils.getFile(oldPropertyFile.getParent(), oldPropertyFile.getName() + ".dryrun");
-                System.out.println(targetFile.toString());
-            }
-            // todo check performance of FileUtils.moveFile(tempFile,targetFile) alternative
-            System.out.printf("Moving: %s to %s REPLACE_EXISTING\n", tempFile.toString(), targetFile.toString());
-            java.nio.file.Files.move(tempFile.toPath(), targetFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+            //java.nio.file.Files.move(tempFile.toPath(), targetFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
 
         } catch (IOException e) {
             System.out.println(e.hashCode());
             e.printStackTrace();
         } catch (ConfigurationException e) {
             e.printStackTrace();
+        } finally {
+            return tempFile;
         }
     }
 
-    public void updateCustom() {
+    public void updateCustom() throws IOException {
         // main method
-        // takes source and target from class
-        // Generate new custom directory with changes from release
-        //https://examples.javacodegeeks.com/core-java/apache/commons/io-commons/fileutils/org-apache-commons-io-fileutils-example/
-        //FileFilter filterNames=new FileFilter()
-        // todo add copying all non properties files
-        // Fileutils filter on .properties
-        // process all properties but
-        // find $currentDir/ -type f -iname "*.properties" | sed "s@$currentDir/@@g" | grep -v "jobs.properties" | grep -v "Templates.properties")
-        // calls updatePropertyFile with every property file
 
+        //targetCustomDir=FileUtils.getFile(FileUtils.getTempDirectory(),"tempTarget");
+
+        // Copy sourceCustomOldDir to targetCustomDir
+        FileUtils.copyDirectory(sourceCustomOldDir, targetCustomDir, true);
+
+        // Copy all but properties or urlrewrite.xml from sourceCustomNewDir to targetCustomDir
+        IOFileFilter excludeFilter = new NotFileFilter(
+                new OrFileFilter(
+                        new NameFileFilter("urlrewrite.xml"),
+                        new SuffixFileFilter(".properties")
+                )
+        );
+        FileUtils.copyDirectory(this.sourceCustomNewDir, this.targetCustomDir, excludeFilter);
+
+        // Process all .properties files from sourceCustomNewDir, copy all non existing files to targetCustomDir
+        IOFileFilter processFilter = new AndFileFilter(new SuffixFileFilter(".properties"),
+                new NotFileFilter(
+                        new OrFileFilter(
+                                new NameFileFilter("Templates.properties"),
+                                new NameFileFilter("jobs.properties")
+                        )
+                )
+        );
+        Collection<File> collectionProperties = FileUtils.listFiles(
+                this.sourceCustomNewDir,
+                processFilter,
+                TrueFileFilter.INSTANCE);
+
+        for (File newPropertiesFile : collectionProperties) {
+
+            String newRelativePath = getRelativePath(newPropertiesFile, sourceCustomNewDir);
+            File targetPropertiesFile = FileUtils.getFile(targetCustomDir, newRelativePath);
+            File oldPropertiesFile = FileUtils.getFile(sourceCustomOldDir, newRelativePath);
+
+            if (oldPropertiesFile.exists()) { // Previous version found merging
+                System.out.printf("Merging %s with new %s\n",
+                        oldPropertiesFile,
+                        newPropertiesFile);
+                FileUtils.copyFile(
+                        updatePropertyFile(oldPropertiesFile, newPropertiesFile),
+                        targetPropertiesFile,
+                        true);
+            } else {
+                System.out.printf("Copying source file %s to %s\n",
+                        newPropertiesFile,
+                        FileUtils.getFile(targetCustomDir, newRelativePath));
+                FileUtils.copyFile(
+                        newPropertiesFile,
+                        targetPropertiesFile,
+                        true);
+            }
+        }
+    }
+
+    public String getRelativePath(File absolutePath, File basePath) {
+        return basePath.toURI().relativize(absolutePath.toURI()).getPath();
     }
 }
