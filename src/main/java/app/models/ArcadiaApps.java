@@ -4,7 +4,10 @@ public enum ArcadiaApps
 {
     // ID ("LongName","ShortName","database")
     CBOS("cbos", "cbos", "arcadia_cbos"),
-    OPENCARD("opencard", "oc", "opencard");
+    OPENCARD("opencard", "oc", "opencard"),
+    ELLIOTT("elliott", "elliott", "elliott"),
+    EVENTDETECT("EventDetect", "event", "eventdetect"),
+    INTERFACES("interfaces", "interfaces", "interfaces");
 
     private final String longName;
     private final String shortName;
