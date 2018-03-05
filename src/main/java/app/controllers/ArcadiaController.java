@@ -38,7 +38,7 @@ public class ArcadiaController
             File dir = this.getArcadiaAppDir(app);
             if (dir != null) {
                 // App found collect relevant data
-
+                System.out.println("App found collect relevant data");
                 ArcadiaAppData arcadiaAppData = new ArcadiaAppData(
                         app,
                         dir,
