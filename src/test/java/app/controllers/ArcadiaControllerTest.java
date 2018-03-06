@@ -9,7 +9,8 @@ import java.util.ArrayList;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class ArcadiaControllerTest {
+class ArcadiaControllerTest
+{
 
     @Test
     void getArcadiaAppDir() {
@@ -50,8 +51,9 @@ class ArcadiaControllerTest {
             if (appVersion != null) {
                 System.out.printf("App: %s Version: %s\n",
                         app.getLongName(), appVersion);
-
             }
         }
     }
 }
+
+
