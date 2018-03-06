@@ -6,10 +6,10 @@ public class ArcadiaAppData
 {
     ArcadiaApps app;
     File installedDir;
-    int portNumber;
+    String portNumber;
     String version;
 
-    public ArcadiaAppData(ArcadiaApps app, File installedDir, int portNumber, String version) {
+    public ArcadiaAppData(ArcadiaApps app, File installedDir, String portNumber, String version) {
         this.app = app;
         this.installedDir = installedDir;
         this.portNumber = portNumber;
@@ -32,11 +32,11 @@ public class ArcadiaAppData
         this.installedDir = installedDir;
     }
 
-    public int getPortNumber() {
+    public String getPortNumber() {
         return portNumber;
     }
 
-    public void setPortNumber(int portNumber) {
+    public void setPortNumber(String portNumber) {
         this.portNumber = portNumber;
     }
 
