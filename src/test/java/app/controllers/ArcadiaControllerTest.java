@@ -43,4 +43,10 @@ class ArcadiaControllerTest
         ArcadiaController arcadiaController = new ArcadiaController();
         assertEquals("8", arcadiaController.getArcadiaAppPort(ArcadiaApps.CBOS).substring(0, 1));
     }
+
+    @Test
+    void getArcadiaVersion() {
+        ArcadiaController arcadiaController = new ArcadiaController();
+        arcadiaController.getArcadiaVersion(ArcadiaApps.CBOS);
+    }
 }

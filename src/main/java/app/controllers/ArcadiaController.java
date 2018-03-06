@@ -10,7 +10,12 @@ import org.apache.commons.io.FileUtils;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.ArrayList;
 
 public class ArcadiaController
@@ -42,6 +47,32 @@ public class ArcadiaController
     }
 
     public String getArcadiaVersion(ArcadiaApps app) {
+        try {
+            URL url = new URL("http://localhost:" + getArcadiaAppPort(app) + "/" + app.getShortName() + "/version.html");
+            System.out.printf("Querying %s\n", url.toString());
+            HttpURLConnection httpURLConnection = (HttpURLConnection) url.openConnection();
+            httpURLConnection.setDoOutput(true);
+            httpURLConnection.setRequestMethod("GET");
+            int responseCode = httpURLConnection.getResponseCode();
+            System.out.println("\nSending 'GET' request to URL : " + url);
+            System.out.println("Response Code : " + responseCode);
+
+            BufferedReader in = new BufferedReader(
+                    new InputStreamReader(httpURLConnection.getInputStream()));
+            String inputLine;
+            StringBuffer response = new StringBuffer();
+
+            while ((inputLine = in.readLine()) != null) {
+                response.append(inputLine);
+            }
+            in.close();
+
+            //print result
+            System.out.println(response.toString());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
         return "10.0";
     }
 
