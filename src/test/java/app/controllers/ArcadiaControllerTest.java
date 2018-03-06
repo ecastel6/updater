@@ -9,8 +9,7 @@ import java.util.ArrayList;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class ArcadiaControllerTest
-{
+class ArcadiaControllerTest {
 
     @Test
     void getArcadiaAppDir() {
@@ -27,16 +26,14 @@ class ArcadiaControllerTest
         }
     }
 
-
     @Test
     void getInstalledApps() {
-        ArcadiaController ac = new ArcadiaController();
-        ArrayList<ArcadiaAppData> arcadiaAppDataArrayList = ac.getInstalledApps();
+        ArcadiaController arcadiaController = new ArcadiaController();
+        ArrayList<ArcadiaAppData> arcadiaAppDataArrayList = arcadiaController.getInstalledApps();
         for (ArcadiaAppData appdata : arcadiaAppDataArrayList) {
             System.out.println(appdata.toString());
         }
     }
-
 
     @Test
     void getArcadiaAppPort() {
@@ -47,6 +44,14 @@ class ArcadiaControllerTest
     @Test
     void getArcadiaVersion() {
         ArcadiaController arcadiaController = new ArcadiaController();
-        arcadiaController.getArcadiaVersion(ArcadiaApps.CBOS);
+        String appVersion;
+        for (ArcadiaApps app : ArcadiaApps.values()) {
+            appVersion = arcadiaController.getArcadiaVersion(app);
+            if (appVersion != null) {
+                System.out.printf("App: %s Version: %s\n",
+                        app.getLongName(), appVersion);
+
+            }
+        }
     }
 }

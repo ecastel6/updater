@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.file.Path;
 import java.util.ArrayList;
 
 public class ArcadiaController
@@ -24,13 +25,14 @@ public class ArcadiaController
     ArrayList<ArcadiaAppData> installedApps;
 
     public String getArcadiaAppPort(ArcadiaApps app) {
-        // grep tomcat conf search Port
+        // todo maybe interesting to throw a blind detection of installed Apps or ports with HTTP GET queries
+        // Look for Port in tomcat conf
         File tomcatConf = FileUtils.getFile(getArcadiaAppDir(app), "conf/server.xml");
-        System.out.printf("Fichero conf=%s\n", tomcatConf.toString());
+        System.out.printf("Looking %s. Fichero conf=%s\n", app.getLongName(), tomcatConf.toString());
         // get port from config
         try {
             Configurations configs = new Configurations();
-            XMLConfiguration config = configs.xml("/home/ecastel/opt/tomcat_cbos/conf/server.xml");
+            XMLConfiguration config = configs.xml(getArcadiaAppDir(app) + "/conf/server.xml");
             NodeList listNodes = config.getDocument().getElementsByTagName("Connector");
 
             //Map<String,String> nodeValues = new HashMap<>();
@@ -47,39 +49,61 @@ public class ArcadiaController
     }
 
     public String getArcadiaVersion(ArcadiaApps app) {
+        String version = null;
         try {
-            URL url = new URL("http://localhost:" + getArcadiaAppPort(app) + "/" + app.getShortName() + "/version.html");
-            System.out.printf("Querying %s\n", url.toString());
-            HttpURLConnection httpURLConnection = (HttpURLConnection) url.openConnection();
-            httpURLConnection.setDoOutput(true);
-            httpURLConnection.setRequestMethod("GET");
-            int responseCode = httpURLConnection.getResponseCode();
-            System.out.println("\nSending 'GET' request to URL : " + url);
-            System.out.println("Response Code : " + responseCode);
+            String arcadiaAppPort = getArcadiaAppPort(app);
+            if (arcadiaAppPort != null) {
+                URL url = new URL("http://localhost:" + arcadiaAppPort + "/" + app.getVersionInfo() + "/version.html");
+                System.out.printf("Querying %s\n", url.toString());
+                HttpURLConnection httpURLConnection = (HttpURLConnection) url.openConnection();
+                httpURLConnection.setDoOutput(true);
+                httpURLConnection.setRequestMethod("GET");
+                int responseCode = httpURLConnection.getResponseCode();
+                System.out.println("\nSending 'GET' request to URL : " + url);
+                System.out.println("Response Code : " + responseCode);
 
-            BufferedReader in = new BufferedReader(
-                    new InputStreamReader(httpURLConnection.getInputStream()));
-            String inputLine;
-            StringBuffer response = new StringBuffer();
+                BufferedReader in = new BufferedReader(
+                        new InputStreamReader(httpURLConnection.getInputStream()));
+                String inputLine;
+                StringBuffer response = new StringBuffer();
 
-            while ((inputLine = in.readLine()) != null) {
-                response.append(inputLine);
-            }
-            in.close();
+                while ((inputLine = in.readLine()) != null) {
+                    response.append(inputLine);
+                }
+                in.close();
 
-            //print result
-            System.out.println(response.toString());
+                //print result
+                
+
+            } else
+                return null;
         } catch (IOException e) {
-            e.printStackTrace();
+            //e.printStackTrace();
+        } finally {
+            return version;
         }
-
-        return "10.0";
     }
+
+    public File getLowerDepthDirectory(ArrayList<Path> alternatives) {
+        Integer lowerDepth = Integer.MAX_VALUE;
+        Path lowerDepthPath = null;
+        for (Path path : alternatives) {
+            if (path.getNameCount() < lowerDepth) {
+                lowerDepth = path.getNameCount();
+                lowerDepthPath = path;
+            }
+        }
+        return lowerDepthPath.toFile();
+    }
+
 
     public File getArcadiaAppDir(ArcadiaApps appName) {
         // find directory tomcat + short name
         FileFinderController arcadiaAppDir = FileFinderController.doit("/", "tomcat_" + appName.getShortName(), SearchType.Directories);
-        if (arcadiaAppDir.getNumMatches() > 0) {
+        if (arcadiaAppDir.getNumMatches() > 1) {
+            // if multiple directories found, the node with less depth is returned
+            return getLowerDepthDirectory(arcadiaAppDir.getResults());
+        } else if (arcadiaAppDir.getNumMatches() == 1) {
             return arcadiaAppDir.getResults().get(0).toFile();
         }
         return null;
@@ -87,7 +111,6 @@ public class ArcadiaController
 
     // Search system, returns ArcadiaAppData Arraylist
     public ArrayList<ArcadiaAppData> getInstalledApps() {
-
         // iterate Enumerated AppList search relevant info
         for (ArcadiaApps app : ArcadiaApps.values()) {
             File dir = this.getArcadiaAppDir(app);
