@@ -4,25 +4,24 @@ import app.models.ArcadiaApps;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
-import java.util.Date;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class BackupsControllerTest
 {
 
-    @Test
-    void getLastBackupSize() {
-    }
 
     @Test
-    void getLastBackupDate() {
+    void testGetLastBackupDir() {
         BackupsController backupsController = BackupsController.getInstance();
-        Date appBackupDate;
+        File appBackupDir;
         for (ArcadiaApps app : ArcadiaApps.values()) {
-            appBackupDate = backupsController.getLastBackupDate(app);
-            if (appBackupDate != null) {
-                System.out.printf("%s Date: %s\n", app.getLongName(), appBackupDate.toString());
+            appBackupDir = backupsController.getLastBackupDir(app);
+            if (appBackupDir != null) {
+                System.out.printf("%s Date: %s Size: %d\n",
+                        app.getLongName(),
+                        appBackupDir.toString(),
+                        backupsController.getDirSize(appBackupDir));
             } else {
                 System.out.printf("Backup directory of %s not found\n", app.getLongName());
             }
@@ -30,7 +29,7 @@ class BackupsControllerTest
     }
 
     @Test
-    void getRootBackupsDir() {
+    void testGetRootBackupsDir() {
         BackupsController backupsController = BackupsController.getInstance();
         File backupsDir = backupsController.getRootBackupsDir();
         System.out.printf("Root backups dir: %s\n", backupsDir.toString());
