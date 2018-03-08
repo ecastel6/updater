@@ -98,6 +98,7 @@ public class ArcadiaController
         Integer lowerDepth = Integer.MAX_VALUE;
         Path lowerDepthPath = null;
         for (Path path : alternatives) {
+            System.out.printf("Path=%s\n", path.toString());
             if (path.getNameCount() < lowerDepth) {
                 lowerDepth = path.getNameCount();
                 lowerDepthPath = path;
