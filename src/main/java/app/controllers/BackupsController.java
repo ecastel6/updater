@@ -2,13 +2,14 @@ package app.controllers;
 
 import app.models.ArcadiaApps;
 import app.models.SearchType;
-import com.google.common.io.ByteStreams;
-import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorOutputStream;
 import org.apache.commons.io.FileUtils;
 
-import java.io.*;
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.math.BigInteger;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -80,7 +81,7 @@ public class BackupsController
         return tarArchiveOutputStream;
     }
 
-    static void putTarEntry(TarArchiveOutputStream tarOutputStream, TarArchiveEntry tarEntry, Path file)
+    /*static void putTarEntry(TarArchiveOutputStream tarOutputStream, TarArchiveEntry tarEntry, Path file)
             throws IOException {
         tarEntry.setSize(Files.size(file));
         tarOutputStream.putArchiveEntry(tarEntry);
@@ -111,11 +112,17 @@ public class BackupsController
         }
     }
 
-    public void createZipBackup(File startDir) {
+    public void createTarBackup(File sourceDir, File targetTar) {
+        FileUtils fileUtils;
 
+        TarArchiveEntry entry = new TarArchiveEntry(targetTar);
+        entry.setSize(sourceDir);
+        tarOutput.putArchiveEntry(entry);
+        tarOutput.write(contentOfEntry);
+        tarOutput.closeArchiveEntry();
         //https://commons.apache.org/proper/commons-compress/examples.html
 
-    }
+    }*/
 
 }
 
