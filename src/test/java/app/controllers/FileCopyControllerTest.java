@@ -35,7 +35,7 @@ class FileCopyControllerTest {
     }
 
     @Test
-    void copyDirectory() {
+    void testCopyDirectory() {
         File sourceDir = new File("/home/ecastel/Música/");
         File targetDir = new File("/tmp/target");
         try {
@@ -49,7 +49,7 @@ class FileCopyControllerTest {
     }
 
     @Test
-    void copyFile() {
+    void testCopyFile() {
         System.out.printf("%s: Source: %s\nTarget: %s\n", this.getClass(), testFile1, testTargetPath);
         try {
             Files.copy(testFile1, testTargetPath, StandardCopyOption.REPLACE_EXISTING);
@@ -59,14 +59,15 @@ class FileCopyControllerTest {
     }
 
     @Test
-    void rename() {
-        System.out.printf("Renaming directory %s to %s",
+    void testRename() {
+        System.out.printf("Renaming directory %s to %s\n",
                 testSourcePath.toString(),
                 testEmptyTargetPath.toString());
-        FileCopyController.rename(testSourcePath, testEmptyTargetPath, StandardCopyOption.REPLACE_EXISTING);
+        FileCopyController.move(testSourcePath, testEmptyTargetPath, StandardCopyOption.REPLACE_EXISTING);
     }
 
-    /*@AfterEach
+
+/*@AfterEach
     void Cleanup() {
         try {
             System.out.printf("Deleting temp dir: %s\n",testSourcePath);

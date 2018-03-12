@@ -18,26 +18,41 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class ArcadiaController
 {
 
-    ArrayList<ArcadiaAppData> installedApps;
+    //ArrayList<ArcadiaAppData> installedApps;
+    Map<String, ArcadiaAppData> installedApps = new HashMap<>();
 
-    public String getArcadiaAppPort(ArcadiaApps app) {
+    private static ArcadiaController ourInstance = new ArcadiaController();
+
+    public static ArcadiaController getInstance() {
+        return ourInstance;
+    }
+
+    private ArcadiaController() {
+
+    }
+
+    private String getArcadiaAppPort(File configFile) {
         // todo maybe interesting to throw a blind detection of installed Apps or ports with HTTP GET queries
         // Look for Port in tomcat conf
-        System.out.printf("getArcadiaAppDir(%s)\n", app.getShortName());
-        if (getArcadiaAppDir(app) == null) return null;
+        /*System.out.printf("getArcadiaAppPor - getArcadiaAppDir(%s)\n", app.getShortName());
+        if (installedApps.
+
+                == null) return null;
         File tomcatConf = FileUtils.getFile(getArcadiaAppDir(app), "conf/server.xml");
-        if (tomcatConf == null) return null;
-        System.out.printf("Fichero conf=%s\n", tomcatConf.toString());
+        if (tomcatConf == null) return null;*/
+        System.out.printf("Fichero conf=%s\n", configFile);
         // get port from config
         try {
             Configurations configs = new Configurations();
-            XMLConfiguration config = configs.xml(tomcatConf);
+            XMLConfiguration config = configs.xml(configFile.toString());
             NodeList listNodes = config.getDocument().getElementsByTagName("Connector");
 
             //Map<String,String> nodeValues = new HashMap<>();
@@ -53,10 +68,10 @@ public class ArcadiaController
         return null;
     }
 
-    public String getVersionFromResponse(String response) {
+    private String getVersionFromResponse(String response) {
         final Pattern pattern = Pattern.compile("^Version:\\s(.*)\\-RELEASE");
         Matcher matcher = pattern.matcher(response);
-
+        System.out.println("getVersionFromResponse");
         if (matcher.find()) {
             return matcher.group(1);
         } else {
@@ -64,14 +79,13 @@ public class ArcadiaController
         }
     }
 
-    public String getArcadiaVersion(ArcadiaApps app) {
+    public String getArcadiaVersion(ArcadiaApps app, String port) {
         // get arcadia app version parsing placed HTTP GET to version.html
         // get Port used with getArcadiaAppPort
         StringBuffer response = null;
-        String appPort = getArcadiaAppPort(app);
-        if (appPort == null) return null;
+        System.out.println(app.name());
         try {
-            URL url = new URL("http://localhost:" + getArcadiaAppPort(app) + "/" + app.getVersionInfo() + "/version.html");
+            URL url = new URL("http://localhost:" + port + "/" + app.getVersionInfo() + "/version.html");
             HttpURLConnection httpURLConnection = (HttpURLConnection) url.openConnection();
             httpURLConnection.setDoOutput(true);
             httpURLConnection.setRequestMethod("GET");
@@ -89,7 +103,7 @@ public class ArcadiaController
             bufferedReader.close();
             return (getVersionFromResponse(response.toString()));
         } catch (IOException e) {
-            e.printStackTrace();
+            //e.printStackTrace();
         }
         return null;
     }
@@ -120,21 +134,23 @@ public class ArcadiaController
     }
 
     // Search system, returns ArcadiaAppData Arraylist
-    public ArrayList<ArcadiaAppData> getInstalledApps() {
-
+    public Map<String, ArcadiaAppData> getInstalledApps() {
+        System.out.println("Looking for ArcadiaApps. \nPlease standby...");
         // iterate Enumerated AppList search relevant info
         for (ArcadiaApps app : ArcadiaApps.values()) {
+            System.out.printf("Searching for %s\n", app.getLongName());
             File dir = this.getArcadiaAppDir(app);
             if (dir != null) {
                 // App found collect relevant data
                 System.out.println("App found collect relevant data");
+                String appPort = getArcadiaAppPort(FileUtils.getFile(dir, "conf", "server.xml"));
                 ArcadiaAppData arcadiaAppData = new ArcadiaAppData(
                         app,
                         dir,
-                        getArcadiaAppPort(app),
-                        getArcadiaVersion(app));
+                        appPort,
+                        getArcadiaVersion(app, appPort));
                 System.out.printf("getInstalledApps: %s\n", arcadiaAppData.toString());
-                //arcadiaController.installedApps.add(arcadiaAppData);
+                installedApps.put(app.name(), arcadiaAppData);
             }
         }
         return installedApps;

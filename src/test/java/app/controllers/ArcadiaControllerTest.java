@@ -5,16 +5,17 @@ import app.models.ArcadiaApps;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
-import java.util.ArrayList;
+import java.util.Map;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 class ArcadiaControllerTest
 {
 
     @Test
     void getArcadiaAppDir() {
-        ArcadiaController ac = new ArcadiaController();
+        ArcadiaController ac = ArcadiaController.getInstance();
         for (ArcadiaApps app : ArcadiaApps.values()) {
             File o = ac.getArcadiaAppDir(app);
             if (o != null) {
@@ -29,31 +30,26 @@ class ArcadiaControllerTest
 
     @Test
     void getInstalledApps() {
-        ArcadiaController arcadiaController = new ArcadiaController();
-        ArrayList<ArcadiaAppData> arcadiaAppDataArrayList = arcadiaController.getInstalledApps();
-        for (ArcadiaAppData appdata : arcadiaAppDataArrayList) {
-            System.out.println(appdata.toString());
-        }
+        ArcadiaController arcadiaController = ArcadiaController.getInstance();
+        Map<String, ArcadiaAppData> arcadiaAppDataArrayList = arcadiaController.getInstalledApps();
+        for (Map.Entry<String, ArcadiaAppData> entry : arcadiaAppDataArrayList.entrySet())
+            System.out.println(entry.toString());
     }
 
-    @Test
-    void getArcadiaAppPort() {
-        ArcadiaController arcadiaController = new ArcadiaController();
-        assertEquals("8", arcadiaController.getArcadiaAppPort(ArcadiaApps.CBOS).substring(0, 1));
-    }
 
+/*
     @Test
     void getArcadiaVersion() {
-        ArcadiaController arcadiaController = new ArcadiaController();
+        ArcadiaController arcadiaController = ArcadiaController.getInstance();
         String appVersion;
         for (ArcadiaApps app : ArcadiaApps.values()) {
-            appVersion = arcadiaController.getArcadiaVersion(app);
+            appVersion = arcadiaController.getArcadiaVersion(app,);
             if (appVersion != null) {
                 System.out.printf("App: %s Version: %s\n",
                         app.getLongName(), appVersion);
             }
         }
-    }
+    }*/
 }
 
 

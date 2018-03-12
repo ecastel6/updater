@@ -62,7 +62,7 @@ public class FileCopyController extends SimpleFileVisitor<Path> {
         }
     }
 
-    public static Path rename(Path source, Path target, StandardCopyOption mode) {
+    public static Path move(Path source, Path target, StandardCopyOption mode) {
         // StandardCopyOption REPLACE_EXISTING or ATOMIC_MOVE
         Path newTarget;
         try {

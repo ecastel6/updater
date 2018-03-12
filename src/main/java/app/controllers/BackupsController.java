@@ -2,25 +2,16 @@ package app.controllers;
 
 import app.models.ArcadiaApps;
 import app.models.SearchType;
-import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
-import org.apache.commons.compress.compressors.gzip.GzipCompressorOutputStream;
 import org.apache.commons.io.FileUtils;
 
-import java.io.BufferedOutputStream;
 import java.io.File;
-import java.io.IOException;
-import java.io.OutputStream;
 import java.math.BigInteger;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Comparator;
 
 public class BackupsController
 {
     // todo check backups
-    // todo get backup size
-    // todo backup ArcadiaResources
     // todo backup database
 
     private File rootBackupsDir;
@@ -60,7 +51,7 @@ public class BackupsController
     }
 
     public File getRootBackupsDir() {
-        ArcadiaController arcadiaController = new ArcadiaController();
+        ArcadiaController arcadiaController = ArcadiaController.getInstance();
         // Simple shot, lowerDepthDirectory, guess system has daily
         FileFinderController fileFinderController = FileFinderController.doit("/", "daily", SearchType.Directories);
         return arcadiaController.getLowerDepthDirectory(fileFinderController.results);
@@ -68,61 +59,8 @@ public class BackupsController
 
     public void setRootBackupsDir(File rootBackupsDir) {
         this.rootBackupsDir = rootBackupsDir;
+
     }
-
-    // https://www.programcreek.com/java-api-examples/index.php?class=org.apache.commons.compress.archivers.tar.TarArchiveEntry&method=setSize
-    private static TarArchiveOutputStream buildTarStream(Path outputPath, boolean gZipped) throws IOException {
-        OutputStream outputStream = new BufferedOutputStream(Files.newOutputStream(outputPath));
-        if (gZipped) {
-            outputStream = new GzipCompressorOutputStream(outputStream);
-        }
-        TarArchiveOutputStream tarArchiveOutputStream = new TarArchiveOutputStream(outputStream);
-        tarArchiveOutputStream.setLongFileMode(TarArchiveOutputStream.LONGFILE_GNU);
-        return tarArchiveOutputStream;
-    }
-
-    /*static void putTarEntry(TarArchiveOutputStream tarOutputStream, TarArchiveEntry tarEntry, Path file)
-            throws IOException {
-        tarEntry.setSize(Files.size(file));
-        tarOutputStream.putArchiveEntry(tarEntry);
-        try (InputStream input = new BufferedInputStream(Files.newInputStream(file))) {
-            ByteStreams.copy(input, tarOutputStream);
-            tarOutputStream.closeArchiveEntry();
-        }
-    }
-
-
-    public static void tar(Path inputPath, Path outputPath) throws IOException {
-        if (!Files.exists(inputPath)) {
-            throw new FileNotFoundException("File not found " + inputPath);
-        }
-
-        try (TarArchiveOutputStream tarArchiveOutputStream = buildTarStream(outputPath.toFile())) {
-            if (!Files.isDirectory(inputPath)) {
-                TarArchiveEntry tarEntry = new TarArchiveEntry(inputPath.toFile().getName());
-                if (inputPath.toFile().canExecute()) {
-                    tarEntry.setMode(tarEntry.getMode() | 0755);
-                }
-                putTarEntry(tarArchiveOutputStream, tarEntry, inputPath);
-            } else {
-                Files.walkFileTree(inputPath,
-                        new TarDirWalker(inputPath, tarArchiveOutputStream));
-            }
-            tarArchiveOutputStream.flush();
-        }
-    }
-
-    public void createTarBackup(File sourceDir, File targetTar) {
-        FileUtils fileUtils;
-
-        TarArchiveEntry entry = new TarArchiveEntry(targetTar);
-        entry.setSize(sourceDir);
-        tarOutput.putArchiveEntry(entry);
-        tarOutput.write(contentOfEntry);
-        tarOutput.closeArchiveEntry();
-        //https://commons.apache.org/proper/commons-compress/examples.html
-
-    }*/
 
 }
 

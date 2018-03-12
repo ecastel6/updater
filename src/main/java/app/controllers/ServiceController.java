@@ -21,12 +21,23 @@ public class ServiceController {
 
     private ServiceController() {
         this.os = getOs();
+        System.out.printf("OS: %s\n", osToString(os));
     }
 
     public OS getOs() {
         String osName = System.getProperty("os.name");
         return osStringToEnum(osName);
+    }
 
+    public String osToString(OS os) {
+        switch (os) {
+            case LINUX:
+                return "Linux";
+            case WINDOWS:
+                return "Windows";
+            default:
+                return "Other";
+        }
     }
 
     public OS osStringToEnum(String osName) {
@@ -73,16 +84,16 @@ public class ServiceController {
         final List<String> availableActions = Arrays.asList("start", "stop", "restart", "status");
         if (!availableActions.contains(command))
             return new ReturnValues(-1, "Invalid Action");
-        switch (this.os) {
+        switch (os) {
             case LINUX:
                 switch (command) {
                     case "restart":
-                        returnedValues = this.runCommand(new String[]{"service", serviceName, "stop"});
-                        returnedValues = this.runCommand(new String[]{"service", serviceName, "start"});
-                        break;
+                        returnedValues = this.runCommand(new String[]{"sudo", "service", serviceName, "stop"});
+                        returnedValues = this.runCommand(new String[]{"sudo", "service", serviceName, "start"});
+                        return returnedValues;
                     default:
-                        returnedValues = this.runCommand(new String[]{"service", serviceName, command});
-                        break;
+                        returnedValues = this.runCommand(new String[]{"sudo", "service", serviceName, command});
+                        return returnedValues;
                 }
 
             case WINDOWS:
@@ -91,11 +102,11 @@ public class ServiceController {
                     case "status":
                         windowsScript = new String[]{"cmd.exe", "/c", "sc", "query", serviceName, "|", "find", "/C", "\"RUNNING\""};
                         returnedValues = this.runCommand(windowsScript);
-                        break;
+                        return returnedValues;
                     case "start":
                         windowsScript = new String[]{"cmd.exe", "/c", "sc", "start", serviceName};
                         returnedValues = this.runCommand(windowsScript);
-                        break;
+                        return returnedValues;
                     case "stop":
                         windowsScript = new String[]{"cmd.exe", "/c", "sc", "stop", serviceName};
                         returnedValues = this.runCommand(windowsScript);
