@@ -4,23 +4,26 @@ import java.io.File;
 
 public class ArcadiaAppData
 {
-    ArcadiaApps app;
+    ArcadiaApp app;
     File installedDir;
     String portNumber;
     String version;
 
-    public ArcadiaAppData(ArcadiaApps app, File installedDir, String portNumber, String version) {
+    public ArcadiaAppData(ArcadiaApp app, File installedDir, String portNumber, String version) {
         this.app = app;
         this.installedDir = installedDir;
         this.portNumber = portNumber;
         this.version = version;
     }
 
-    public ArcadiaApps getApp() {
+    public ArcadiaAppData() {
+    }
+
+    public ArcadiaApp getApp() {
         return app;
     }
 
-    public void setApp(ArcadiaApps app) {
+    public void setApp(ArcadiaApp app) {
         this.app = app;
     }
 

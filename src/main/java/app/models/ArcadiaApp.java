@@ -1,6 +1,6 @@
 package app.models;
 
-public enum ArcadiaApps {
+public enum ArcadiaApp {
     // ID ("LongName","ShortName","versionInfo","database")
     CBOS("cbos", "cbos", "cbos", "arcadia_cbos"),
     OPENCARD("opencard", "oc", "openCard", "opencard"),
@@ -13,7 +13,7 @@ public enum ArcadiaApps {
     private final String versionInfo;
     private final String databaseName;
 
-    ArcadiaApps(String longName, String shortName, String versionInfo, String databaseName) {
+    ArcadiaApp(String longName, String shortName, String versionInfo, String databaseName) {
         this.longName = longName;
         this.shortName = shortName;
         this.versionInfo = versionInfo;
@@ -38,7 +38,7 @@ public enum ArcadiaApps {
 
     @Override
     public String toString() {
-        return "ArcadiaApps{" +
+        return "ArcadiaApp{" +
                 "longName='" + longName + '\'' +
                 ", shortName='" + shortName + '\'' +
                 ", versionInfo='" + versionInfo + '\'' +

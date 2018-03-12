@@ -140,21 +140,6 @@ public class DbController {
         return adminPasswd;
     }
 
-    public int databaseBackup(String database, Path targetFolder) {
-        String[] command = new String[]{
-                "pg_dump",
-                "-U",
-                "postgres",
-                "-Fd",
-                "-b",
-                "-f",
-                targetFolder.toString(),
-                database
-        };
-        ServiceController serviceController = ServiceController.getInstance();
-        ReturnValues returnValues = serviceController.runCommand(command);
-        return (int) returnValues.t;
-    }
 
     @Override
     public String toString() {

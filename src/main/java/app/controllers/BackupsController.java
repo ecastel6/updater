@@ -1,6 +1,7 @@
 package app.controllers;
 
-import app.models.ArcadiaApps;
+import app.models.ArcadiaApp;
+import app.models.ReturnValues;
 import app.models.SearchType;
 import org.apache.commons.io.FileUtils;
 
@@ -30,7 +31,7 @@ public class BackupsController
         return FileUtils.sizeOfDirectoryAsBigInteger(directory);
     }
 
-    public File getLastBackupDir(ArcadiaApps app) {
+    public File getLastBackupDir(ArcadiaApp app) {
         File directory = FileUtils.getFile(this.rootBackupsDir, app.getDatabaseName());
         System.out.printf("Searching %s directory\n", directory);
 
@@ -60,6 +61,22 @@ public class BackupsController
     public void setRootBackupsDir(File rootBackupsDir) {
         this.rootBackupsDir = rootBackupsDir;
 
+    }
+
+    public int databaseBackup(String database, File targetFolder) {
+        String[] command = new String[]{
+                "pg_dump",
+                "-U",
+                "postgres",
+                "-Fd",
+                "-b",
+                "-f",
+                targetFolder.toString(),
+                database
+        };
+        ServiceController serviceController = ServiceController.getInstance();
+        ReturnValues returnValues = serviceController.runCommand(command);
+        return (int) returnValues.t;
     }
 
 }

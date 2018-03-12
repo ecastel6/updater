@@ -1,35 +1,45 @@
 package app;
 
 import app.controllers.ArcadiaController;
+import app.controllers.BackupsController;
 import app.controllers.ServiceController;
 import app.core.UpdateException;
+import app.models.ArcadiaApp;
 import app.models.ArcadiaAppData;
 import app.models.ReturnValues;
+import org.apache.commons.io.FileUtils;
 
-import java.util.Map;
+public class ArcadiaUpdater {
 
-public class ArcadiaUpdater
-{
-
-    public static Boolean updateCbos() throws UpdateException {
-
+    public static Boolean updateApp(ArcadiaApp app) throws UpdateException {
 
         // Check database service
         ServiceController serviceController = ServiceController.getInstance();
-        if (!serviceController.serviceAlive("postgres"))
+        if (!serviceController.serviceAlive("postgres")) {
             throw new UpdateException("Database not started");
+        }
         else System.out.println("OK: Database Server available");
 
         // Stop tomcat service
         //serviceController.serviceAction("tomcat_cbos","stop");
-        String serviceName = "tomcat_cbos";
-        ReturnValues returnedValues = serviceController.runCommand(new String[]{"sudo", "/etc/init.d/" + serviceName, "stop", "-force"});
+
+        ReturnValues returnValues = serviceController.serviceAction(
+                "tomcat_" + app.getShortName(), "stop");
 
         // Check tomcat stopped
-        if (serviceController.serviceAlive("tomcat_cbos"))
+        if (serviceController.serviceAlive("tomcat_" + app.getShortName())) {
             throw new UpdateException("Tomcat not stoped!!");
+        }
         else System.out.println("OK: Tomcat is stoped");
         // Backup database
+        BackupsController backupsController = BackupsController.getInstance();
+        backupsController.databaseBackup(
+                app.getDatabaseName(),
+                FileUtils.getFile(
+                        backupsController.getRootBackupsDir(),
+                        "daily",
+                        app.getDatabaseName()));
+
 
         // Check database backup size
         // Check last database backup size
@@ -62,31 +72,33 @@ public class ArcadiaUpdater
     }
 
     public static void main(String[] args) {
-
-
         /*if ((args.length < 1) || (args.length > 3)) {
             System.out.println(
                     "Two or three parameters required. \n Usage: merger ActualConfig.properties NewConfig.properties <dry>");
         } else {
 
         }*/
-
+        if (args.length == 0) System.out.println("No parameters, auto update in progress...");
         ArcadiaController arcadiaController = ArcadiaController.getInstance();
-        Map<String, ArcadiaAppData> arcadiaAppData = arcadiaController.getInstalledApps();
-        System.out.printf("%s apps installed\n", arcadiaAppData.size());
+        //Map<String, ArcadiaAppData> arcadiaAppData = null;
+        arcadiaController.getInstalledApps();
+        System.out.printf("%s valid app targets\n", arcadiaController.installedApps.size());
+        for (ArcadiaAppData arcadiaAppData : arcadiaController.installedApps.values()) {
+            System.out.println(arcadiaAppData.toString());
+        }
 //        for (ArcadiaAppData arcadiaAppData:
 //                arcadiaController.getInstalledApps()) {
 //            System.out.println(arcadiaAppData.toString());
 //        }
         System.exit(0);
 
-        boolean resultCbos;
+        /*boolean result;
         try {
-            resultCbos = updateCbos();
+            result = updateApp(app);
         } catch (UpdateException e) {
             System.out.printf("ERROR: %s", e.getMessage());
             //e.printStackTrace();
-        }
+        }*/
 
 
     }

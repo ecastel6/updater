@@ -4,8 +4,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -72,15 +70,5 @@ class DbControllerTest {
     void getAdminPasswd() {
     }
 
-    @Test
-    void databaseBackup() {
-        DbController dbController = DbController.getInstance();
-        try {
-            Path targetFolder = Files.createTempDirectory(this.getClass().toString());
-            System.out.println(targetFolder.toString());
-            assertEquals(0, dbController.databaseBackup("template1", targetFolder));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
+
 }

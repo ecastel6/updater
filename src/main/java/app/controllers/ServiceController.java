@@ -81,7 +81,7 @@ public class ServiceController {
     public ReturnValues serviceAction(String serviceName, String command) {
         String msg;
         ReturnValues returnedValues = new ReturnValues(0, "");
-        final List<String> availableActions = Arrays.asList("start", "stop", "restart", "status");
+        final List<String> availableActions = Arrays.asList("start", "stop", "forcestop", "restart", "status");
         if (!availableActions.contains(command))
             return new ReturnValues(-1, "Invalid Action");
         switch (os) {
@@ -90,6 +90,14 @@ public class ServiceController {
                     case "restart":
                         returnedValues = this.runCommand(new String[]{"sudo", "service", serviceName, "stop"});
                         returnedValues = this.runCommand(new String[]{"sudo", "service", serviceName, "start"});
+                        return returnedValues;
+                    case "stop":
+                        if (serviceName.startsWith("tomcat_")) {
+                            returnedValues = this.runCommand(
+                                    new String[]{"sudo", "/etc/init.d/" + serviceName, "stop", "-force"});
+                        } else {
+                            returnedValues = this.runCommand(new String[]{"sudo", "service", serviceName, command});
+                        }
                         return returnedValues;
                     default:
                         returnedValues = this.runCommand(new String[]{"sudo", "service", serviceName, command});
