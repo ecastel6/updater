@@ -51,4 +51,10 @@ class BackupsControllerTest
             e.printStackTrace();
         }
     }
+
+    @Test
+    void getToday() {
+        BackupsController backupsController = BackupsController.getInstance();
+        System.out.println(backupsController.getToday());
+    }
 }

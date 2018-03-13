@@ -1,23 +1,39 @@
 package app;
 
-import app.controllers.ArcadiaController;
-import app.controllers.BackupsController;
-import app.controllers.ServiceController;
+import app.controllers.*;
 import app.core.UpdateException;
 import app.core.ZipHandler;
-import app.models.ArcadiaApp;
-import app.models.CompresionLevel;
-import app.models.ReturnValues;
+import app.models.*;
 import org.apache.commons.io.FileUtils;
 
 import java.io.File;
 import java.math.BigInteger;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
+import java.util.HashMap;
+import java.util.Map;
 
 public class ArcadiaUpdater {
 
-    private static ArcadiaController arcadiaController;
+    private ArcadiaController arcadiaController;
+    private static Map<String, ArcadiaAppData> testInstalledApps = new HashMap<>();
+    private BackupsController backupsController = BackupsController.getInstance();
 
-    public static Boolean updateApp(ArcadiaApp app) throws UpdateException {
+    public Boolean updateApp(ArcadiaApp app) throws UpdateException {
+
+        // Initialize general Directories variables
+        FileFinderController fileFinder = FileFinderController.doit("/", "arcadiaVersions", SearchType.Directories);
+        // updates base directory
+        // /opt/arcadiaVersions
+        File appUpdatesDirectory = FileUtils.getFile(
+                arcadiaController.getLowerDepthDirectory(fileFinder.getResults()),
+                app.getShortName());
+        // latest update available
+        File latestAppUpdatesDirectory = getLatestUpdate(appUpdatesDirectory.listFiles());
+
+        // updating app base dir
+        // /opt/tomcat_cbos e.g
+        File installedAppDir = testInstalledApps.get(app.name()).getInstalledDir();
 
         // Check database service
         ServiceController serviceController = ServiceController.getInstance();
@@ -36,15 +52,15 @@ public class ArcadiaUpdater {
         if (serviceController.serviceAlive("tomcat_" + app.getShortName())) {
             throw new UpdateException("Tomcat not stopped!!");
         } else System.out.println("OK: Tomcat is stopped");
+
         // Backup database
-        BackupsController backupsController = BackupsController.getInstance();
 
         File targetBackupDir = FileUtils.getFile(
                 backupsController.getRootBackupsDir(),
                 app.getDatabaseName(),
                 app.getDatabaseName() + "_" + backupsController.getToday());
         if (backupsController.databaseBackup(app.getDatabaseName(), targetBackupDir) > 0) {
-            throw new UpdateException("Error while backup database");
+            throw new UpdateException("Error while backup'in database");
         }
 
         // Check last database backup size
@@ -52,23 +68,41 @@ public class ArcadiaUpdater {
 
         // Check database backup size
         BigInteger targetBackupDirSize = backupsController.getDirSize(targetBackupDir);
-
+        System.out.printf("LastBackupSize: %s\ntargetBackupDirSize: %s\n", lastBackupSize, targetBackupDirSize);
         // Backup ArcadiaResources
         String separator = File.separator;
         ZipHandler zipHandler = new ZipHandler();
+        /*String sourceFolder =
+                arcadiaController.installedApps.get(
+                        app.name()).getInstalledDir().toString() +
+                        separator +
+                        "webapps" +
+                        separator +
+                        "Arcadiaresources";*/
         String sourceFolder =
-                arcadiaController.installedApps.get(app.name()).getInstalledDir().toString() +
+                installedAppDir.toString() +
                         separator +
                         "webapps" +
                         separator +
                         "Arcadiaresources";
+
         String outputZip = backupsController.getRootBackupsDir().toString() +
                 separator +
-                "ArcadiaResources." + app.getShortName() +
+                "ArcadiaResources." + app.getShortName() + "." +
                 backupsController.getToday() + ".zip";
+        System.out.printf("Compressing folder %s to output zip: %s\n", sourceFolder, outputZip);
         zipHandler.zip(sourceFolder, outputZip, CompresionLevel.UNCOMPRESSED.getLevel());
 
         // Move sharedlib to backout
+        System.out.printf("Moving %s to %s",
+                Paths.get(installedAppDir.toString(), "sharedlib"),
+                Paths.get(latestAppUpdatesDirectory.toString(), "backout"));
+
+        FileCopyController.move(
+                Paths.get(installedAppDir.toString(), "sharedlib"),
+                Paths.get(latestAppUpdatesDirectory.toString(), "backout"),
+                StandardCopyOption.REPLACE_EXISTING);
+
         // Move logback-common.xml to backout
         // Copy custom to backout
         // Move webapps to backout
@@ -94,6 +128,13 @@ public class ArcadiaUpdater {
         return true;
     }
 
+    // Input Array of directories
+    // returns first sorted
+    public File getLatestUpdate(File[] updatesDir) {
+        backupsController.sortDirectoriesByDate(updatesDir);
+        return updatesDir[0];
+    }
+
     public static void main(String[] args) {
         /*if ((args.length < 1) || (args.length > 3)) {
             System.out.println(
@@ -103,8 +144,17 @@ public class ArcadiaUpdater {
         }*/
         if (args.length == 0) System.out.println("No parameters, auto update in progress...");
 
+        //public ArcadiaAppData(ArcadiaApp app, File installedDir, String portNumber, String version) {
+        ArcadiaAppData testArcadiaAppData = new ArcadiaAppData(
+                ArcadiaApp.CBOS,
+                new File("D:\\opt\\tomcat_cbos"),
+                "81",
+                "12R1");
+        testInstalledApps.put("CBOS", testArcadiaAppData);
+
+        ArcadiaUpdater arcadiaUpdater = new ArcadiaUpdater();
         try {
-            updateApp(ArcadiaApp.CBOS);
+            arcadiaUpdater.updateApp(ArcadiaApp.CBOS);
         } catch (UpdateException e) {
             e.printStackTrace();
         }

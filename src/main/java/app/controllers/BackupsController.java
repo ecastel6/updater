@@ -12,12 +12,11 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Date;
 
-public class BackupsController
-{
+public class BackupsController {
     // todo check backups
     // todo backup database
 
-    private File rootBackupsDir;
+    private File rootBackupsDir = null;
 
     private String today = null;
 
@@ -28,7 +27,6 @@ public class BackupsController
     }
 
     private BackupsController() {
-        this.rootBackupsDir = getRootBackupsDir();
     }
 
     public BigInteger getDirSize(File directory) {
@@ -37,11 +35,22 @@ public class BackupsController
 
     public String getToday() {
         if (today == null) {
-            SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+            SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd_HH-mm.EEEE");
             Date now = new Date();
             today = simpleDateFormat.format(now);
         }
         return today;
+    }
+
+
+    public File[] sortDirectoriesByDate(File[] listDirectories) {
+        Arrays.sort(listDirectories, new Comparator<File>() {
+            public int compare(File f1, File f2) {
+                return Long.valueOf(f2.lastModified()).compareTo(f1.lastModified());
+            }
+        });
+        System.out.printf("directories found: %s newer is: %s\n", listDirectories.length, listDirectories[0]);
+        return listDirectories;
     }
 
     public File getLastBackupDir(ArcadiaApp app) {
@@ -55,13 +64,7 @@ public class BackupsController
         // app backups directory empty
         if (listDirectories.length == 0) return null;
 
-        Arrays.sort(listDirectories, new Comparator<File>() {
-            public int compare(File f1, File f2) {
-                return Long.valueOf(f2.lastModified()).compareTo(f1.lastModified());
-            }
-        });
-        System.out.printf("directories found: %s newer is: %s\n", listDirectories.length, listDirectories[0]);
-        return listDirectories[0];
+        return sortDirectoriesByDate(listDirectories)[0];
     }
 
     public File getRootBackupsDir() {
