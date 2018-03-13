@@ -46,7 +46,7 @@ class BackupsControllerTest
         try {
             Path targetFolder = Files.createTempDirectory(this.getClass().toString());
             System.out.println(targetFolder.toString());
-            assertEquals(0, backupsController.databaseBackup("template1", targetFolder));
+            assertEquals(0, backupsController.databaseBackup("template1", targetFolder.toFile()));
         } catch (IOException e) {
             e.printStackTrace();
         }

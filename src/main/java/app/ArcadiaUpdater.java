@@ -4,12 +4,18 @@ import app.controllers.ArcadiaController;
 import app.controllers.BackupsController;
 import app.controllers.ServiceController;
 import app.core.UpdateException;
+import app.core.ZipHandler;
 import app.models.ArcadiaApp;
-import app.models.ArcadiaAppData;
+import app.models.CompresionLevel;
 import app.models.ReturnValues;
 import org.apache.commons.io.FileUtils;
 
+import java.io.File;
+import java.math.BigInteger;
+
 public class ArcadiaUpdater {
+
+    private static ArcadiaController arcadiaController;
 
     public static Boolean updateApp(ArcadiaApp app) throws UpdateException {
 
@@ -28,22 +34,39 @@ public class ArcadiaUpdater {
 
         // Check tomcat stopped
         if (serviceController.serviceAlive("tomcat_" + app.getShortName())) {
-            throw new UpdateException("Tomcat not stoped!!");
-        }
-        else System.out.println("OK: Tomcat is stoped");
+            throw new UpdateException("Tomcat not stopped!!");
+        } else System.out.println("OK: Tomcat is stopped");
         // Backup database
         BackupsController backupsController = BackupsController.getInstance();
-        backupsController.databaseBackup(
-                app.getDatabaseName(),
-                FileUtils.getFile(
-                        backupsController.getRootBackupsDir(),
-                        "daily",
-                        app.getDatabaseName()));
 
+        File targetBackupDir = FileUtils.getFile(
+                backupsController.getRootBackupsDir(),
+                app.getDatabaseName(),
+                app.getDatabaseName() + "_" + backupsController.getToday());
+        if (backupsController.databaseBackup(app.getDatabaseName(), targetBackupDir) > 0) {
+            throw new UpdateException("Error while backup database");
+        }
+
+        // Check last database backup size
+        BigInteger lastBackupSize = backupsController.getDirSize(backupsController.getLastBackupDir(app));
 
         // Check database backup size
-        // Check last database backup size
+        BigInteger targetBackupDirSize = backupsController.getDirSize(targetBackupDir);
+
         // Backup ArcadiaResources
+        String separator = File.separator;
+        ZipHandler zipHandler = new ZipHandler();
+        String sourceFolder =
+                arcadiaController.installedApps.get(app.name()).getInstalledDir().toString() +
+                        separator +
+                        "webapps" +
+                        separator +
+                        "Arcadiaresources";
+        String outputZip = backupsController.getRootBackupsDir().toString() +
+                separator +
+                "ArcadiaResources." + app.getShortName() +
+                backupsController.getToday() + ".zip";
+        zipHandler.zip(sourceFolder, outputZip, CompresionLevel.UNCOMPRESSED.getLevel());
 
         // Move sharedlib to backout
         // Move logback-common.xml to backout
@@ -79,26 +102,31 @@ public class ArcadiaUpdater {
 
         }*/
         if (args.length == 0) System.out.println("No parameters, auto update in progress...");
-        ArcadiaController arcadiaController = ArcadiaController.getInstance();
-        //Map<String, ArcadiaAppData> arcadiaAppData = null;
+
+        try {
+            updateApp(ArcadiaApp.CBOS);
+        } catch (UpdateException e) {
+            e.printStackTrace();
+        }
+        /*ArcadiaController arcadiaController=ArcadiaController.getInstance();
         arcadiaController.getInstalledApps();
         System.out.printf("%s valid app targets\n", arcadiaController.installedApps.size());
         for (ArcadiaAppData arcadiaAppData : arcadiaController.installedApps.values()) {
-            System.out.println(arcadiaAppData.toString());
-        }
+            System.out.printf("Updating %s ...\n",arcadiaAppData.toString());
+            boolean result;
+            try {
+                result = updateApp(arcadiaAppData.getApp());
+            } catch (UpdateException e) {
+                System.out.printf("ERROR: %s", e.getMessage());
+                //e.printStackTrace();
+            }
+        }*/
 //        for (ArcadiaAppData arcadiaAppData:
 //                arcadiaController.getInstalledApps()) {
 //            System.out.println(arcadiaAppData.toString());
 //        }
         System.exit(0);
 
-        /*boolean result;
-        try {
-            result = updateApp(app);
-        } catch (UpdateException e) {
-            System.out.printf("ERROR: %s", e.getMessage());
-            //e.printStackTrace();
-        }*/
 
 
     }

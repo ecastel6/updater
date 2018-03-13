@@ -80,6 +80,7 @@ public class ServiceController {
 
     public ReturnValues serviceAction(String serviceName, String command) {
         String msg;
+        System.out.printf("Servicename: %s Command: %s\n", serviceName, command);
         ReturnValues returnedValues = new ReturnValues(0, "");
         final List<String> availableActions = Arrays.asList("start", "stop", "forcestop", "restart", "status");
         if (!availableActions.contains(command))

@@ -7,8 +7,10 @@ import org.apache.commons.io.FileUtils;
 
 import java.io.File;
 import java.math.BigInteger;
+import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.Date;
 
 public class BackupsController
 {
@@ -16,6 +18,8 @@ public class BackupsController
     // todo backup database
 
     private File rootBackupsDir;
+
+    private String today = null;
 
     private static BackupsController ourInstance = new BackupsController();
 
@@ -29,6 +33,15 @@ public class BackupsController
 
     public BigInteger getDirSize(File directory) {
         return FileUtils.sizeOfDirectoryAsBigInteger(directory);
+    }
+
+    public String getToday() {
+        if (today == null) {
+            SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+            Date now = new Date();
+            today = simpleDateFormat.format(now);
+        }
+        return today;
     }
 
     public File getLastBackupDir(ArcadiaApp app) {
@@ -52,10 +65,13 @@ public class BackupsController
     }
 
     public File getRootBackupsDir() {
-        ArcadiaController arcadiaController = ArcadiaController.getInstance();
-        // Simple shot, lowerDepthDirectory, guess system has daily
-        FileFinderController fileFinderController = FileFinderController.doit("/", "daily", SearchType.Directories);
-        return arcadiaController.getLowerDepthDirectory(fileFinderController.results);
+        if (rootBackupsDir == null) {
+            ArcadiaController arcadiaController = ArcadiaController.getInstance();
+            // Simple shot, lowerDepthDirectory, guess system has daily
+            FileFinderController fileFinderController = FileFinderController.doit("/", "daily", SearchType.Directories);
+            rootBackupsDir = arcadiaController.getLowerDepthDirectory(fileFinderController.results);
+        }
+        return rootBackupsDir;
     }
 
     public void setRootBackupsDir(File rootBackupsDir) {

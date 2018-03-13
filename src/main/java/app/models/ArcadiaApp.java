@@ -2,11 +2,11 @@ package app.models;
 
 public enum ArcadiaApp {
     // ID ("LongName","ShortName","versionInfo","database")
-    CBOS("cbos", "cbos", "cbos", "arcadia_cbos"),
-    OPENCARD("opencard", "oc", "openCard", "opencard"),
+    CBOS("cbos", "cbos", "cbos", "arcadia_cbos");
+    /*OPENCARD("opencard", "oc", "openCard", "opencard"),
     ELLIOTT("elliott", "elliott", "elliott", "elliott"),
     EVENTDETECT("EventDetect", "event", "event", "eventdetect"),
-    INTERFACES("interfaces", "interfaces", "interfaceMonitor", "interfaces");
+    INTERFACES("interfaces", "interfaces", "interfaceMonitor", "interfaces");*/
 
     private final String longName;
     private final String shortName;
