@@ -7,6 +7,7 @@ import app.models.*;
 import org.apache.commons.io.FileUtils;
 
 import java.io.File;
+import java.io.FilenameFilter;
 import java.math.BigInteger;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
@@ -15,21 +16,29 @@ import java.util.Map;
 
 public class ArcadiaUpdater {
 
-    private ArcadiaController arcadiaController;
+    private ArcadiaController arcadiaController = ArcadiaController.getInstance();
     private static Map<String, ArcadiaAppData> testInstalledApps = new HashMap<>();
     private BackupsController backupsController = BackupsController.getInstance();
 
     public Boolean updateApp(ArcadiaApp app) throws UpdateException {
 
         // Initialize general Directories variables
-        FileFinderController fileFinder = FileFinderController.doit("/", "arcadiaVersions", SearchType.Directories);
+        FileFinderController fileFinder =
+                FileFinderController.doit("/", "arcadiaVersions", SearchType.Directories);
         // updates base directory
         // /opt/arcadiaVersions
         File appUpdatesDirectory = FileUtils.getFile(
                 arcadiaController.getLowerDepthDirectory(fileFinder.getResults()),
                 app.getShortName());
         // latest update available
-        File latestAppUpdatesDirectory = getLatestUpdate(appUpdatesDirectory.listFiles());
+
+        File latestAppUpdatesDirectory = getLatestUpdate(appUpdatesDirectory.listFiles(new FilenameFilter()
+        {
+            @Override
+            public boolean accept(File dir, String name) {
+                return new File(dir, name).isDirectory();
+            }
+        }));
 
         // updating app base dir
         // /opt/tomcat_cbos e.g
@@ -147,7 +156,7 @@ public class ArcadiaUpdater {
         //public ArcadiaAppData(ArcadiaApp app, File installedDir, String portNumber, String version) {
         ArcadiaAppData testArcadiaAppData = new ArcadiaAppData(
                 ArcadiaApp.CBOS,
-                new File("D:\\opt\\tomcat_cbos"),
+                new File("/home/ecastel/opt/tomcat_cbos"),
                 "81",
                 "12R1");
         testInstalledApps.put("CBOS", testArcadiaAppData);
