@@ -25,11 +25,14 @@ public class ArcadiaUpdater {
         // Initialize general Directories variables
         FileFinderController fileFinder =
                 FileFinderController.doit("/", "arcadiaVersions", SearchType.Directories);
+
         // updates base directory
         // /opt/arcadiaVersions
         File appUpdatesDirectory = FileUtils.getFile(
                 arcadiaController.getLowerDepthDirectory(fileFinder.getResults()),
                 app.getShortName());
+        System.out.printf("ArcadiaUpdater.updateApp updatesdir:%s\n", appUpdatesDirectory.toString());
+
         // latest update available
 
         File latestAppUpdatesDirectory = getLatestUpdate(appUpdatesDirectory.listFiles(new FilenameFilter()
@@ -39,6 +42,7 @@ public class ArcadiaUpdater {
                 return new File(dir, name).isDirectory();
             }
         }));
+        System.out.printf("ArcadiaUpdater.updateApp latestupdDir:%s\n", latestAppUpdatesDirectory.toString());
 
         // updating app base dir
         // /opt/tomcat_cbos e.g
@@ -109,7 +113,7 @@ public class ArcadiaUpdater {
 
         FileCopyController.move(
                 Paths.get(installedAppDir.toString(), "sharedlib"),
-                Paths.get(latestAppUpdatesDirectory.toString(), "backout"),
+                Paths.get(latestAppUpdatesDirectory.toString(), "backout", "sharedlib"),
                 StandardCopyOption.REPLACE_EXISTING);
 
         // Move logback-common.xml to backout
@@ -156,7 +160,8 @@ public class ArcadiaUpdater {
         //public ArcadiaAppData(ArcadiaApp app, File installedDir, String portNumber, String version) {
         ArcadiaAppData testArcadiaAppData = new ArcadiaAppData(
                 ArcadiaApp.CBOS,
-                new File("/home/ecastel/opt/tomcat_cbos"),
+                //new File("/home/ecastel/opt/tomcat_cbos"),
+                new File("d:/opt/tomcat_cbos"),
                 "81",
                 "12R1");
         testInstalledApps.put("CBOS", testArcadiaAppData);
