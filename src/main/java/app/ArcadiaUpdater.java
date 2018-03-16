@@ -8,7 +8,9 @@ import org.apache.commons.io.FileUtils;
 
 import java.io.File;
 import java.io.FilenameFilter;
+import java.io.IOException;
 import java.math.BigInteger;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.HashMap;
@@ -106,23 +108,55 @@ public class ArcadiaUpdater {
         System.out.printf("Compressing folder %s to output zip: %s\n", sourceFolder, outputZip);
         zipHandler.zip(sourceFolder, outputZip, CompresionLevel.UNCOMPRESSED.getLevel());
 
+        Path source, target;
         // Move sharedlib to backout
-        System.out.printf("Moving %s to %s",
-                Paths.get(installedAppDir.toString(), "sharedlib"),
-                Paths.get(latestAppUpdatesDirectory.toString(), "backout"));
-
-        FileCopyController.move(
-                Paths.get(installedAppDir.toString(), "sharedlib"),
-                Paths.get(latestAppUpdatesDirectory.toString(), "backout", "sharedlib"),
-                StandardCopyOption.REPLACE_EXISTING);
+        source = Paths.get(installedAppDir.toString(), "sharedlib");
+        target = Paths.get(latestAppUpdatesDirectory.toString(), "backout", "sharedlib");
+        System.out.printf("Moving %s to %s", source.toString(), target.toString());
+        FileCopyController.move(source, target, StandardCopyOption.REPLACE_EXISTING);
 
         // Move logback-common.xml to backout
+        source = Paths.get(installedAppDir.toString(), "lib", "logback-common.xml");
+        target = Paths.get(latestAppUpdatesDirectory.toString(), "backout");
+        System.out.printf("Moving %s to %s", source.toString(), target.toString());
+        FileCopyController.move(source, target, StandardCopyOption.REPLACE_EXISTING);
+
         // Copy custom to backout
         // Move webapps to backout
+        source = Paths.get(installedAppDir.toString(), "webapps");
+        target = Paths.get(latestAppUpdatesDirectory.toString(), "backout", "wars");
+        System.out.printf("Moving %s to %s", source.toString(), target.toString());
+        FileCopyController.move(source, target, StandardCopyOption.REPLACE_EXISTING);
+
         // Move backout/webapps/ArcadiaResources to webapps
+        source = Paths.get(latestAppUpdatesDirectory.toString(), "backout", "wars", "ArcadiaResources");
+        target = Paths.get(installedAppDir.toString(), "webapps", "ArcadiaResources");
+        System.out.printf("Moving %s to %s", source.toString(), target.toString());
+        FileCopyController.move(source, target, StandardCopyOption.REPLACE_EXISTING);
+
         // Move commons WEB-INF to backout
+        source = Paths.get(installedAppDir.toString(), "webapps", "ArcadiaResources", "WEB-INF");
+        target = Paths.get(latestAppUpdatesDirectory.toString(), "backout", "WEB-INF");
+        System.out.printf("Moving %s to %s", source.toString(), target.toString());
+        FileCopyController.move(source, target, StandardCopyOption.REPLACE_EXISTING);
+        source = Paths.get(installedAppDir.toString(), "webapps", "ArcadiaResources", "commons");
+        target = Paths.get(latestAppUpdatesDirectory.toString(), "backout", "commons");
+        System.out.printf("Moving %s to %s", source.toString(), target.toString());
+        FileCopyController.move(source, target, StandardCopyOption.REPLACE_EXISTING);
+
         // Move logs to backout
+        source = Paths.get(installedAppDir.toString(), "logs");
+        target = Paths.get(latestAppUpdatesDirectory.toString(), "backout", "logs");
+        System.out.printf("Moving %s to %s", source.toString(), target.toString());
+        FileCopyController.move(source, target, StandardCopyOption.REPLACE_EXISTING);
+
         // Create logs
+        File logTarget = FileUtils.getFile(installedAppDir.toString(), "logs");
+        try {
+            FileUtils.forceMkdir(logTarget);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         // Clean tomcat cache
 
         // Update resources
@@ -158,12 +192,21 @@ public class ArcadiaUpdater {
         if (args.length == 0) System.out.println("No parameters, auto update in progress...");
 
         //public ArcadiaAppData(ArcadiaApp app, File installedDir, String portNumber, String version) {
-        ArcadiaAppData testArcadiaAppData = new ArcadiaAppData(
-                ArcadiaApp.CBOS,
-                //new File("/home/ecastel/opt/tomcat_cbos"),
-                new File("d:/opt/tomcat_cbos"),
-                "81",
-                "12R1");
+        ServiceController serviceController = ServiceController.getInstance();
+        ArcadiaAppData testArcadiaAppData;
+        if (serviceController.getOs() == OS.WINDOWS) {
+            testArcadiaAppData = new ArcadiaAppData(
+                    ArcadiaApp.CBOS,
+                    new File("d:/opt/tomcat_cbos"),
+                    "81",
+                    "12R1");
+        } else {
+            testArcadiaAppData = new ArcadiaAppData(
+                    ArcadiaApp.CBOS,
+                    new File("/home/ecastel/opt/tomcat_cbos"),
+                    "81",
+                    "12R1");
+        }
         testInstalledApps.put("CBOS", testArcadiaAppData);
 
         ArcadiaUpdater arcadiaUpdater = new ArcadiaUpdater();
