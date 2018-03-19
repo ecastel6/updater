@@ -2,6 +2,7 @@ package app;
 
 import app.controllers.ArcadiaController;
 import app.controllers.BackupsController;
+import app.controllers.PropertiesUpdaterController;
 import app.controllers.ServiceController;
 import app.core.UpdateException;
 import app.models.ArcadiaApp;
@@ -13,7 +14,6 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.*;
 
 import java.io.File;
-import java.io.FileFilter;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.*;
@@ -81,6 +81,8 @@ public class ArcadiaUpdater
     }
 
     public Boolean updateApp(ArcadiaApp app) throws UpdateException {
+
+
 /*
 
         // Initialize general Directories variables
@@ -107,7 +109,7 @@ public class ArcadiaUpdater
         // updating app base dir
         // /opt/tomcat_cbos e.g
         File installedAppDir = testInstalledApps.get(app.name()).getInstalledDir();
-
+*/
         // Check database service
         ServiceController serviceController = ServiceController.getInstance();
         if (!serviceController.serviceAlive("postgres")) {
@@ -115,6 +117,17 @@ public class ArcadiaUpdater
         }
         else System.out.println("OK: Database Server available");
 
+        // Check rabbitmq
+        if (!serviceController.serviceAlive("rabbitmq")) {
+            throw new UpdateException("ERROR: Rabbitmq not started");
+        } else System.out.println("OK: RabbitMq Server available");
+
+        // Check zookeeper
+        if (!serviceController.serviceAlive("zookeeper")) {
+            throw new UpdateException("ERROR: Zookeeper not started");
+        } else System.out.println("OK: Zookeeper Server available");
+
+        /*
         // Stop tomcat service
         //serviceController.serviceAction("tomcat_cbos","stop");
 
@@ -173,8 +186,8 @@ public class ArcadiaUpdater
         File source, target;
         // Move sharedlib to backout
         File installedAppDir = testInstalledApps.get(app.name()).getInstalledDir();
-        File latestAppUpdatesDirectory = FileUtils.getFile("/home/ecastel/opt/arcadiaVersions/cbos/3.12R2(fw)");
-
+        //File latestAppUpdatesDirectory = FileUtils.getFile("/home/ecastel/opt/arcadiaVersions/cbos/3.12R2(fw)");
+        File latestAppUpdatesDirectory = FileUtils.getFile("D:/opt/arcadiaVersions/cbos/3.12R4(fw)");
         source = FileUtils.getFile(installedAppDir, "sharedlib");
         target = FileUtils.getFile(latestAppUpdatesDirectory, "backout");
         moveFilteredDir(source, target, TrueFileFilter.TRUE);
@@ -238,20 +251,37 @@ public class ArcadiaUpdater
             ZipFile zipFile = new ZipFile(warAr);
             zipFile.extractAll(tempOutputExtractZip.toString());
         } catch (ZipException e) {
-            e.printStackTrace();
+            throw new UpdateException("Error extracting ArcadiaResources");
         }
 
-
+        // Copy commons
         try {
-            FileUtils.copyDirectory(tempOutputExtractZip,
+            FileUtils.copyDirectoryToDirectory(
+                    FileUtils.getFile(
+                            tempOutputExtractZip.toString(),
+                            "commons"),
                     FileUtils.getFile(
                             installedAppDir.toString(),
                             "webapps",
-                            "ArcadiaResources"),
-                    (FileFilter) resourcesToBackout);
+                            "ArcadiaResources")
+            );
         } catch (IOException e) {
-            throw new UpdateException("Error copying new resources");
+            throw new UpdateException("Error copying new ArcadiaResources");
         }
+        try {
+            FileUtils.copyDirectoryToDirectory(
+                    FileUtils.getFile(
+                            tempOutputExtractZip.toString(),
+                            "WEB-INF"),
+                    FileUtils.getFile(
+                            installedAppDir.toString(),
+                            "webapps",
+                            "ArcadiaResources")
+            );
+        } catch (IOException e) {
+            throw new UpdateException("Error copying new ArcadiaResources");
+        }
+
 
         // Copy new logback
         try {
@@ -280,19 +310,31 @@ public class ArcadiaUpdater
                 FileUtils.getFile(installedAppDir.toString(), "sharedlib"),
                 jarsFilter);
 
+        // Copy wars but ArcadiaResources reuse filterWebapps created before
+        copyFilteredDir(
+                FileUtils.getFile(latestAppUpdatesDirectory.toString(), "wars"),
+                FileUtils.getFile(installedAppDir.toString(), "webapps"),
+                filterWebapps);
 
-        // Copy wars but ArcadiaResources
         // Update custom
+        File sourceOldCustom = FileUtils.getFile(latestAppUpdatesDirectory.toString(), "backout", "custom");
+        File sourceNewCustom = FileUtils.getFile(latestAppUpdatesDirectory.toString(), "custom");
+        File targetCustom = FileUtils.getFile(installedAppDir.toString(), "custom");
 
-        // Check rabbitmq
-        // Check zookeeper
+        PropertiesUpdaterController puc = new PropertiesUpdaterController(sourceOldCustom, sourceNewCustom, targetCustom);
+        try {
+            puc.updateCustom();
+        } catch (IOException e) {
+            throw new UpdateException("Error updating custom");
+        }
+
         // Start service
         // Check schema_version all ok
 
         return true;
     }
 
-    private void moveFilteredDir(File source, File target, FilenameFilter filter) {
+    private void moveFilteredDir(File source, File target, FilenameFilter filter) throws UpdateException {
         Collection<File> filteredDir = new ArrayList<>();
         if (filter.equals(TrueFileFilter.INSTANCE)) {
             if (source.exists())
@@ -311,8 +353,7 @@ public class ArcadiaUpdater
                 else
                     FileUtils.moveFileToDirectory(file, target, true);
             } catch (IOException e) {
-                e.printStackTrace();
-                //throw new UpdateException("ERROR moving " + file);
+                throw new UpdateException("ERROR moving " + file + " " + e.getMessage());
             }
         }
     }
