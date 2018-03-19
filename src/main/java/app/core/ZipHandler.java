@@ -1,6 +1,11 @@
 package app.core;
+///////
+// DEPRECATED GO WITH ZIP4J
+/////////////
 
-import app.models.CompresionLevel;
+import net.lingala.zip4j.core.ZipFile;
+import net.lingala.zip4j.exception.ZipException;
+import org.apache.commons.io.FileUtils;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -9,16 +14,33 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
-public class ZipHandler {
+public class ZipHandler
+{
 
     List<String> fileList;
     //    private static final String OUTPUT_ZIP_FILE = "C:\\tmp\\ziptest.zip";
 //    private static final String SOURCE_FOLDER = "C:\\tmp\\ziptest";
     String Folder;
-    String ZipFile;
+    static String ZipFile;
 
     public ZipHandler() {
         fileList = new ArrayList<String>();
+    }
+
+    public static void main(String[] args) {
+
+        String zip = "/home/ecastel/opt/arcadiaVersions/cbos/3.12R2(fw)/wars/ArcadiaResources.war";
+        String destination = "/tmp/ziptest";
+        ZipFile zipFile = null;
+        try {
+            zipFile = new ZipFile(zip);
+            FileUtils.cleanDirectory(new File(destination));
+            zipFile.extractAll(destination);
+        } catch (ZipException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     public String getFolder() {
@@ -42,7 +64,7 @@ public class ZipHandler {
      *
      * @param sourceFolder
      * @param outputZip
-     * @param level compression level
+     * @param level        compression level
      */
     public void zip(String sourceFolder, String outputZip, int level) {
         byte[] buffer = new byte[1024];
@@ -132,7 +154,6 @@ public class ZipHandler {
             ZipEntry zipEntry = zipInputStream.getNextEntry();
 
             while (zipEntry != null) {
-
                 String fileName = zipEntry.getName();
                 File newFile = new File(outputFolder + File.separator + fileName);
                 System.out.println("file unzip : " + newFile.getAbsoluteFile());
@@ -157,20 +178,10 @@ public class ZipHandler {
             System.out.println("Done");
 
         } catch (IOException ex) {
-            ex.printStackTrace();
+            //ex.printStackTrace();
         }
     }
-
-
-
-    public static void main(String[] args) {
-        ZipHandler sampleZip = new ZipHandler();
-        sampleZip.zip(
-                "c:\\tmp\\ziptest",
-                "c:\\tmp\\ziptest.zip",
-                CompresionLevel.UNCOMPRESSED.getLevel());
-
-        sampleZip.unzip("c:\\tmp\\ziptest.zip", "c:\\tmp\\ziptest2");
-
-    }
 }
+
+
+

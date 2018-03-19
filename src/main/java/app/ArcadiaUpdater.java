@@ -1,186 +1,29 @@
 package app;
 
-import app.controllers.*;
+import app.controllers.ArcadiaController;
+import app.controllers.BackupsController;
+import app.controllers.ServiceController;
 import app.core.UpdateException;
-import app.core.ZipHandler;
-import app.models.*;
+import app.models.ArcadiaApp;
+import app.models.ArcadiaAppData;
+import app.models.OS;
+import net.lingala.zip4j.core.ZipFile;
+import net.lingala.zip4j.exception.ZipException;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.filefilter.*;
 
 import java.io.File;
+import java.io.FileFilter;
 import java.io.FilenameFilter;
 import java.io.IOException;
-import java.math.BigInteger;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
-public class ArcadiaUpdater {
+public class ArcadiaUpdater
+{
 
-    private ArcadiaController arcadiaController = ArcadiaController.getInstance();
     private static Map<String, ArcadiaAppData> testInstalledApps = new HashMap<>();
+    private ArcadiaController arcadiaController = ArcadiaController.getInstance();
     private BackupsController backupsController = BackupsController.getInstance();
-
-    public Boolean updateApp(ArcadiaApp app) throws UpdateException {
-
-        // Initialize general Directories variables
-        FileFinderController fileFinder =
-                FileFinderController.doit("/", "arcadiaVersions", SearchType.Directories);
-
-        // updates base directory
-        // /opt/arcadiaVersions
-        File appUpdatesDirectory = FileUtils.getFile(
-                arcadiaController.getLowerDepthDirectory(fileFinder.getResults()),
-                app.getShortName());
-        System.out.printf("ArcadiaUpdater.updateApp updatesdir:%s\n", appUpdatesDirectory.toString());
-
-        // latest update available
-
-        File latestAppUpdatesDirectory = getLatestUpdate(appUpdatesDirectory.listFiles(new FilenameFilter()
-        {
-            @Override
-            public boolean accept(File dir, String name) {
-                return new File(dir, name).isDirectory();
-            }
-        }));
-        System.out.printf("ArcadiaUpdater.updateApp latestupdDir:%s\n", latestAppUpdatesDirectory.toString());
-
-        // updating app base dir
-        // /opt/tomcat_cbos e.g
-        File installedAppDir = testInstalledApps.get(app.name()).getInstalledDir();
-
-        // Check database service
-        ServiceController serviceController = ServiceController.getInstance();
-        if (!serviceController.serviceAlive("postgres")) {
-            throw new UpdateException("Database not started");
-        }
-        else System.out.println("OK: Database Server available");
-
-        // Stop tomcat service
-        //serviceController.serviceAction("tomcat_cbos","stop");
-
-        ReturnValues returnValues = serviceController.serviceAction(
-                "tomcat_" + app.getShortName(), "stop");
-
-        // Check tomcat stopped
-        if (serviceController.serviceAlive("tomcat_" + app.getShortName())) {
-            throw new UpdateException("Tomcat not stopped!!");
-        } else System.out.println("OK: Tomcat is stopped");
-
-        // Backup database
-
-        File targetBackupDir = FileUtils.getFile(
-                backupsController.getRootBackupsDir(),
-                app.getDatabaseName(),
-                app.getDatabaseName() + "_" + backupsController.getToday());
-        if (backupsController.databaseBackup(app.getDatabaseName(), targetBackupDir) > 0) {
-            throw new UpdateException("Error while backup'in database");
-        }
-
-        // Check last database backup size
-        BigInteger lastBackupSize = backupsController.getDirSize(backupsController.getLastBackupDir(app));
-
-        // Check database backup size
-        BigInteger targetBackupDirSize = backupsController.getDirSize(targetBackupDir);
-        System.out.printf("LastBackupSize: %s\ntargetBackupDirSize: %s\n", lastBackupSize, targetBackupDirSize);
-        // Backup ArcadiaResources
-        String separator = File.separator;
-        ZipHandler zipHandler = new ZipHandler();
-        /*String sourceFolder =
-                arcadiaController.installedApps.get(
-                        app.name()).getInstalledDir().toString() +
-                        separator +
-                        "webapps" +
-                        separator +
-                        "Arcadiaresources";*/
-        String sourceFolder =
-                installedAppDir.toString() +
-                        separator +
-                        "webapps" +
-                        separator +
-                        "Arcadiaresources";
-
-        String outputZip = backupsController.getRootBackupsDir().toString() +
-                separator +
-                "ArcadiaResources." + app.getShortName() + "." +
-                backupsController.getToday() + ".zip";
-        System.out.printf("Compressing folder %s to output zip: %s\n", sourceFolder, outputZip);
-        zipHandler.zip(sourceFolder, outputZip, CompresionLevel.UNCOMPRESSED.getLevel());
-
-        Path source, target;
-        // Move sharedlib to backout
-        source = Paths.get(installedAppDir.toString(), "sharedlib");
-        target = Paths.get(latestAppUpdatesDirectory.toString(), "backout", "sharedlib");
-        System.out.printf("Moving %s to %s", source.toString(), target.toString());
-        FileCopyController.move(source, target, StandardCopyOption.REPLACE_EXISTING);
-
-        // Move logback-common.xml to backout
-        source = Paths.get(installedAppDir.toString(), "lib", "logback-common.xml");
-        target = Paths.get(latestAppUpdatesDirectory.toString(), "backout");
-        System.out.printf("Moving %s to %s", source.toString(), target.toString());
-        FileCopyController.move(source, target, StandardCopyOption.REPLACE_EXISTING);
-
-        // Copy custom to backout
-        // Move webapps to backout
-        source = Paths.get(installedAppDir.toString(), "webapps");
-        target = Paths.get(latestAppUpdatesDirectory.toString(), "backout", "wars");
-        System.out.printf("Moving %s to %s", source.toString(), target.toString());
-        FileCopyController.move(source, target, StandardCopyOption.REPLACE_EXISTING);
-
-        // Move backout/webapps/ArcadiaResources to webapps
-        source = Paths.get(latestAppUpdatesDirectory.toString(), "backout", "wars", "ArcadiaResources");
-        target = Paths.get(installedAppDir.toString(), "webapps", "ArcadiaResources");
-        System.out.printf("Moving %s to %s", source.toString(), target.toString());
-        FileCopyController.move(source, target, StandardCopyOption.REPLACE_EXISTING);
-
-        // Move commons WEB-INF to backout
-        source = Paths.get(installedAppDir.toString(), "webapps", "ArcadiaResources", "WEB-INF");
-        target = Paths.get(latestAppUpdatesDirectory.toString(), "backout", "WEB-INF");
-        System.out.printf("Moving %s to %s", source.toString(), target.toString());
-        FileCopyController.move(source, target, StandardCopyOption.REPLACE_EXISTING);
-        source = Paths.get(installedAppDir.toString(), "webapps", "ArcadiaResources", "commons");
-        target = Paths.get(latestAppUpdatesDirectory.toString(), "backout", "commons");
-        System.out.printf("Moving %s to %s", source.toString(), target.toString());
-        FileCopyController.move(source, target, StandardCopyOption.REPLACE_EXISTING);
-
-        // Move logs to backout
-        source = Paths.get(installedAppDir.toString(), "logs");
-        target = Paths.get(latestAppUpdatesDirectory.toString(), "backout", "logs");
-        System.out.printf("Moving %s to %s", source.toString(), target.toString());
-        FileCopyController.move(source, target, StandardCopyOption.REPLACE_EXISTING);
-
-        // Create logs
-        File logTarget = FileUtils.getFile(installedAppDir.toString(), "logs");
-        try {
-            FileUtils.forceMkdir(logTarget);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        // Clean tomcat cache
-
-        // Update resources
-        // Copy new logback
-        // Copy new sharedlib
-        // Copy jars
-        // Copy wars but ArcadiaResources
-        // Update custom
-
-        // Check rabbitmq
-        // Check zookeeper
-        // Start service
-        // Check schema_version all ok
-
-
-        return true;
-    }
-
-    // Input Array of directories
-    // returns first sorted
-    public File getLatestUpdate(File[] updatesDir) {
-        backupsController.sortDirectoriesByDate(updatesDir);
-        return updatesDir[0];
-    }
 
     public static void main(String[] args) {
         /*if ((args.length < 1) || (args.length > 3)) {
@@ -235,6 +78,269 @@ public class ArcadiaUpdater {
         System.exit(0);
 
 
+    }
 
+    public Boolean updateApp(ArcadiaApp app) throws UpdateException {
+/*
+
+        // Initialize general Directories variables
+      FileFinderController fileFinder =
+                FileFinderController.doit("/", "arcadiaVersions", SearchType.Directories);
+
+        // updates base directory
+        // /opt/arcadiaVersions
+        arcadiaController.getLowerDepthDirectory(fileFinder.getResults()),app.getShortName());
+        System.out.printf("ArcadiaUpdater.updateApp updatesdir:%s\n", appUpdatesDirectory.toString());
+
+        // latest update available
+
+        File latestAppUpdatesDirectory = getLatestUpdate(appUpdatesDirectory.listFiles(new FilenameFilter()
+        {
+            @Override
+            public boolean accept(File dir, String name) {
+                return new File(dir, name).isDirectory();
+            }
+        }));
+
+        System.out.printf("ArcadiaUpdater.updateApp latestupdDir:%s\n", latestAppUpdatesDirectory.toString());
+
+        // updating app base dir
+        // /opt/tomcat_cbos e.g
+        File installedAppDir = testInstalledApps.get(app.name()).getInstalledDir();
+
+        // Check database service
+        ServiceController serviceController = ServiceController.getInstance();
+        if (!serviceController.serviceAlive("postgres")) {
+            throw new UpdateException("Database not started");
+        }
+        else System.out.println("OK: Database Server available");
+
+        // Stop tomcat service
+        //serviceController.serviceAction("tomcat_cbos","stop");
+
+        ReturnValues returnValues = serviceController.serviceAction(
+                "tomcat_" + app.getShortName(), "stop");
+
+        // Check tomcat stopped
+        if (serviceController.serviceAlive("tomcat_" + app.getShortName())) {
+            throw new UpdateException("Tomcat not stopped!!");
+        } else System.out.println("OK: Tomcat is stopped");
+
+        // Backup database
+
+        File targetBackupDir = FileUtils.getFile(
+                backupsController.getRootBackupsDir(),
+                app.getDatabaseName(),
+                app.getDatabaseName() + "_" + backupsController.getToday());
+        if (backupsController.databaseBackup(app.getDatabaseName(), targetBackupDir) > 0) {
+            throw new UpdateException("Error while backup'in database");
+        }
+
+        // Check last database backup size
+        BigInteger lastBackupSize = backupsController.getDirSize(backupsController.getLastBackupDir(app));
+
+        // Check database backup size
+        BigInteger targetBackupDirSize = backupsController.getDirSize(targetBackupDir);
+        System.out.printf("LastBackupSize: %s\ntargetBackupDirSize: %s\n", lastBackupSize, targetBackupDirSize);
+        // Backup ArcadiaResources
+        String separator = File.separator;
+        ZipHandler zipHandler = new ZipHandler();
+        */
+/*String sourceFolder =
+                arcadiaController.installedApps.get(
+                        app.name()).getInstalledDir().toString() +
+                        separator +
+                        "webapps" +
+                        separator +
+                        "Arcadiaresources";*//*
+
+        String sourceFolder =
+                installedAppDir.toString() +
+                        separator +
+                        "webapps" +
+                        separator +
+                        "Arcadiaresources";
+
+        String outputZip = backupsController.getRootBackupsDir().toString() +
+                separator +
+                "ArcadiaResources." + app.getShortName() + "." +
+                backupsController.getToday() + ".zip";
+        System.out.printf("Compressing folder %s to output zip: %s\n", sourceFolder, outputZip);
+        zipHandler.zip(sourceFolder, outputZip, CompresionLevel.UNCOMPRESSED.getLevel());
+*/
+
+
+        File source, target;
+        // Move sharedlib to backout
+        File installedAppDir = testInstalledApps.get(app.name()).getInstalledDir();
+        File latestAppUpdatesDirectory = FileUtils.getFile("/home/ecastel/opt/arcadiaVersions/cbos/3.12R2(fw)");
+
+        source = FileUtils.getFile(installedAppDir, "sharedlib");
+        target = FileUtils.getFile(latestAppUpdatesDirectory, "backout");
+        moveFilteredDir(source, target, TrueFileFilter.TRUE);
+
+        // Move logback-common.xml to backout
+        source = FileUtils.getFile(installedAppDir.toString(), "lib", "logback-common.xml");
+        target = FileUtils.getFile(latestAppUpdatesDirectory.toString(), "backout");
+        moveFilteredDir(source, target, TrueFileFilter.TRUE);
+
+        // Moving old wars and deployed dirs
+        source = FileUtils.getFile(installedAppDir.toString(), "webapps");
+        target = FileUtils.getFile(latestAppUpdatesDirectory.toString(), "backout", "wars");
+        FilenameFilter filterWebapps = new NotFileFilter(new NameFileFilter("ArcadiaResources"));
+        moveFilteredDir(source, target, filterWebapps);
+
+        // Move custom to backout
+        source = FileUtils.getFile(installedAppDir.toString(), "custom");
+        target = FileUtils.getFile(latestAppUpdatesDirectory.toString(), "backout");
+        moveFilteredDir(source, target, TrueFileFilter.TRUE);
+
+        // Move commons WEB-INF to backout
+        source = FileUtils.getFile(installedAppDir.toString(), "webapps", "ArcadiaResources");
+        target = FileUtils.getFile(latestAppUpdatesDirectory.toString(), "backout");
+        FilenameFilter resourcesToBackout = new OrFileFilter(
+                new NameFileFilter("commons"),
+                new NameFileFilter("WEB-INF")
+        );
+        moveFilteredDir(source, target, resourcesToBackout);
+
+        // Move logs to backout
+        source = FileUtils.getFile(installedAppDir.toString(), "logs");
+        target = FileUtils.getFile(latestAppUpdatesDirectory.toString(), "backout");
+        moveFilteredDir(source, target, TrueFileFilter.TRUE);
+
+        // Create logs directory
+        try {
+            FileUtils.forceMkdir(FileUtils.getFile(installedAppDir.toString(), "logs"));
+        } catch (IOException e) {
+            throw new UpdateException("Error creating logs directory");
+        }
+
+        // Clean tomcat cache
+
+        try {
+            FileUtils.cleanDirectory(
+                    FileUtils.getFile(installedAppDir.toString(), "work"));
+        } catch (IOException e) {
+            throw new UpdateException("Error cleaning Tomcat cache");
+        }
+
+        //
+        // Now place new version
+        //
+        // Update resources
+        File tempOutputExtractZip = FileUtils.getFile(
+                FileUtils.getTempDirectory(), backupsController.getToday());
+        File warAr = FileUtils.getFile(latestAppUpdatesDirectory.toString(),
+                "wars",
+                "ArcadiaResources.war");
+        try {
+            ZipFile zipFile = new ZipFile(warAr);
+            zipFile.extractAll(tempOutputExtractZip.toString());
+        } catch (ZipException e) {
+            e.printStackTrace();
+        }
+
+
+        try {
+            FileUtils.copyDirectory(tempOutputExtractZip,
+                    FileUtils.getFile(
+                            installedAppDir.toString(),
+                            "webapps",
+                            "ArcadiaResources"),
+                    (FileFilter) resourcesToBackout);
+        } catch (IOException e) {
+            throw new UpdateException("Error copying new resources");
+        }
+
+        // Copy new logback
+        try {
+            FileUtils.copyDirectoryToDirectory(
+                    FileUtils.getFile(latestAppUpdatesDirectory.toString(), "lib"),
+                    installedAppDir
+            );
+        } catch (IOException e) {
+            throw new UpdateException("Error copying logback configuration");
+        }
+
+        // Copy new sharedlib
+        try {
+            FileUtils.copyDirectoryToDirectory(
+                    FileUtils.getFile(latestAppUpdatesDirectory.toString(), "sharedlib"),
+                    installedAppDir
+            );
+        } catch (IOException e) {
+            throw new UpdateException("Error copying sharedlib");
+        }
+
+        // Copy jars
+        FilenameFilter jarsFilter = new SuffixFileFilter(".jar");
+        copyFilteredDir(
+                FileUtils.getFile(latestAppUpdatesDirectory.toString(), "jars"),
+                FileUtils.getFile(installedAppDir.toString(), "sharedlib"),
+                jarsFilter);
+
+
+        // Copy wars but ArcadiaResources
+        // Update custom
+
+        // Check rabbitmq
+        // Check zookeeper
+        // Start service
+        // Check schema_version all ok
+
+        return true;
+    }
+
+    private void moveFilteredDir(File source, File target, FilenameFilter filter) {
+        Collection<File> filteredDir = new ArrayList<>();
+        if (filter.equals(TrueFileFilter.INSTANCE)) {
+            if (source.exists())
+                filteredDir.add(source);
+        } else {
+            filteredDir = Arrays.asList(source.listFiles(filter));
+            //FileUtils.listFilesAndDirs(source, (IOFileFilter) filter,TrueFileFilter.TRUE);
+        }
+
+        for (File file :
+                filteredDir) {
+            try {
+                System.out.printf("Moving %s to %s\n", file.toString(), target.toString());
+                if (file.isDirectory())
+                    FileUtils.moveDirectoryToDirectory(file, target, true);
+                else
+                    FileUtils.moveFileToDirectory(file, target, true);
+            } catch (IOException e) {
+                e.printStackTrace();
+                //throw new UpdateException("ERROR moving " + file);
+            }
+        }
+    }
+
+    private void copyFilteredDir(File source, File target, FilenameFilter filter) throws UpdateException {
+        Collection<File> filteredDir = new ArrayList<>();
+        filteredDir.addAll(Arrays.asList(source.listFiles(filter)));
+        for (File file : filteredDir) {
+            if (file.isDirectory())
+                try {
+                    FileUtils.copyDirectoryToDirectory(file, target);
+                } catch (IOException e) {
+                    throw new UpdateException("Error copying " + source + " to " + target);
+                }
+            else
+                try {
+                    FileUtils.copyFileToDirectory(file, target, true);
+                } catch (IOException e) {
+                    throw new UpdateException("Error copying " + source + " to " + target);
+                }
+        }
+    }
+
+
+    // Input Array of directories
+    // returns first sorted
+    public File getLatestUpdate(File[] updatesDir) {
+        backupsController.sortDirectoriesByDate(updatesDir);
+        return updatesDir[0];
     }
 }
