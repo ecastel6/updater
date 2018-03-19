@@ -1,11 +1,13 @@
 package app.controllers;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.filefilter.DirectoryFileFilter;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
+import java.io.FileFilter;
 import java.io.IOException;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -73,6 +75,24 @@ class CommonsIoFileutilsTest
         assertTrue(FileUtils.directoryContains(renamedDir, FileUtils.getFile(renamedDir, "1")));
     }
 
+    @Test
+    void testListFilesAndDirs() {
+        System.out.println("Searching for ArcadiaResources dir.");
+//        Collection<File> filesAndDirs=new ArrayList<>();
+//        IOFileFilter onlyArcadiaResources=new NameFileFilter( "ArcadiaResources");
+//        String dir="d:/opt";
+//
+//        filesAndDirs=FileUtils.listFilesAndDirs(new File(dir), new NotFileFilter(TrueFileFilter.INSTANCE), onlyArcadiaResources);
+//        System.out.printf("Found %s results\n",filesAndDirs.size());
+//        for (File directory:filesAndDirs) {
+//            System.out.println(directory);
+//        }
+        File directory = new File("d:/opt");
+        File[] subdirs = directory.listFiles((FileFilter) DirectoryFileFilter.DIRECTORY);
+        for (File dir : subdirs) {
+            System.out.println("Directory: " + dir.getName());
+        }
+    }
 
     @AfterEach
     void Cleanup() {
