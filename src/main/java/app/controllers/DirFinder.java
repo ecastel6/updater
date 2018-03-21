@@ -22,7 +22,7 @@ public class DirFinder
         FileFinderController fileFinder = FileFinderController.doit("/", "arcadiaVersions", SearchType.Directories);
         endTime = System.currentTimeMillis();
         System.out.printf("Resultado: %s. Execution time %s\n", fileFinder.getResults().toString(), (endTime - startTime));
-
+        System.exit(0);
     }
 
     private String findDir(File root, String[] dirNames) {
