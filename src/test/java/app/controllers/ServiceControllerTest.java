@@ -28,10 +28,7 @@ class ServiceControllerTest {
 
     @Test
     void runCommand() {
-
-        String p = (String) serviceController.runCommand(command).u;
-        System.out.println(p);
-        //assertEquals("1", serviceController.runCommand(command).u.toString().trim());
+        assertEquals("[1]", serviceController.runCommand(command).u.toString().trim());
     }
 
     @Test
@@ -70,5 +67,4 @@ class ServiceControllerTest {
         boolean finalStatus = serviceController.serviceAlive(testSVC);
         System.out.printf("Service %s final status is %s\n", testSVC, finalStatus);
     }
-
 }

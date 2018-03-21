@@ -143,7 +143,7 @@ public class ServiceController {
             BufferedReader input =
                     new BufferedReader(new InputStreamReader(p.getInputStream()));
             while ((line = input.readLine()) != null) {
-                if (line.toLowerCase().contains(serviceName)) return true;
+                if (line.toLowerCase().contains(serviceName.toLowerCase())) return true;
             }
             input.close();
         } catch (Exception err) {
