@@ -48,6 +48,12 @@
             <artifactId>commons-compress</artifactId>
             <version>1.5</version>
         </dependency>
+        <!--StringUtils-->
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+            <version>3.7</version>
+        </dependency>
         <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
