@@ -68,9 +68,11 @@ public class FileFinderController
 
     void find(Path file) {
         Path name = file.getFileName();
+        //name.toAbsolutePath().endsWith();
         if (name != null && matcher.matches(name)) {
             results.add(file);
             numMatches++;
+
         }
     }
 
