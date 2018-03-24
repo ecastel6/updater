@@ -9,20 +9,21 @@ public class PathMatcherExample {
         String[] pathMultifolder = new String[]{"opt", "arcadiaVersions"};
 
         FileSystem fileSystem = FileSystems.getDefault();
-        //PathMatcher pathMatcher = fileSystem.getPathMatcher("glob:D:/**/opt/arcadiaVersions");
+        String pattern = "opt/arcadiaVersions/reg.properties";
+        PathMatcher pathMatcher = fileSystem.getPathMatcher("glob:?:/**/" + pattern);
 
-        String pattern = "Vorsions";//opt/arcadiaVersions";
 
         //String regularExpression="([a-zA-Z]:)?(\\\\[a-zA-Z0-9_.-]+)+\\\\?" +pattern +"$";
-        String regularExpression = "\"[[a-zA-Z]:]?\\\\/(([A-z0-9\\\\-\\\\%]+\\\\/)*[A-z0-9\\\\-\\\\%]+)?\\\\/opt\\\\/arcadiaVersions$\"";
-        //String regularExpression="([a-zA-Z]:)?(\\\\[a-zA-Z0-9_.-]+)+\\\\?\\/opt.+";
+        //String regularExpression="^([a-zA-Z]:\\/[a-zA-Z]*)";
         //String regularExpression="([a-zA-Z]:)?(\\\\[a-zA-Z0-9_.-]+)+\\\\?\\/opt.+";
 
         //PathMatcher pathMatcher = fileSystem.getPathMatcher("glob:?:/**/opt/arcadiaVersions");
+        //Pattern pattern=Pattern.compile(regularExpression);
+        Path samplepath = Paths.get("D:/cp/opt/arcadiaVersions/reg.properties");
+        if (pathMatcher.matches(samplepath)) System.out.println("Match");
 
-        PathMatcher pathMatcher = fileSystem.getPathMatcher("regex:" + regularExpression);
-        Path path = Paths.get("C:/cp/opt/arcadiaVersions");
-        System.out.println(regularExpression);
-        System.out.println(pathMatcher.matches(path));
+        //PathMatcher pathMatcher = fileSystem.getPathMatcher("regex:" + regularExpression);
+
+
     }
 }

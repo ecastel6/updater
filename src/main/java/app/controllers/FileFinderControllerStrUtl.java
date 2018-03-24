@@ -2,6 +2,7 @@ package app.controllers;
 
 import app.models.OS;
 import app.models.SearchType;
+import org.apache.commons.lang3.StringUtils;
 
 import java.io.IOException;
 import java.nio.file.*;
@@ -12,7 +13,7 @@ import java.util.List;
 
 import static java.nio.file.FileVisitResult.CONTINUE;
 
-public class FileFinderController
+public class FileFinderControllerStrUtl
         extends SimpleFileVisitor<Path>
 {
     private final PathMatcher matcher;
@@ -20,7 +21,8 @@ public class FileFinderController
     private double numMatches = 0;
     private SearchType searchType;
     private String pattern;
-    public FileFinderController(String pattern, SearchType searchType) {
+
+    public FileFinderControllerStrUtl(String pattern, SearchType searchType) {
         matcher = FileSystems.getDefault().getPathMatcher("glob:/**/" + pattern);
         this.searchType = searchType;
         this.pattern = pattern;
@@ -43,12 +45,12 @@ public class FileFinderController
         return driveList;
     }
 
-    public static FileFinderController doit(String startPath, String pattern, SearchType searchType) {
+    public static FileFinderControllerStrUtl doit(String startPath, String pattern, SearchType searchType) {
         // what =0 all
         // what =1 files
         // what =2 dirs
         //for (Path p: getDriveList()) System.out.println(p.toString());
-        FileFinderController finder = new FileFinderController(pattern, searchType);
+        FileFinderControllerStrUtl finder = new FileFinderControllerStrUtl(pattern, searchType);
         ServiceController serviceController = ServiceController.getInstance();
 
         List<String> driveList;
@@ -71,7 +73,8 @@ public class FileFinderController
         //Path name = file.getFileName();
         //name.toAbsolutePath().endsWith();
 
-        if (file != null && matcher.matches(file)) {
+        //if (file != null && matcher.matches(file)) {
+        if (file != null && StringUtils.endsWith(file.toString(), this.pattern)) {
             results.add(file);
             numMatches++;
 

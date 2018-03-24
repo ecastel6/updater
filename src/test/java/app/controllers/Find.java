@@ -14,8 +14,10 @@ public class Find {
 
         private final PathMatcher matcher;
         private int numMatches = 0;
+        private String pattern;
 
         Finder(String pattern) {
+            this.pattern = pattern;
             matcher = FileSystems.getDefault()
                     .getPathMatcher("glob:" + pattern);
         }
@@ -23,8 +25,9 @@ public class Find {
         // Compares the glob pattern against
         // the file or directory name.
         void find(Path file) {
-            Path name = file.getFileName();
-            if (name != null && matcher.matches(name)) {
+            //Path name = file.getFileName();
+            //System.out.printf("Checking %s with pattern: %s\n",file,this.pattern);
+            if (file != null && file.toString().endsWith(this.pattern)) {
                 numMatches++;
                 System.out.println(file);
             }
@@ -58,7 +61,7 @@ public class Find {
         @Override
         public FileVisitResult visitFileFailed(Path file,
                                                IOException exc) {
-            System.err.println(exc);
+            //System.err.println(exc);
             return CONTINUE;
         }
     }
