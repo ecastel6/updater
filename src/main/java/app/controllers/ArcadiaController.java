@@ -24,31 +24,30 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class ArcadiaController {
-
-    //ArrayList<ArcadiaAppData> installedApps;
-    public Map<String, ArcadiaAppData> installedApps = new HashMap<>();
+public class ArcadiaController
+{
 
     private static ArcadiaController ourInstance = new ArcadiaController();
+    public Map<String, ArcadiaAppData> installedApps = new HashMap<>();
+    private Path arcadiaUpdatesRepository;
+
+    public ArcadiaController(Map<String, ArcadiaAppData> installedApps) {
+        this.installedApps = installedApps;
+    }
+
+    private ArcadiaController() {
+    }
 
     public static ArcadiaController getInstance() {
         return ourInstance;
     }
 
-    private ArcadiaController() {
-
-    }
-
+    /*
+            Read tomcat conf get HTTP connector port
+    */
     private String getArcadiaAppPort(File configFile) {
-        // todo maybe interesting to throw a blind detection of installed Apps or ports with HTTP GET queries
-        // Look for Port in tomcat conf
-        /*System.out.printf("getArcadiaAppPor - getArcadiaAppDir(%s)\n", app.getShortName());
-        if (installedApps.
 
-                == null) return null;
-        File tomcatConf = FileUtils.getFile(getArcadiaAppDir(app), "conf/server.xml");
-        if (tomcatConf == null) return null;*/
-        System.out.printf("Fichero conf=%s\n", configFile);
+        System.out.printf("Parsing config %s\n", configFile);
         // get port from config
         try {
             Configurations configs = new Configurations();
@@ -69,6 +68,9 @@ public class ArcadiaController {
         return null;
     }
 
+    /*
+            Auxiliary method decode response to get Arcadia AppVersion
+    */
     private String getVersionFromResponse(String response) {
         final Pattern pattern = Pattern.compile("^Version:\\s(.*)\\-RELEASE");
         Matcher matcher = pattern.matcher(response);
@@ -80,11 +82,12 @@ public class ArcadiaController {
         }
     }
 
+    /*
+            getArcadiaVersion Get applicattion version with HTTP GET
+            to version.html
+    */
     public String getArcadiaVersion(ArcadiaApp app, String port) {
-        // get arcadia app version parsing placed HTTP GET to version.html
-        // get Port used with getArcadiaAppPort
         StringBuffer response = null;
-        System.out.println(app.name());
         URL url = null;
         try {
             url = new URL("http://localhost:" + port + "/" + app.getVersionInfo() + "/version.html");
@@ -111,10 +114,11 @@ public class ArcadiaController {
             bufferedReader.close();
             return (getVersionFromResponse(response.toString()));
         } catch (IOException e) {
-            System.out.printf("Server not listening %s\n", url);
+            System.out.printf("%s Server not listening. unable to get version in %s\n", app.getLongName(), url);
             return null;
         }
     }
+
 
     public File getLowerDepthDirectory(ArrayList<Path> alternatives) {
         Integer lowerDepth = Integer.MAX_VALUE;
@@ -129,13 +133,13 @@ public class ArcadiaController {
         return lowerDepthPath.toFile();
     }
 
-    public File getArcadiaDir(String pattern) {
+    public File getTomcatDir(String tomcatAppDir) {
         // find lower directory pattern + short name
         // pattern
         // tomcat_ for application
         // arcadiaVersions
 
-        FileFinderController arcadiaDir = FileFinderController.doit("/", pattern, SearchType.Directories);
+        FileFinderControllerStr arcadiaDir = FileFinderControllerStr.doit("/", tomcatAppDir, SearchType.Directories);
         if (arcadiaDir.getNumMatches() > 1) {
             // if multiple directories found, the node with less depth is returned
             return getLowerDepthDirectory(arcadiaDir.getResults());
@@ -145,32 +149,50 @@ public class ArcadiaController {
         return null;
     }
 
+    /*
+            todo find update version for App in updates directory arcadiaVersions
+     */
     public String getArcadiaUpdateVersion(ArcadiaApp app) {
-        // find update directory arcadiaVersions + short name
+
 
         return null;
     }
 
-    // Search system, returns ArcadiaAppData Arraylist
+    /*
+        Search installed Arcadia Apps
+        returns Map String -> ArcadiaAppData
+    */
     public Map<String, ArcadiaAppData> getInstalledApps() {
-        System.out.println("Looking for ArcadiaApp. \nPlease standby...");
-        // iterate Enumerated AppList search relevant info
+        if (this.installedApps.size() > 0) {
+            return installedApps;
+        }
+        System.out.println("Looking for ArcadiaApp. Please standby...");
+        // iterate Enum AppList collect relevant info
         for (ArcadiaApp app : ArcadiaApp.values()) {
             System.out.printf("Searching for %s\n", app.getLongName());
-            File dir = this.getArcadiaDir("tomcat_" + app.getShortName());
-            if (dir != null) {
+            File tomcatDir = this.getTomcatDir("opt/tomcat_" + app.getShortName());
+            if (tomcatDir != null) {
                 // App found collect relevant data
                 System.out.println("App dir found collecting data...");
-                String appPort = getArcadiaAppPort(FileUtils.getFile(dir, "conf", "server.xml"));
+                String appPort = getArcadiaAppPort(FileUtils.getFile(tomcatDir, "conf", "server.xml"));
                 String appVersion = getArcadiaVersion(app, appPort);
 
-                // only register running Arcadia apps with valid responsive ports
-                if ((appVersion != null) && (appPort != null)) {
-                    ArcadiaAppData arcadiaAppData = new ArcadiaAppData(app, dir, appPort, appVersion);
+                if (appPort != null) {
+                    ArcadiaAppData arcadiaAppData = new ArcadiaAppData(app, tomcatDir, appPort, appVersion);
                     installedApps.put(app.name(), arcadiaAppData);
                 }
             }
         }
         return installedApps;
+    }
+
+    public Path getArcadiaUpdatesRepository() {
+        if (arcadiaUpdatesRepository != null) return arcadiaUpdatesRepository;
+        FileFinderControllerStr fileFinder = FileFinderControllerStr.doit("/", "opt/arcadiaVersions", SearchType.Directories);
+        if (fileFinder.getNumMatches() > 1)
+            this.arcadiaUpdatesRepository = ArcadiaController.getInstance().getLowerDepthDirectory(fileFinder.getResults()).toPath();
+        else this.arcadiaUpdatesRepository = fileFinder.getResults().get(0);
+
+        return arcadiaUpdatesRepository;
     }
 }

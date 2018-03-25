@@ -8,8 +8,6 @@ import org.apache.commons.io.FileUtils;
 import java.io.File;
 import java.math.BigInteger;
 import java.text.SimpleDateFormat;
-import java.util.Arrays;
-import java.util.Comparator;
 import java.util.Date;
 
 public class BackupsController {
@@ -27,6 +25,7 @@ public class BackupsController {
     }
 
     private BackupsController() {
+        if (this.rootBackupsDir == null) this.rootBackupsDir = getRootBackupsDir();
     }
 
     public BigInteger getDirSize(File directory) {
@@ -43,15 +42,7 @@ public class BackupsController {
     }
 
 
-    public File[] sortDirectoriesByDate(File[] listDirectories) {
-        Arrays.sort(listDirectories, new Comparator<File>() {
-            public int compare(File f1, File f2) {
-                return Long.valueOf(f2.lastModified()).compareTo(f1.lastModified());
-            }
-        });
-        System.out.printf("directories found: %s newer is: %s\n", listDirectories.length, listDirectories[0]);
-        return listDirectories;
-    }
+
 
     public File getLastBackupDir(ArcadiaApp app) {
         File directory = FileUtils.getFile(this.rootBackupsDir, app.getDatabaseName());
@@ -63,8 +54,7 @@ public class BackupsController {
 
         // app backups directory empty
         if (listDirectories.length == 0) return null;
-
-        return sortDirectoriesByDate(listDirectories)[0];
+        return new FileSystemCommons().sortDirectoriesByDate(listDirectories)[0];
     }
 
     public File getRootBackupsDir() {

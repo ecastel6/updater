@@ -13,10 +13,10 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 class ArcadiaControllerTest {
 
     @Test
-    void getArcadiaAppDir() {
+    void getArcadiaAppDirTest() {
         ArcadiaController ac = ArcadiaController.getInstance();
         for (ArcadiaApp app : ArcadiaApp.values()) {
-            File o = ac.getArcadiaDir("tomcat_" + app.getShortName());
+            File o = ac.getTomcatDir("tomcat_" + app.getShortName());
             if (o != null) {
                 System.out.printf("%s instalada: %s\n", app.getLongName(), o.toString());
                 assertNotNull(o);
@@ -28,30 +28,21 @@ class ArcadiaControllerTest {
     }
 
     @Test
-    void getInstalledApps() {
+    void getInstalledAppsTest() {
         ArcadiaController arcadiaController = ArcadiaController.getInstance();
-        Map<String, ArcadiaAppData> arcadiaAppDataArrayList = null;
 
-        arcadiaAppDataArrayList = arcadiaController.getInstalledApps();
+        Map<String, ArcadiaAppData> arcadiaAppDataArrayList = arcadiaController.getInstalledApps();
 
         for (Map.Entry<String, ArcadiaAppData> entry : arcadiaAppDataArrayList.entrySet())
             System.out.println(entry.toString());
     }
 
-
-/*
     @Test
-    void getArcadiaVersion() {
+    void getArcadiaUpdatesRepositoryTest() {
         ArcadiaController arcadiaController = ArcadiaController.getInstance();
-        String appVersion;
-        for (ArcadiaApp app : ArcadiaApp.values()) {
-            appVersion = arcadiaController.getArcadiaVersion(app,);
-            if (appVersion != null) {
-                System.out.printf("App: %s Version: %s\n",
-                        app.getLongName(), appVersion);
-            }
-        }
-    }*/
+        assertNotNull(arcadiaController.getArcadiaUpdatesRepository());
+    }
+
 }
 
 

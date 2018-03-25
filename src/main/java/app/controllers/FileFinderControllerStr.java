@@ -15,14 +15,13 @@ import static java.nio.file.FileVisitResult.CONTINUE;
 public class FileFinderControllerStr
         extends SimpleFileVisitor<Path>
 {
-    private final PathMatcher matcher;
+
     ArrayList<Path> results = new ArrayList<Path>();
     private double numMatches = 0;
     private SearchType searchType;
     private String pattern;
 
     public FileFinderControllerStr(String pattern, SearchType searchType) {
-        matcher = FileSystems.getDefault().getPathMatcher("glob:/**/" + pattern);
         this.searchType = searchType;
         this.pattern = pattern;
     }
@@ -69,8 +68,6 @@ public class FileFinderControllerStr
     }
 
     void find(Path file) {
-        //Path name = file.getFileName();
-        //name.toAbsolutePath().endsWith();
         if (file != null && file.toString().endsWith(this.pattern)) {
             results.add(file);
             numMatches++;
