@@ -10,7 +10,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 
-public class DbController {
+public class DbController
+{
     private static DbController ourInstance;
 
     static {
@@ -19,10 +20,6 @@ public class DbController {
         } catch (IOException e) {
             e.printStackTrace();
         }
-    }
-
-    public static DbController getInstance() {
-        return ourInstance;
     }
 
     // Root database directory e.g. /opt/pgsql
@@ -35,7 +32,6 @@ public class DbController {
     String serverVersion;
     String adminUser;
     String adminPasswd;
-
     private DbController() throws IOException {
         this.serverDir = getServerDir();
         this.serverPort = getServerPort();
@@ -47,10 +43,12 @@ public class DbController {
         this.adminPasswd = getAdminPasswd();
     }
 
+    public static DbController getInstance() {
+        return ourInstance;
+    }
+
     public Path getServerDir() throws IOException {
         Path serverConf = Paths.get(getServerConfFilename());
-        System.out.println(serverConf);
-        System.out.println(serverConf.getParent().getParent());
         return (serverConf.getParent().getParent());
         /*
         FileFinderController rootDB = FileFinderController.doit("/", "pgsql", 2);
@@ -77,7 +75,7 @@ public class DbController {
 
     public String getServerConfFilename() throws IOException {
         //todo getServerConf other database servers
-        FileFinderController postgresConf = FileFinderController.doit("/", "postgresql.conf", SearchType.Files);
+        FileFinderControllerStr postgresConf = FileFinderControllerStr.doit("/", "data/postgresql.conf", SearchType.Files);
 
         if (postgresConf.getNumMatches() == 0) {
             throw new IOException("Unable to find out postgres conf file!!!!");
@@ -94,10 +92,9 @@ public class DbController {
                 }
                 //System.out.println("Unable to guess returning the first one.");
             } else {
-                if ((results.get(0).toString().contains("opt")) && (results.get(0).getNameCount() < 5)) {
-                    return results.get(0).toString();
-                }
+                return results.get(0).toString();
             }
+
         }
         throw new IOException("Unable to find out postgres conf file!!!!");
     }

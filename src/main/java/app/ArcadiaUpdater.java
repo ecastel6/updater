@@ -3,6 +3,7 @@ package app;
 import app.controllers.ArcadiaController;
 import app.controllers.BackupsController;
 import app.controllers.UpdateController;
+import app.core.UpdateException;
 import app.models.ArcadiaAppData;
 
 import java.util.HashMap;
@@ -35,6 +36,11 @@ public class ArcadiaUpdater
             System.out.printf("Updating %s ...\n",arcadiaAppData.toString());
             boolean result;
             UpdateController updateController = new UpdateController(arcadiaAppData);
+            try {
+                result = updateController.updateApp(arcadiaAppData);
+            } catch (UpdateException e) {
+                System.out.println(e.getMessage());
+            }
         }
 
         System.exit(0);
