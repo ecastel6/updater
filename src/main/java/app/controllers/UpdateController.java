@@ -57,7 +57,7 @@ public class UpdateController
         Path eachApp = Paths.get(arcadiaController.getArcadiaUpdatesRepository().toString(), arcadiaApp.getApp().getShortName());
         File[] subdirs = eachApp.toFile().listFiles((FileFilter) DirectoryFileFilter.DIRECTORY);
         if (subdirs.length > 0) {
-            File latestAppUpdatesDirectory = new FileSystemCommons().sortDirectoriesByName(subdirs)[0];
+            latestAppUpdatesDirectory = new FileSystemCommons().sortDirectoriesByName(subdirs)[0];
             System.out.printf("ArcadiaUpdater.updateApp latestupdDir:%s\n", latestAppUpdatesDirectory.toString());
         }
         installedAppDir = this.appData.getInstalledDir();
@@ -65,7 +65,6 @@ public class UpdateController
 
     private void checkDbServer() throws UpdateException {
         // Check database service
-        ServiceController serviceController = ServiceController.getInstance();
         if (!serviceController.serviceAlive("postgres")) {
             throw new UpdateException("Database not started");
         } else System.out.println("OK: Database Server available");
@@ -285,17 +284,19 @@ public class UpdateController
         } else System.out.println("OK: Tomcat is stopped");
     }
 
-    private void checkZookeeper() throws UpdateException {
+    private void checkZookeeper() {
         // Check zookeeper
         if (!serviceController.serviceAlive("zookeeper")) {
-            throw new UpdateException("ERROR: Zookeeper not started");
+            System.out.println("ERROR: Zookeeper not started");
+            //throw new UpdateException("ERROR: Zookeeper not started");
         } else System.out.println("OK: Zookeeper Server available");
     }
 
-    private void checkRabbitmq() throws UpdateException {
+    private void checkRabbitmq() {
         // Check rabbitmq
         if (!serviceController.serviceAlive("rabbitmq")) {
-            throw new UpdateException("ERROR: Rabbitmq not started");
+            System.out.println("ERROR: Rabbitmq not started");
+            //throw new UpdateException("ERROR: Rabbitmq not started");
         } else System.out.println("OK: RabbitMq Server available");
     }
 
