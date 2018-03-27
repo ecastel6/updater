@@ -2,6 +2,7 @@ package app.controllers;
 
 import app.models.OS;
 import app.models.SearchType;
+import org.apache.commons.io.FilenameUtils;
 
 import java.io.IOException;
 import java.nio.file.*;
@@ -13,9 +14,8 @@ import java.util.List;
 import static java.nio.file.FileVisitResult.CONTINUE;
 
 public class FileFinderControllerStr
-        extends SimpleFileVisitor<Path>
-{
-
+        extends SimpleFileVisitor<Path> {
+    static ServiceController serviceController = ServiceController.getInstance();
     ArrayList<Path> results = new ArrayList<Path>();
     private double numMatches = 0;
     private SearchType searchType;
@@ -23,7 +23,11 @@ public class FileFinderControllerStr
 
     public FileFinderControllerStr(String pattern, SearchType searchType) {
         this.searchType = searchType;
-        this.pattern = pattern;
+        if (serviceController.os.equals(OS.WINDOWS))
+            this.pattern = FilenameUtils.separatorsToSystem(pattern);
+        else
+            this.pattern = pattern;
+
     }
 
     public static ArrayList<String> getDriveList() {
@@ -49,7 +53,7 @@ public class FileFinderControllerStr
         // what =2 dirs
         //for (Path p: getDriveList()) System.out.println(p.toString());
         FileFinderControllerStr finder = new FileFinderControllerStr(pattern, searchType);
-        ServiceController serviceController = ServiceController.getInstance();
+
 
         List<String> driveList;
         if (serviceController.os.equals(OS.LINUX)) {
@@ -92,7 +96,6 @@ public class FileFinderControllerStr
         // what =2 only dirs
 
         if ((searchType == SearchType.All) | (searchType == SearchType.Files)) {
-            //System.out.printf("Checking file %s", file.toString());
             find(file);
         }
         return CONTINUE;
