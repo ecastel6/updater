@@ -71,8 +71,8 @@ public class ArcadiaController
     /*
             Auxiliary method decode response to get Arcadia AppVersion
     */
-    private String getVersionFromResponse(String response) {
-        final Pattern pattern = Pattern.compile("^Version:\\s(.*)\\-RELEASE");
+    public String getVersionFromResponse(String response) {
+        final Pattern pattern = Pattern.compile("^(.*?)(\\-.*?)");
         Matcher matcher = pattern.matcher(response);
         System.out.println("getVersionFromResponse");
         if (matcher.find()) {

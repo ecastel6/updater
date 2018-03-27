@@ -43,6 +43,12 @@ class ArcadiaControllerTest {
         assertNotNull(arcadiaController.getArcadiaUpdatesRepository());
     }
 
+    @Test
+    void getVersionFromResponseTest() {
+        ArcadiaController arcadiaController = ArcadiaController.getInstance();
+        String response = "3.11R4-RELEASE<br>Core-Version: 3.20-RELEASE<br>Messaging-Version: 1.11";
+        System.out.println(arcadiaController.getVersionFromResponse(response));
+    }
 }
 
 
