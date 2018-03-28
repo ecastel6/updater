@@ -6,28 +6,19 @@ import app.models.SearchType;
 import org.apache.commons.io.FileUtils;
 
 import java.io.File;
-import java.math.BigInteger;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
 public class BackupsController {
-    // todo check backups
-    // todo backup database
-
     private static BackupsController ourInstance = new BackupsController();
     private File rootBackupsDir = null;
     private String today = null;
 
     private BackupsController() {
-        if (this.rootBackupsDir == null) this.rootBackupsDir = getRootBackupsDir();
     }
 
     public static BackupsController getInstance() {
         return ourInstance;
-    }
-
-    public BigInteger getDirSize(File directory) {
-        return FileUtils.sizeOfDirectoryAsBigInteger(directory);
     }
 
     public String getToday() {
@@ -39,10 +30,13 @@ public class BackupsController {
         return today;
     }
 
+    public Long getLatestBackupSize(ArcadiaApp app) {
+        return FileUtils.sizeOfDirectory(getLastBackupDir(app));
+    }
 
     public File getLastBackupDir(ArcadiaApp app) {
-        File directory = FileUtils.getFile(this.rootBackupsDir, app.getDatabaseName());
-        System.out.printf("Searching %s directory\n", directory);
+        File directory = FileUtils.getFile(this.getRootBackupsDir(), app.getDatabaseName());
+        System.out.printf("Checking %s directory. Searching latest backup.\n", directory);
 
         // app backups directory not found
         if (!directory.exists()) return null;
@@ -85,14 +79,14 @@ public class BackupsController {
         return (int) returnValues.t;
     }
 
+    /*
+    Relative difference percentaje
+     */
+    public double differencePercentage(Long v1, Long v2) {
+        Long z = Math.abs(v1 - v2);
+        double p = (v1 + v2) / 2;
+        p = Math.abs((z / p) * 100);
+        System.out.printf("Difference percentage: %s\n", p);
+        return p;
+    }
 }
-
-
-
-
-
-
-
-
-
-

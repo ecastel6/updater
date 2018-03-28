@@ -1,6 +1,7 @@
 package app.controllers;
 
 import app.models.ArcadiaApp;
+import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
@@ -25,7 +26,7 @@ class BackupsControllerTest
                 System.out.printf("%s Date: %s Size: %d\n",
                         app.getLongName(),
                         appBackupDir.toString(),
-                        backupsController.getDirSize(appBackupDir));
+                        FileUtils.sizeOfDirectory(appBackupDir));
             } else {
                 System.out.printf("Backup directory of %s not found\n", app.getLongName());
             }

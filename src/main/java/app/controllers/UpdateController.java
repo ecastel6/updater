@@ -14,15 +14,14 @@ import java.io.File;
 import java.io.FileFilter;
 import java.io.FilenameFilter;
 import java.io.IOException;
-import java.math.BigInteger;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 
-public class UpdateController
-{
+public class UpdateController {
+    final static int DBTHRESHOLD = 1;
     // instance BackupsController
     BackupsController backupsController = BackupsController.getInstance();
     // instance ServiceController
@@ -32,8 +31,8 @@ public class UpdateController
     private ArcadiaAppData appData;
     // instance ArcadiaController
     // access installed apps details
-    private ArcadiaController arcadiaController = ArcadiaController.getInstance();
 
+    private ArcadiaController arcadiaController = ArcadiaController.getInstance();
     private File arcadiaUpdatesRepository;
     private File latestAppUpdatesDirectory;
     private File installedAppDir;
@@ -43,6 +42,39 @@ public class UpdateController
     }
 
     public UpdateController() {
+    }
+
+    /*
+     *
+     Main method
+     *
+     */
+    public Boolean updateApp(ArcadiaAppData app) throws UpdateException {
+        sysinit(app);
+        checkDbServer();
+        checkRabbitmq();
+        checkZookeeper();
+        stopAppServer(app.getApp());
+        Long lastBackupSize = backupsController.getLatestBackupSize(app.getApp());
+        Long databaseBackupDirSize = backupDatabase(app.getApp());
+        if (currentBackupSizeMismatch(lastBackupSize, databaseBackupDirSize))
+            throw new UpdateException("ERROR: Backup size mismatch!!!");
+        backupArcadiaResources();
+        backoutApp();
+        // Now place new version
+        updateArcadiaResources();
+        updateLogBack();
+        updateSharedlib();
+        updateWars();
+        updateCustom();
+        startAppServer(app.getApp());
+        // Check schema_version all ok
+
+        return true;
+    }
+
+    private boolean currentBackupSizeMismatch(Long lastBackupSize, Long databaseBackupDirSize) {
+        return backupsController.differencePercentage(lastBackupSize, databaseBackupDirSize) > DBTHRESHOLD;
     }
 
     private void sysinit(ArcadiaAppData arcadiaApp) throws UpdateException {
@@ -71,31 +103,6 @@ public class UpdateController
         if (!serviceController.serviceAlive("postgres")) {
             throw new UpdateException("Database not started");
         } else System.out.println("OK: Database Server available");
-    }
-
-    public Boolean updateApp(ArcadiaAppData arcadiaApp) throws UpdateException {
-
-        sysinit(arcadiaApp);
-        checkDbServer();
-        checkRabbitmq();
-        checkZookeeper();
-        stopAppServer(arcadiaApp.getApp());
-        File targetBackupDir = backupDatabase(arcadiaApp.getApp());
-        BigInteger lastBackupSize = getLatestBackupSize(arcadiaApp.getApp());
-        getCurrentBackupSize(targetBackupDir, lastBackupSize);
-        backupArcadiaResources();
-        backoutApp();
-        // Now place new version
-        updateArcadiaResources();
-        updateLogBack();
-        updateSharedlib();
-        updateWars();
-        updateCustom();
-
-        // Start service
-        // Check schema_version all ok
-
-        return true;
     }
 
     private void updateCustom() throws UpdateException {
@@ -253,18 +260,8 @@ public class UpdateController
         ZipHandler zipHandler = new ZipHandler();
     }
 
-    private void getCurrentBackupSize(File targetBackupDir, BigInteger lastBackupSize) {
-        // Check database backup size
-        BigInteger targetBackupDirSize = backupsController.getDirSize(targetBackupDir);
-        System.out.printf("LastBackupSize: %s\ntargetBackupDirSize: %s\n", lastBackupSize, targetBackupDirSize);
-    }
 
-    private BigInteger getLatestBackupSize(ArcadiaApp app) {
-        // Check last database backup size
-        return backupsController.getDirSize(backupsController.getLastBackupDir(app));
-    }
-
-    private File backupDatabase(ArcadiaApp app) throws UpdateException {
+    private Long backupDatabase(ArcadiaApp app) throws UpdateException {
         // Backup database
         File targetBackupDir = FileUtils.getFile(
                 backupsController.getRootBackupsDir(),
@@ -273,7 +270,7 @@ public class UpdateController
         if (backupsController.databaseBackup(app.getDatabaseName(), targetBackupDir) > 0) {
             throw new UpdateException("Error while backup'in database");
         }
-        return targetBackupDir;
+        return FileUtils.sizeOfDirectory(targetBackupDir);
     }
 
     private void stopAppServer(ArcadiaApp app) throws UpdateException {
@@ -282,9 +279,26 @@ public class UpdateController
                 "tomcat_" + app.getShortName(), "stop");
 
         // Check tomcat stopped
+        try {
+            Thread.sleep(5000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
         if (serviceController.serviceAlive("tomcat_" + app.getShortName())) {
             throw new UpdateException("Tomcat not stopped!!");
         } else System.out.println("OK: Tomcat is stopped");
+    }
+
+    private void startAppServer(ArcadiaApp app) throws UpdateException {
+        // Stop tomcat service
+        ReturnValues returnValues = serviceController.serviceAction(
+                "tomcat_" + app.getShortName(), "start");
+
+        // Check tomcat started-ing
+        if (serviceController.serviceAlive("tomcat_" + app.getShortName())) {
+            System.out.println("OK: Tomcat started");
+        } else
+            throw new UpdateException("ERROR: Tomcat not started!!");
     }
 
     private void checkZookeeper() {
