@@ -72,9 +72,9 @@ public class ArcadiaController
             Auxiliary method decode response to get Arcadia AppVersion
     */
     public String getVersionFromResponse(String response) {
-        final Pattern pattern = Pattern.compile("^(.*?)(\\-.*?)");
+        //final Pattern pattern = Pattern.compile("^Version\b(.*?)(\\-.*?)");
+        final Pattern pattern = Pattern.compile("^Version:\\s*(.*?)(\\-.*?)");
         Matcher matcher = pattern.matcher(response);
-        System.out.println("getVersionFromResponse");
         if (matcher.find()) {
             return matcher.group(1);
         } else {
@@ -112,6 +112,7 @@ public class ArcadiaController
                 response.append(inputLine);
             }
             bufferedReader.close();
+            System.out.printf("Response from server: %s\n", response);
             return (getVersionFromResponse(response.toString()));
         } catch (IOException e) {
             System.out.printf("%s Server not listening. unable to get version in %s\n", app.getLongName(), url);

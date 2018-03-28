@@ -14,18 +14,16 @@ public class BackupsController {
     // todo check backups
     // todo backup database
 
-    private File rootBackupsDir = null;
-
-    private String today = null;
-
     private static BackupsController ourInstance = new BackupsController();
-
-    public static BackupsController getInstance() {
-        return ourInstance;
-    }
+    private File rootBackupsDir = null;
+    private String today = null;
 
     private BackupsController() {
         if (this.rootBackupsDir == null) this.rootBackupsDir = getRootBackupsDir();
+    }
+
+    public static BackupsController getInstance() {
+        return ourInstance;
     }
 
     public BigInteger getDirSize(File directory) {
@@ -40,8 +38,6 @@ public class BackupsController {
         }
         return today;
     }
-
-
 
 
     public File getLastBackupDir(ArcadiaApp app) {
@@ -61,8 +57,9 @@ public class BackupsController {
         if (rootBackupsDir == null) {
             ArcadiaController arcadiaController = ArcadiaController.getInstance();
             // Simple shot, lowerDepthDirectory, guess system has daily
-            FileFinderController fileFinderController = FileFinderController.doit("/", "daily", SearchType.Directories);
-            rootBackupsDir = arcadiaController.getLowerDepthDirectory(fileFinderController.results);
+            FileFinderControllerStr fileFinderController = FileFinderControllerStr.doit("/", "daily", SearchType.Directories);
+            if (fileFinderController.getNumMatches() > 0)
+                rootBackupsDir = arcadiaController.getLowerDepthDirectory(fileFinderController.results);
         }
         return rootBackupsDir;
     }

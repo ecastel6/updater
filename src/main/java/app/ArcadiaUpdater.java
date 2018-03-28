@@ -1,7 +1,6 @@
 package app;
 
 import app.controllers.ArcadiaController;
-import app.controllers.BackupsController;
 import app.controllers.UpdateController;
 import app.core.UpdateException;
 import app.models.ArcadiaAppData;
@@ -14,7 +13,6 @@ public class ArcadiaUpdater
 
     private static Map<String, ArcadiaAppData> testInstalledApps = new HashMap<>();
     private ArcadiaController arcadiaController = ArcadiaController.getInstance();
-    private BackupsController backupsController = BackupsController.getInstance();
 
     public static void main(String[] args) {
         /*if ((args.length < 1) || (args.length > 3)) {

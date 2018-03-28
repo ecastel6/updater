@@ -45,9 +45,12 @@ public class UpdateController
     public UpdateController() {
     }
 
-    private void sysinit(ArcadiaAppData arcadiaApp) {
+    private void sysinit(ArcadiaAppData arcadiaApp) throws UpdateException {
         // Initialize general Directories variables
-        // store app this object
+        //check valid backups directory
+        if (backupsController.getRootBackupsDir() == null)
+            throw new UpdateException("ERROR: invalid database backup directory");
+
         this.appData = arcadiaApp;
         arcadiaUpdatesRepository = arcadiaController.getArcadiaUpdatesRepository().toFile();
         System.out.printf("ArcadiaUpdater.updateApp updatesdir:%s\n", arcadiaUpdatesRepository);

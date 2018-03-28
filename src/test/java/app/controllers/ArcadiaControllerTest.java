@@ -49,6 +49,11 @@ class ArcadiaControllerTest {
         String response = "3.11R4-RELEASE<br>Core-Version: 3.20-RELEASE<br>Messaging-Version: 1.11";
         System.out.println(arcadiaController.getVersionFromResponse(response));
     }
+
+    @Test
+    void getVersionFromHTTPResponseTest() {
+        ArcadiaController arcadiaController = ArcadiaController.getInstance();
+        String response = arcadiaController.getArcadiaVersion(ArcadiaApp.CBOS, "81");
+        System.out.printf("Version from response: %s\n", response);
+    }
 }
-
-
