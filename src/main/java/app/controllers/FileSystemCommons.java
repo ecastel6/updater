@@ -1,5 +1,7 @@
 package app.controllers;
 
+import app.core.Version;
+
 import java.io.File;
 import java.util.*;
 import java.util.regex.Matcher;
@@ -22,6 +24,10 @@ public class FileSystemCommons
         return listDirectories;
     }
 
+    /*
+        Converts dir filename R Version
+        to normalized ArrayList X.Y.Z (major.minor.patch)
+     */
     public List<String> getVersionFromDir(String dir) {
         List<String> version = new ArrayList<>();
         //Pattern pattern = Pattern.compile("^(\\d*?)\\.(\\d*?)R?(\\d*?)$");
@@ -35,16 +41,22 @@ public class FileSystemCommons
         return version;
     }
 
+    /*
+    Converts R version standard X.Y.Z (major,minor,patch)
+     */
+    public String normalizeVersion(String arcadiaVersion) {
+        return arcadiaVersion.replace("R", ".");
+    }
+
     public File[] sortDirectoriesByVersion(File[] listDirectories) {
-        //System.out.println(new ComparableVersion("3.12R1").compareTo(new ComparableVersion("3.13")));
-        /*Arrays.sort(listDirectories, new Comparator<File>()
+        Arrays.sort(listDirectories, new Comparator<File>()
         {
             public int compare(File f1, File f2) {
-                return Long.valueOf(f2.lastModified()).compareTo(f1.lastModified());
+                return new Version(normalizeVersion(f2.getName()))
+                        .compareTo(new Version(normalizeVersion(f1.getName())));
             }
         });
-        return listDirectories;*/
-        return null;
+        return listDirectories;
     }
 
 }
