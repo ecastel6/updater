@@ -1,13 +1,16 @@
 package app.controllers;
 
 import app.core.UpdateException;
+import app.core.Version;
 import app.core.ZipHandler;
 import app.models.ArcadiaApp;
 import app.models.ArcadiaAppData;
 import app.models.ReturnValues;
 import net.lingala.zip4j.core.ZipFile;
 import net.lingala.zip4j.exception.ZipException;
+import org.apache.commons.cli.CommandLine;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.filefilter.*;
 
 import java.io.File;
@@ -19,9 +22,11 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Scanner;
 
-public class UpdateController {
-    final static int DBTHRESHOLD = 1;
+public class UpdateController
+{
+    final static int DBTHRESHOLD = 3;
     // instance BackupsController
     BackupsController backupsController = BackupsController.getInstance();
     // instance ServiceController
@@ -31,17 +36,16 @@ public class UpdateController {
     private ArcadiaAppData appData;
     // instance ArcadiaController
     // access installed apps details
-
     private ArcadiaController arcadiaController = ArcadiaController.getInstance();
+    private CommandLine commandLine;
+
     private File arcadiaUpdatesRepository;
-    private File latestAppUpdatesDirectory;
+    private File latestUpdatesVersionDir;
     private File installedAppDir;
 
-    public UpdateController(ArcadiaAppData appData) {
+    public UpdateController(CommandLine commandLine, ArcadiaAppData arcadiaAppData) {
+        this.commandLine = commandLine;
         this.appData = appData;
-    }
-
-    public UpdateController() {
     }
 
     /*
@@ -91,11 +95,34 @@ public class UpdateController {
         //
         Path eachApp = Paths.get(arcadiaController.getArcadiaUpdatesRepository().toString(), arcadiaApp.getApp().getShortName());
         File[] subdirs = eachApp.toFile().listFiles((FileFilter) DirectoryFileFilter.DIRECTORY);
+        FileSystemCommons fsc = new FileSystemCommons();
+        Version updateVersion = null;
         if (subdirs.length > 0) {
-            latestAppUpdatesDirectory = new FileSystemCommons().sortDirectoriesByName(subdirs)[0];
-            System.out.printf("ArcadiaUpdater.updateApp latestupdDir:%s\n", latestAppUpdatesDirectory.toString());
+            latestUpdatesVersionDir = fsc.sortDirectoriesByVersion(subdirs)[0];
+            System.out.printf("ArcadiaUpdater.updateApp latestUpdatesVersionDir:%s\n", latestUpdatesVersionDir);
+            updateVersion = new Version(fsc.normalizeVersion(FilenameUtils.getName(latestUpdatesVersionDir.getAbsolutePath())));
         }
+
+        if (arcadiaApp.getVersion() == null) {
+            System.out.printf("Current version unknown. Maybe server is stopped. Proceed anyway?:");
+            if (!proceedAnyway())
+                throw new UpdateException(
+                        String.format("ERROR: Unable to update %s. Current version unknown. Maybe server is stopped\n",
+                                arcadiaApp.getApp().getShortName()));
+
+        }
+        if (new Version(fsc.normalizeVersion(arcadiaApp.getVersion())).compareTo(updateVersion) > 0) {
+            throw new UpdateException(arcadiaApp.getApp().getLongName() + " already updated.");
+        }
+        System.out.printf("New version detected %s. Updating in progress...\n", latestUpdatesVersionDir.toString());
         installedAppDir = this.appData.getInstalledDir();
+    }
+
+    private boolean proceedAnyway() {
+        Scanner keyboard = new Scanner(System.in);
+        System.out.println("Y/N");
+        String answer = keyboard.next();
+        return answer.toUpperCase() == "Y";
     }
 
     private void checkDbServer() throws UpdateException {
@@ -107,8 +134,8 @@ public class UpdateController {
 
     private void updateCustom() throws UpdateException {
         // Update custom
-        File sourceOldCustom = FileUtils.getFile(latestAppUpdatesDirectory.toString(), "backout", "custom");
-        File sourceNewCustom = FileUtils.getFile(latestAppUpdatesDirectory.toString(), "custom");
+        File sourceOldCustom = FileUtils.getFile(latestUpdatesVersionDir.toString(), "backout", "custom");
+        File sourceNewCustom = FileUtils.getFile(latestUpdatesVersionDir.toString(), "custom");
         File targetCustom = FileUtils.getFile(installedAppDir.toString(), "custom");
 
         PropertiesUpdaterController puc = new PropertiesUpdaterController(sourceOldCustom, sourceNewCustom, targetCustom);
@@ -122,7 +149,7 @@ public class UpdateController {
     private void updateWars() throws UpdateException {
         // Copy wars but ArcadiaResources reuse filterWebapps created before
         copyFilteredDir(
-                FileUtils.getFile(latestAppUpdatesDirectory.toString(), "wars"),
+                FileUtils.getFile(latestUpdatesVersionDir.toString(), "wars"),
                 FileUtils.getFile(installedAppDir.toString(), "webapps"),
                 new NotFileFilter(new NameFileFilter("ArcadiaResources")));
     }
@@ -131,7 +158,7 @@ public class UpdateController {
         // Copy new sharedlib
         try {
             FileUtils.copyDirectoryToDirectory(
-                    FileUtils.getFile(latestAppUpdatesDirectory.toString(), "sharedlib"),
+                    FileUtils.getFile(latestUpdatesVersionDir.toString(), "sharedlib"),
                     installedAppDir
             );
         } catch (IOException e) {
@@ -140,7 +167,7 @@ public class UpdateController {
         // Copy jars
         FilenameFilter jarsFilter = new SuffixFileFilter(".jar");
         copyFilteredDir(
-                FileUtils.getFile(latestAppUpdatesDirectory.toString(), "jars"),
+                FileUtils.getFile(latestUpdatesVersionDir.toString(), "jars"),
                 FileUtils.getFile(installedAppDir.toString(), "sharedlib"),
                 jarsFilter);
     }
@@ -149,7 +176,7 @@ public class UpdateController {
         // Copy new logback
         try {
             FileUtils.copyDirectoryToDirectory(
-                    FileUtils.getFile(latestAppUpdatesDirectory.toString(), "lib"),
+                    FileUtils.getFile(latestUpdatesVersionDir.toString(), "lib"),
                     installedAppDir
             );
         } catch (IOException e) {
@@ -161,30 +188,30 @@ public class UpdateController {
         // Move sharedlib to backout
         moveFilteredDir(
                 FileUtils.getFile(installedAppDir, "sharedlib"),
-                FileUtils.getFile(latestAppUpdatesDirectory, "backout"),
+                FileUtils.getFile(latestUpdatesVersionDir, "backout"),
                 TrueFileFilter.TRUE);
 
         // Move logback-common.xml to backout
         moveFilteredDir(
                 FileUtils.getFile(installedAppDir.toString(), "lib", "logback-common.xml"),
-                FileUtils.getFile(latestAppUpdatesDirectory.toString(), "backout"), TrueFileFilter.TRUE);
+                FileUtils.getFile(latestUpdatesVersionDir.toString(), "backout"), TrueFileFilter.TRUE);
 
         // Moving old wars and deployed dirs
         moveFilteredDir(
                 FileUtils.getFile(installedAppDir.toString(), "webapps"),
-                FileUtils.getFile(latestAppUpdatesDirectory.toString(), "backout", "wars"),
+                FileUtils.getFile(latestUpdatesVersionDir.toString(), "backout", "wars"),
                 new NotFileFilter(new NameFileFilter("ArcadiaResources")));
 
         // Move custom to backout
         moveFilteredDir(
                 FileUtils.getFile(installedAppDir.toString(), "custom"),
-                FileUtils.getFile(latestAppUpdatesDirectory.toString(), "backout"),
+                FileUtils.getFile(latestUpdatesVersionDir.toString(), "backout"),
                 TrueFileFilter.TRUE);
 
         // Move commons WEB-INF to backout
         moveFilteredDir(
                 FileUtils.getFile(installedAppDir.toString(), "webapps", "ArcadiaResources"),
-                FileUtils.getFile(latestAppUpdatesDirectory.toString(), "backout"),
+                FileUtils.getFile(latestUpdatesVersionDir.toString(), "backout"),
                 new OrFileFilter(
                         new NameFileFilter("commons"),
                         new NameFileFilter("WEB-INF")));
@@ -192,7 +219,7 @@ public class UpdateController {
         // Move logs to backout
         moveFilteredDir(
                 FileUtils.getFile(installedAppDir.toString(), "logs"),
-                FileUtils.getFile(latestAppUpdatesDirectory.toString(), "backout"),
+                FileUtils.getFile(latestUpdatesVersionDir.toString(), "backout"),
                 TrueFileFilter.TRUE);
 
         // Create logs directory
@@ -215,7 +242,7 @@ public class UpdateController {
         // Update resources
         File tempOutputExtractZip = FileUtils.getFile(
                 FileUtils.getTempDirectory(), backupsController.getToday());
-        File warAr = FileUtils.getFile(latestAppUpdatesDirectory.toString(),
+        File warAr = FileUtils.getFile(latestUpdatesVersionDir.toString(),
                 "wars",
                 "ArcadiaResources.war");
         try {
@@ -280,10 +307,11 @@ public class UpdateController {
 
         // Check tomcat stopped
         try {
-            Thread.sleep(5000);
+            Thread.sleep(10000);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
+        System.out.printf("Checking if tomcat_%s server is stopped.", app.getShortName());
         if (serviceController.serviceAlive("tomcat_" + app.getShortName())) {
             throw new UpdateException("Tomcat not stopped!!");
         } else System.out.println("OK: Tomcat is stopped");

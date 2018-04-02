@@ -51,7 +51,7 @@ public class BackupsController {
         if (rootBackupsDir == null) {
             ArcadiaController arcadiaController = ArcadiaController.getInstance();
             // Simple shot, lowerDepthDirectory, guess system has daily
-            FileFinderControllerStr fileFinderController = FileFinderControllerStr.doit("/", "daily", SearchType.Directories);
+            FileFinderControllerStr fileFinderController = FileFinderControllerStr.doit("/", "/daily", SearchType.Directories);
             if (fileFinderController.getNumMatches() > 0)
                 rootBackupsDir = arcadiaController.getLowerDepthDirectory(fileFinderController.results);
         }

@@ -111,7 +111,7 @@ public class ArcadiaController
                 response.append(inputLine);
             }
             bufferedReader.close();
-            System.out.printf("Response from server: %s\n", response);
+            //System.out.printf("Response from server: %s\n", response);
             return (getVersionFromResponse(response.toString()));
         } catch (IOException e) {
             System.out.printf("%s Server not listening. unable to get version in %s\n", app.getLongName(), url);
@@ -176,7 +176,7 @@ public class ArcadiaController
                 System.out.println("App dir found collecting data...");
                 String appPort = getArcadiaAppPort(FileUtils.getFile(tomcatDir, "conf", "server.xml"));
                 String appVersion = getArcadiaVersion(app, appPort);
-
+                System.out.printf("App version: %s.\n", appVersion);
                 if (appPort != null) {
                     ArcadiaAppData arcadiaAppData = new ArcadiaAppData(app, tomcatDir, appPort, appVersion);
                     installedApps.put(app.name(), arcadiaAppData);

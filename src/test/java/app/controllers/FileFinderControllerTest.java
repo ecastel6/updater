@@ -60,21 +60,22 @@ class FileFinderControllerTest {
 
     @Test
     void checkFindDirectory() {
-        long startTime = System.currentTimeMillis();
+        testPattern = "/daily";
+        /* long startTime = System.currentTimeMillis();
         FileFinderController fileFinder = FileFinderController.doit(startPath, testPattern, SearchType.Directories);
         System.out.println(fileFinder.getResults().toString());
         long stopTime = System.currentTimeMillis();
         long elapsedTime = stopTime - startTime;
-        System.out.printf("Elapsed time.GlobSearch: %s\n", elapsedTime);
+        System.out.printf("Elapsed time.GlobSearch: %s\n", elapsedTime);*/
 
-        startTime = System.currentTimeMillis();
+        long startTime = System.currentTimeMillis();
         FileFinderControllerStr fileFinderStr = FileFinderControllerStr.doit(startPath, testPattern, SearchType.Directories);
         System.out.println(fileFinderStr.getResults().toString());
-        stopTime = System.currentTimeMillis();
-        elapsedTime = stopTime - startTime;
+        long stopTime = System.currentTimeMillis();
+        long elapsedTime = stopTime - startTime;
         System.out.printf("Elapsed time.StringSearch: %s\n", elapsedTime);
 
-        assertTrue(fileFinder.getNumMatches() > 0);
+        assertTrue(fileFinderStr.getNumMatches() > 0);
     }
 
     @Test
