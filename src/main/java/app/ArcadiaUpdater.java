@@ -2,7 +2,6 @@ package app;
 
 import app.controllers.ArcadiaController;
 import app.controllers.UpdateController;
-import app.core.UpdateException;
 import app.models.ArcadiaAppData;
 import app.models.Errorlevels;
 import org.apache.commons.cli.*;
@@ -18,7 +17,7 @@ public class ArcadiaUpdater {
 
     public static void main(String[] args) {
         // create the command line parser
-        CommandLine line = null;
+        CommandLine commandLine = null;
         CommandLineParser parser = new DefaultParser();
 
         // create the Options
@@ -34,48 +33,53 @@ public class ArcadiaUpdater {
         executionMode.addOption(t);
         options.addOptionGroup(executionMode);
 
-        options.addOption("F", "force", false, "do not check servers for version. Force update.");
+        options.addOption("F", "force", false, "Forced update. do not check servers for version");
         options.addOption(Option.builder("R").longOpt("repository").hasArg(true)
                 .argName("repodir").desc("Update repository e.g. ./updates or /opt/arcadiaVersions")
                 .required(false).build());
-        options.addOption("b", "ignore-backupsize", false, "do not check backups size");
-        options.addOption("B", "ignore-backout", false, "do not preserve old version to backout.");
+        options.addOption(Option.builder("t").longOpt("timeout").hasArg(true)
+                .argName("time").desc("set stop tomcat services timeout")
+                .required(false).build());
+        options.addOption("s", "ignore-backups-size", false, "do not check backups size");
+        options.addOption("b", "override-backups", false, "Do not make security backups");
+        options.addOption("B", "override-backout", false, "Do not move old version to backout");
+        options.addOption("n", "ignore-checkservices", false, "do not check services availability (Rabbitmq,Zookeeper).");
         try {
             // parse the command line arguments
-            line = parser.parse(options, args);
+            commandLine = parser.parse(options, args);
 
             // validate that block-size has been set
-            if ((line.hasOption("h") || (args.length == 0)) || (!line.hasOption("S") && !line.hasOption("T"))) {
+            if ((commandLine.hasOption("h") || (args.length == 0)) || (!commandLine.hasOption("S") && !commandLine.hasOption("T"))) {
                 // display help
                 HelpFormatter formatter = new HelpFormatter();
                 formatter.printHelp("arcadia-updater", options);
                 System.exit(1);
             }
-            if (line.hasOption("repository") && (!new File(line.getOptionValue("repository")).exists())) {
-                System.out.printf("%s %s\n", line.getOptionValue("repository"), Errorlevels.E2.getErrorDescription());
+            if (commandLine.hasOption("repository") && (!new File(commandLine.getOptionValue("repository")).exists())) {
+                System.out.printf("%s %s\n", commandLine.getOptionValue("repository"), Errorlevels.E2.getErrorDescription());
                 System.exit(Errorlevels.E2.getErrorLevel());
             }
         } catch (ParseException exp) {
             System.out.println(exp.getMessage());
         }
 
-        if (line.hasOption("S")) {
+        if (commandLine.hasOption("S")) {
             ArcadiaController arcadiaController = ArcadiaController.getInstance();
             arcadiaController.getInstalledApps();
             System.out.printf("%s valid app targets\n", arcadiaController.installedApps.size());
             for (ArcadiaAppData arcadiaAppData : arcadiaController.installedApps.values()) {
                 System.out.printf("Updating %s ...\n", arcadiaAppData.toString());
                 boolean result;
-                UpdateController updateController = new UpdateController(line, arcadiaAppData);
+                UpdateController updateController = new UpdateController(commandLine, arcadiaAppData);
                 try {
                     result = updateController.updateApp(arcadiaAppData);
-                } catch (UpdateException e) {
+                } catch (RuntimeException e) {
                     System.out.println(e.getMessage());
                 }
             }
             System.exit(0);
         }
-        if (line.hasOption("T") && !line.hasOption("repository")) {
+        if (commandLine.hasOption("T") && !commandLine.hasOption("repository")) {
             System.out.println(Errorlevels.E4.getErrorDescription());
             System.exit(Errorlevels.E4.getErrorLevel());
         }

@@ -10,15 +10,16 @@ import java.io.FileFilter;
 import java.nio.file.Paths;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-class FileSystemCommonsTest
+class SystemCommonsTest
 {
 
     @Test
     void getVersionFromDir() {
         String textVersion;
         textVersion = "3.12R2";
-        //FileSystemCommons fsc=new FileSystemCommons();
+        //SystemCommons fsc=new SystemCommons();
         //System.out.println(fsc.getVersionFromDir(textVersion).toString());
         //System.out.println(new ComparableVersion("3.12R1").compareTo(new ComparableVersion("3.13")));
 
@@ -45,14 +46,14 @@ class FileSystemCommonsTest
         for (File f : updatesDirList)
             System.out.println(f);
         System.out.println("Sorted");
-        FileSystemCommons fsc = new FileSystemCommons();
+        SystemCommons fsc = new SystemCommons();
         for (File f : fsc.sortDirectoriesByVersion(updatesDirList))
             System.out.println(f);
     }
 
     @Test
     void normalizeVersion() {
-        FileSystemCommons fsc = new FileSystemCommons();
+        SystemCommons fsc = new SystemCommons();
         String rVersion = "3.12R4";
         String normalizedVersion = fsc.normalizeVersion(rVersion);
         Version version = new Version(normalizedVersion);
@@ -62,5 +63,12 @@ class FileSystemCommonsTest
                 normalizedVersion,
                 version.toString());
         assertEquals("3.12.2", fsc.normalizeVersion("3.12R2"));
+    }
+
+    @Test
+    void getTodayTest() {
+        String today = new SystemCommons().getToday();
+        System.out.println(today);
+        assertTrue(Integer.parseInt(today.split("-")[0]) > 2000);
     }
 }

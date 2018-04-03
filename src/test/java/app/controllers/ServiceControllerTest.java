@@ -67,4 +67,6 @@ class ServiceControllerTest {
         boolean finalStatus = serviceController.serviceAlive(testSVC);
         System.out.printf("Service %s final status is %s\n", testSVC, finalStatus);
     }
+
+
 }

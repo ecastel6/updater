@@ -6,8 +6,6 @@ import app.models.SearchType;
 import org.apache.commons.io.FileUtils;
 
 import java.io.File;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 
 public class BackupsController {
     private static BackupsController ourInstance = new BackupsController();
@@ -21,14 +19,7 @@ public class BackupsController {
         return ourInstance;
     }
 
-    public String getToday() {
-        if (today == null) {
-            SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd_HH-mm.EEEE");
-            Date now = new Date();
-            today = simpleDateFormat.format(now);
-        }
-        return today;
-    }
+
 
     public Long getLatestBackupSize(ArcadiaApp app) {
         return FileUtils.sizeOfDirectory(getLastBackupDir(app));
@@ -44,7 +35,7 @@ public class BackupsController {
 
         // app backups directory empty
         if (listDirectories.length == 0) return null;
-        return new FileSystemCommons().sortDirectoriesByDate(listDirectories)[0];
+        return new SystemCommons().sortDirectoriesByDate(listDirectories)[0];
     }
 
     public File getRootBackupsDir() {

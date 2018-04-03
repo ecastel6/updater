@@ -1,6 +1,5 @@
 package app.controllers;
 
-import app.core.UpdateException;
 import app.core.Version;
 import app.core.ZipHandler;
 import app.models.ArcadiaApp;
@@ -22,15 +21,13 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Scanner;
 
-public class UpdateController
-{
+public class UpdateController {
     final static int DBTHRESHOLD = 3;
     // instance BackupsController
-    BackupsController backupsController = BackupsController.getInstance();
+    private BackupsController backupsController = BackupsController.getInstance();
     // instance ServiceController
-    ServiceController serviceController = ServiceController.getInstance();
+    private ServiceController serviceController = ServiceController.getInstance();
 
     // this appupdater
     private ArcadiaAppData appData;
@@ -53,18 +50,17 @@ public class UpdateController
      Main method
      *
      */
-    public Boolean updateApp(ArcadiaAppData app) throws UpdateException {
+    public Boolean updateApp(ArcadiaAppData app) throws RuntimeException {
         sysinit(app);
-        checkDbServer();
-        checkRabbitmq();
-        checkZookeeper();
+        if (!this.commandLine.hasOption("n")) {
+            checkRabbitmq();
+            checkZookeeper();
+        }
         stopAppServer(app.getApp());
-        Long lastBackupSize = backupsController.getLatestBackupSize(app.getApp());
-        Long databaseBackupDirSize = backupDatabase(app.getApp());
-        if (currentBackupSizeMismatch(lastBackupSize, databaseBackupDirSize))
-            throw new UpdateException("ERROR: Backup size mismatch!!!");
-        backupArcadiaResources();
-        backoutApp();
+        if (!this.commandLine.hasOption("b"))
+            backupDatabase(app.getApp());
+        if (!this.commandLine.hasOption("B"))
+            backoutApp();
         // Now place new version
         updateArcadiaResources();
         updateLogBack();
@@ -73,19 +69,25 @@ public class UpdateController
         updateCustom();
         startAppServer(app.getApp());
         // Check schema_version all ok
-
         return true;
+    }
+
+    private void backupDatabase(ArcadiaAppData app) throws RuntimeException {
+        checkDbServer();
+        Long lastBackupSize = backupsController.getLatestBackupSize(app.getApp());
+        Long databaseBackupDirSize = backupDatabase(app.getApp());
+        if (currentBackupSizeMismatch(lastBackupSize, databaseBackupDirSize) && !this.commandLine.hasOption("b"))
+            throw new RuntimeException("ERROR: Backup size mismatch!!!");
+        backupArcadiaResources();
     }
 
     private boolean currentBackupSizeMismatch(Long lastBackupSize, Long databaseBackupDirSize) {
         return backupsController.differencePercentage(lastBackupSize, databaseBackupDirSize) > DBTHRESHOLD;
     }
 
-    private void sysinit(ArcadiaAppData arcadiaApp) throws UpdateException {
+    private void sysinit(ArcadiaAppData arcadiaApp) throws RuntimeException {
         // Initialize general Directories variables
-        //check valid backups directory
-        if (backupsController.getRootBackupsDir() == null)
-            throw new UpdateException("ERROR: invalid database backup directory");
+
 
         this.appData = arcadiaApp;
         arcadiaUpdatesRepository = arcadiaController.getArcadiaUpdatesRepository().toFile();
@@ -95,44 +97,35 @@ public class UpdateController
         //
         Path eachApp = Paths.get(arcadiaController.getArcadiaUpdatesRepository().toString(), arcadiaApp.getApp().getShortName());
         File[] subdirs = eachApp.toFile().listFiles((FileFilter) DirectoryFileFilter.DIRECTORY);
-        FileSystemCommons fsc = new FileSystemCommons();
+        SystemCommons systemCommons = new SystemCommons();
         Version updateVersion = null;
         if (subdirs.length > 0) {
-            latestUpdatesVersionDir = fsc.sortDirectoriesByVersion(subdirs)[0];
+            latestUpdatesVersionDir = systemCommons.sortDirectoriesByVersion(subdirs)[0];
             System.out.printf("ArcadiaUpdater.updateApp latestUpdatesVersionDir:%s\n", latestUpdatesVersionDir);
-            updateVersion = new Version(fsc.normalizeVersion(FilenameUtils.getName(latestUpdatesVersionDir.getAbsolutePath())));
+            updateVersion = new Version(systemCommons.normalizeVersion(FilenameUtils.getName(latestUpdatesVersionDir.getAbsolutePath())));
         }
 
         if (arcadiaApp.getVersion() == null) {
-            System.out.printf("Current version unknown. Maybe server is stopped. Proceed anyway?:");
-            if (!proceedAnyway())
-                throw new UpdateException(
-                        String.format("ERROR: Unable to update %s. Current version unknown. Maybe server is stopped\n",
-                                arcadiaApp.getApp().getShortName()));
+            throw new RuntimeException(
+                    String.format("ERROR: Unable to update %s. Current version unknown. Maybe server is stopped\n",
+                            arcadiaApp.getApp().getShortName()));
 
         }
-        if (new Version(fsc.normalizeVersion(arcadiaApp.getVersion())).compareTo(updateVersion) > 0) {
-            throw new UpdateException(arcadiaApp.getApp().getLongName() + " already updated.");
+        if (new Version(systemCommons.normalizeVersion(arcadiaApp.getVersion())).compareTo(updateVersion) > 0) {
+            throw new RuntimeException(arcadiaApp.getApp().getLongName() + " already updated.");
         }
         System.out.printf("New version detected %s. Updating in progress...\n", latestUpdatesVersionDir.toString());
         installedAppDir = this.appData.getInstalledDir();
     }
 
-    private boolean proceedAnyway() {
-        Scanner keyboard = new Scanner(System.in);
-        System.out.println("Y/N");
-        String answer = keyboard.next();
-        return answer.toUpperCase() == "Y";
-    }
-
-    private void checkDbServer() throws UpdateException {
+    private void checkDbServer() throws RuntimeException {
         // Check database service
         if (!serviceController.serviceAlive("postgres")) {
-            throw new UpdateException("Database not started");
+            throw new RuntimeException("Database not started");
         } else System.out.println("OK: Database Server available");
     }
 
-    private void updateCustom() throws UpdateException {
+    private void updateCustom() throws RuntimeException {
         // Update custom
         File sourceOldCustom = FileUtils.getFile(latestUpdatesVersionDir.toString(), "backout", "custom");
         File sourceNewCustom = FileUtils.getFile(latestUpdatesVersionDir.toString(), "custom");
@@ -142,11 +135,11 @@ public class UpdateController
         try {
             puc.updateCustom();
         } catch (IOException e) {
-            throw new UpdateException("Error updating custom");
+            throw new RuntimeException("Error updating custom");
         }
     }
 
-    private void updateWars() throws UpdateException {
+    private void updateWars() throws RuntimeException {
         // Copy wars but ArcadiaResources reuse filterWebapps created before
         copyFilteredDir(
                 FileUtils.getFile(latestUpdatesVersionDir.toString(), "wars"),
@@ -154,7 +147,7 @@ public class UpdateController
                 new NotFileFilter(new NameFileFilter("ArcadiaResources")));
     }
 
-    private void updateSharedlib() throws UpdateException {
+    private void updateSharedlib() throws RuntimeException {
         // Copy new sharedlib
         try {
             FileUtils.copyDirectoryToDirectory(
@@ -162,7 +155,7 @@ public class UpdateController
                     installedAppDir
             );
         } catch (IOException e) {
-            throw new UpdateException("Error copying sharedlib");
+            throw new RuntimeException("Error copying sharedlib");
         }
         // Copy jars
         FilenameFilter jarsFilter = new SuffixFileFilter(".jar");
@@ -172,7 +165,7 @@ public class UpdateController
                 jarsFilter);
     }
 
-    private void updateLogBack() throws UpdateException {
+    private void updateLogBack() throws RuntimeException {
         // Copy new logback
         try {
             FileUtils.copyDirectoryToDirectory(
@@ -180,11 +173,11 @@ public class UpdateController
                     installedAppDir
             );
         } catch (IOException e) {
-            throw new UpdateException("Error copying logback configuration");
+            throw new RuntimeException("Error copying logback configuration");
         }
     }
 
-    private void backoutApp() throws UpdateException {
+    private void backoutApp() throws RuntimeException {
         // Move sharedlib to backout
         moveFilteredDir(
                 FileUtils.getFile(installedAppDir, "sharedlib"),
@@ -226,7 +219,7 @@ public class UpdateController
         try {
             FileUtils.forceMkdir(FileUtils.getFile(installedAppDir.toString(), "logs"));
         } catch (IOException e) {
-            throw new UpdateException("Error creating logs directory");
+            throw new RuntimeException("Error creating logs directory");
         }
 
         // Clean tomcat cache
@@ -234,14 +227,15 @@ public class UpdateController
             FileUtils.cleanDirectory(
                     FileUtils.getFile(installedAppDir.toString(), "work"));
         } catch (IOException e) {
-            throw new UpdateException("Error cleaning Tomcat cache");
+            throw new RuntimeException("Error cleaning Tomcat cache");
         }
     }
 
-    private void updateArcadiaResources() throws UpdateException {
+    private void updateArcadiaResources() throws RuntimeException {
         // Update resources
+
         File tempOutputExtractZip = FileUtils.getFile(
-                FileUtils.getTempDirectory(), backupsController.getToday());
+                FileUtils.getTempDirectory(), new SystemCommons().getToday());
         File warAr = FileUtils.getFile(latestUpdatesVersionDir.toString(),
                 "wars",
                 "ArcadiaResources.war");
@@ -249,7 +243,7 @@ public class UpdateController
             ZipFile zipFile = new ZipFile(warAr);
             zipFile.extractAll(tempOutputExtractZip.toString());
         } catch (ZipException e) {
-            throw new UpdateException("Error extracting ArcadiaResources");
+            throw new RuntimeException("Error extracting ArcadiaResources");
         }
 
         // Copy commons
@@ -264,7 +258,7 @@ public class UpdateController
                             "ArcadiaResources")
             );
         } catch (IOException e) {
-            throw new UpdateException("Error copying new ArcadiaResources");
+            throw new RuntimeException("Error copying new ArcadiaResources");
         }
         try {
             FileUtils.copyDirectoryToDirectory(
@@ -277,7 +271,7 @@ public class UpdateController
                             "ArcadiaResources")
             );
         } catch (IOException e) {
-            throw new UpdateException("Error copying new ArcadiaResources");
+            throw new RuntimeException("Error copying new ArcadiaResources");
         }
     }
 
@@ -288,19 +282,22 @@ public class UpdateController
     }
 
 
-    private Long backupDatabase(ArcadiaApp app) throws UpdateException {
+    private Long backupDatabase(ArcadiaApp app) throws RuntimeException {
+        //check valid backups directory
+        if (backupsController.getRootBackupsDir() == null)
+            throw new RuntimeException("ERROR: invalid database backup directory");
         // Backup database
         File targetBackupDir = FileUtils.getFile(
                 backupsController.getRootBackupsDir(),
                 app.getDatabaseName(),
-                app.getDatabaseName() + "_" + backupsController.getToday());
+                app.getDatabaseName() + "_" + new SystemCommons().getToday());
         if (backupsController.databaseBackup(app.getDatabaseName(), targetBackupDir) > 0) {
-            throw new UpdateException("Error while backup'in database");
+            throw new RuntimeException("Error while backup'in database");
         }
         return FileUtils.sizeOfDirectory(targetBackupDir);
     }
 
-    private void stopAppServer(ArcadiaApp app) throws UpdateException {
+    private void stopAppServer(ArcadiaApp app) throws RuntimeException {
         // Stop tomcat service
         ReturnValues returnValues = serviceController.serviceAction(
                 "tomcat_" + app.getShortName(), "stop");
@@ -313,11 +310,11 @@ public class UpdateController
         }
         System.out.printf("Checking if tomcat_%s server is stopped.", app.getShortName());
         if (serviceController.serviceAlive("tomcat_" + app.getShortName())) {
-            throw new UpdateException("Tomcat not stopped!!");
+            throw new RuntimeException("Tomcat not stopped!!");
         } else System.out.println("OK: Tomcat is stopped");
     }
 
-    private void startAppServer(ArcadiaApp app) throws UpdateException {
+    private void startAppServer(ArcadiaApp app) throws RuntimeException {
         // Stop tomcat service
         ReturnValues returnValues = serviceController.serviceAction(
                 "tomcat_" + app.getShortName(), "start");
@@ -326,14 +323,14 @@ public class UpdateController
         if (serviceController.serviceAlive("tomcat_" + app.getShortName())) {
             System.out.println("OK: Tomcat started");
         } else
-            throw new UpdateException("ERROR: Tomcat not started!!");
+            throw new RuntimeException("ERROR: Tomcat not started!!");
     }
 
     private void checkZookeeper() {
         // Check zookeeper
         if (!serviceController.serviceAlive("zookeeper")) {
             System.out.println("ERROR: Zookeeper not started");
-            //throw new UpdateException("ERROR: Zookeeper not started");
+            //throw new RuntimeException("ERROR: Zookeeper not started");
         } else System.out.println("OK: Zookeeper Server available");
     }
 
@@ -341,11 +338,11 @@ public class UpdateController
         // Check rabbitmq
         if (!serviceController.serviceAlive("rabbitmq")) {
             System.out.println("ERROR: Rabbitmq not started");
-            //throw new UpdateException("ERROR: Rabbitmq not started");
+            //throw new RuntimeException("ERROR: Rabbitmq not started");
         } else System.out.println("OK: RabbitMq Server available");
     }
 
-    private void moveFilteredDir(File source, File target, FilenameFilter filter) throws UpdateException {
+    private void moveFilteredDir(File source, File target, FilenameFilter filter) throws RuntimeException {
         Collection<File> filteredDir = new ArrayList<>();
         if (filter.equals(TrueFileFilter.INSTANCE)) {
             if (source.exists())
@@ -364,12 +361,12 @@ public class UpdateController
                 else
                     FileUtils.moveFileToDirectory(file, target, true);
             } catch (IOException e) {
-                throw new UpdateException("ERROR moving " + file + " " + e.getMessage());
+                throw new RuntimeException("ERROR moving " + file + " " + e.getMessage());
             }
         }
     }
 
-    private void copyFilteredDir(File source, File target, FilenameFilter filter) throws UpdateException {
+    private void copyFilteredDir(File source, File target, FilenameFilter filter) throws RuntimeException {
         Collection<File> filteredDir = new ArrayList<>();
         filteredDir.addAll(Arrays.asList(source.listFiles(filter)));
         for (File file : filteredDir) {
@@ -377,13 +374,13 @@ public class UpdateController
                 try {
                     FileUtils.copyDirectoryToDirectory(file, target);
                 } catch (IOException e) {
-                    throw new UpdateException("Error copying " + source + " to " + target);
+                    throw new RuntimeException("Error copying " + source + " to " + target);
                 }
             else
                 try {
                     FileUtils.copyFileToDirectory(file, target, true);
                 } catch (IOException e) {
-                    throw new UpdateException("Error copying " + source + " to " + target);
+                    throw new RuntimeException("Error copying " + source + " to " + target);
                 }
         }
     }
@@ -392,7 +389,7 @@ public class UpdateController
     // Input Array of directories
     // returns first sorted
     public File getLatestUpdate(File[] updatesDir) {
-        new FileSystemCommons().sortDirectoriesByDate(updatesDir);
+        new SystemCommons().sortDirectoriesByDate(updatesDir);
         return updatesDir[0];
     }
 }

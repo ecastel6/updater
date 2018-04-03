@@ -23,7 +23,7 @@ class UpdateControllerTest
             if (subdirs.length > 0)
                 System.out.printf("%s latest update: %s\n",
                         app.getShortName(),
-                        new FileSystemCommons().sortDirectoriesByName(subdirs)[0]);
+                        new SystemCommons().sortDirectoriesByName(subdirs)[0]);
         }
     }
 

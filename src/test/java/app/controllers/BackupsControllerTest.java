@@ -53,9 +53,5 @@ class BackupsControllerTest
         }
     }
 
-    @Test
-    void getToday() {
-        BackupsController backupsController = BackupsController.getInstance();
-        System.out.println(backupsController.getToday());
-    }
+
 }
