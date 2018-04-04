@@ -129,7 +129,6 @@ public class ServiceController {
         return returnedValues;
     }
 
-    // TODO Check process exists
     public Boolean serviceAlive(String serviceName) {
         Process p;
         try {
@@ -150,14 +149,5 @@ public class ServiceController {
             err.printStackTrace();
         }
         return false;
-    }
-
-    public static void main(String[] args) {
-        ServiceController sc = new ServiceController();
-        /*ReturnValues rv = sc.serviceAction("apache2", "status");
-        System.out.println("Return code: " + rv.t);
-        System.out.println("stdOut: " + rv.u);
-        //System.getProperties().list(System.out);*/
-        System.out.println(sc.serviceAlive("tomcat"));
     }
 }

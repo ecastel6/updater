@@ -5,24 +5,47 @@ import app.core.Version;
 import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static java.lang.Thread.sleep;
 
 public class SystemCommons {
-    public static void main(String[] args) throws InterruptedException {
+
+    public static void endstuff() {
+        int min = 0, max = 20;
+
+        int randomNum = ThreadLocalRandom.current().nextInt(min, max + 1);
+        System.out.printf("Check stopped. Random: %s\n", randomNum);
+    }
+
+
+    public static void timedExecution(long timeout, String service) throws InterruptedException {
         long startTime = System.currentTimeMillis();
-        // .. do stuff ..
         int count = 0;
         while (true) {
-            System.out.printf("Check stopped %s\n", count++);
+            if (!ServiceController.getInstance().serviceAlive(service)) {
+                System.out.println("Service stoped");
+                break;
+            }
+            System.out.printf("Check %s\n", count++);
             sleep(1000);
             long elapsed = System.currentTimeMillis() - startTime;
-            if (elapsed > 20000)
+            if (elapsed > timeout)
                 throw new RuntimeException("timeout");
         }
     }
+
+    public static void main(String[] args) {
+        ServiceController.getInstance().serviceAction("tomcat_cbos", "stop");
+        try {
+            timedExecution(20000, "tomcat_cbos");
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
 
     public File[] sortDirectoriesByDate(File[] listDirectories) {
         Arrays.sort(listDirectories, new Comparator<File>() {
