@@ -66,8 +66,8 @@ public class ArcadiaUpdater {
         if (commandLine.hasOption("S")) {
             ArcadiaController arcadiaController = ArcadiaController.getInstance();
             arcadiaController.getInstalledApps();
-            System.out.printf("%s valid app targets\n", arcadiaController.installedApps.size());
-            for (ArcadiaAppData arcadiaAppData : arcadiaController.installedApps.values()) {
+            System.out.printf("%s valid app targets\n", arcadiaController.getInstalledApps().size());
+            for (ArcadiaAppData arcadiaAppData : arcadiaController.getInstalledApps().values()) {
                 System.out.printf("Updating %s ...\n", arcadiaAppData.toString());
                 boolean result;
                 UpdateController updateController = new UpdateController(commandLine, arcadiaAppData);

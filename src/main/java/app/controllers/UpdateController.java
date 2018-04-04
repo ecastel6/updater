@@ -1,6 +1,5 @@
 package app.controllers;
 
-import app.core.Version;
 import app.core.ZipHandler;
 import app.models.ArcadiaApp;
 import app.models.ArcadiaAppData;
@@ -9,15 +8,11 @@ import net.lingala.zip4j.core.ZipFile;
 import net.lingala.zip4j.exception.ZipException;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.filefilter.*;
 
 import java.io.File;
-import java.io.FileFilter;
 import java.io.FilenameFilter;
 import java.io.IOException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -90,15 +85,14 @@ public class UpdateController {
 
 
         this.appData = arcadiaApp;
-        arcadiaUpdatesRepository = arcadiaController.getArcadiaUpdatesRepository().toFile();
-        System.out.printf("ArcadiaUpdater.updateApp updatesdir:%s\n", arcadiaUpdatesRepository);
 
-        // latest update available
+
+        /* DEPRECATED - FUNCIONALITY REFACTORIZED TO ARCADIACONTROLLER// latest update available
         //
         Path eachApp = Paths.get(arcadiaController.getArcadiaUpdatesRepository().toString(), arcadiaApp.getApp().getShortName());
-        File[] subdirs = eachApp.toFile().listFiles((FileFilter) DirectoryFileFilter.DIRECTORY);
         SystemCommons systemCommons = new SystemCommons();
         Version updateVersion = null;
+        File[] subdirs = eachApp.toFile().listFiles((FileFilter) DirectoryFileFilter.DIRECTORY);
         if (subdirs.length > 0) {
             latestUpdatesVersionDir = systemCommons.sortDirectoriesByVersion(subdirs)[0];
             System.out.printf("ArcadiaUpdater.updateApp latestUpdatesVersionDir:%s\n", latestUpdatesVersionDir);
@@ -115,7 +109,8 @@ public class UpdateController {
             throw new RuntimeException(arcadiaApp.getApp().getLongName() + " already updated.");
         }
         System.out.printf("New version detected %s. Updating in progress...\n", latestUpdatesVersionDir.toString());
-        installedAppDir = this.appData.getInstalledDir();
+        */
+        installedAppDir = this.appData.getDirectory();
     }
 
     private void checkDbServer() throws RuntimeException {

@@ -5,13 +5,13 @@ import java.io.File;
 public class ArcadiaAppData
 {
     ArcadiaApp app;
-    File installedDir;
+    File directory;
     String portNumber;
     String version;
 
-    public ArcadiaAppData(ArcadiaApp app, File installedDir, String portNumber, String version) {
+    public ArcadiaAppData(ArcadiaApp app, File directory, String portNumber, String version) {
         this.app = app;
-        this.installedDir = installedDir;
+        this.directory = directory;
         this.portNumber = portNumber;
         this.version = version;
     }
@@ -27,12 +27,12 @@ public class ArcadiaAppData
         this.app = app;
     }
 
-    public File getInstalledDir() {
-        return installedDir;
+    public File getDirectory() {
+        return directory;
     }
 
-    public void setInstalledDir(File installedDir) {
-        this.installedDir = installedDir;
+    public void setDirectory(File directory) {
+        this.directory = directory;
     }
 
     public String getPortNumber() {
@@ -55,7 +55,7 @@ public class ArcadiaAppData
     public String toString() {
         return "ArcadiaAppData{" +
                 "app=" + app +
-                ", installedDir=" + installedDir +
+                ", directory=" + directory +
                 ", portNumber=" + portNumber +
                 ", version='" + version + '\'' +
                 '}';
