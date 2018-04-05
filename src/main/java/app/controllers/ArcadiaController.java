@@ -215,7 +215,7 @@ public class ArcadiaController {
                 File newestVersion = systemCommons.sortDirectoriesByVersion(directory.listFiles())[0];
                 arcadiaAppData.setDirectory(newestVersion);
                 arcadiaAppData.setVersion(new Version(systemCommons.normalizeVersion(FilenameUtils.getName(newestVersion.getAbsolutePath()))).toString());
-                availableUpdates.put(directory.getName().toString(), arcadiaAppData);
+                availableUpdates.put(directory.getName(), arcadiaAppData);
             }
         return availableUpdates;
     }

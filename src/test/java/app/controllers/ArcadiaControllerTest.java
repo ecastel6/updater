@@ -5,6 +5,7 @@ import app.models.ArcadiaAppData;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
+import java.util.HashMap;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -38,12 +39,6 @@ class ArcadiaControllerTest {
     }
 
     @Test
-    void getArcadiaUpdatesRepositoryTest() {
-        ArcadiaController arcadiaController = ArcadiaController.getInstance();
-        assertNotNull(arcadiaController.getArcadiaUpdatesRepository());
-    }
-
-    @Test
     void getVersionFromResponseTest() {
         ArcadiaController arcadiaController = ArcadiaController.getInstance();
         String response = "3.11R4-RELEASE<br>Core-Version: 3.20-RELEASE<br>Messaging-Version: 1.11";
@@ -55,5 +50,12 @@ class ArcadiaControllerTest {
         ArcadiaController arcadiaController = ArcadiaController.getInstance();
         String response = arcadiaController.getArcadiaVersion(ArcadiaApp.CBOS, "81");
         System.out.printf("Version from response: %s\n", response);
+    }
+
+    @Test
+    void getAvailableUpdatesTest() {
+        Map<String, ArcadiaAppData> testMap = new HashMap<>();
+        testMap = ArcadiaController.getInstance().getAvailableUpdates();
+
     }
 }

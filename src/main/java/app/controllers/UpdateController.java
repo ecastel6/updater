@@ -17,7 +17,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 
-public class UpdateController {
+public class UpdateController
+{
     final static int DBTHRESHOLD = 3;
     // instance BackupsController
     private BackupsController backupsController = BackupsController.getInstance();
