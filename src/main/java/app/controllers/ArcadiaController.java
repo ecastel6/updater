@@ -22,6 +22,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -44,6 +45,16 @@ public class ArcadiaController {
         return ourInstance;
     }
 
+    public static void main(String[] args) {
+        List<String> appnames = new ArrayList<>();
+        for (ArcadiaApp app : ArcadiaApp.values()) {
+            appnames.add(app.getShortName());
+        }
+        if (appnames.contains("cbos")) {
+            System.out.println("contenido");
+        }
+
+    }
 
     /*
             Read tomcat conf get HTTP connector port
@@ -122,7 +133,6 @@ public class ArcadiaController {
         }
     }
 
-
     public File getLowerDepthDirectory(ArrayList<Path> alternatives) {
         Integer lowerDepth = Integer.MAX_VALUE;
         Path lowerDepthPath = null;
@@ -200,23 +210,46 @@ public class ArcadiaController {
         Search available updates within arcadiaUpdatesRepository
         returns Map String -> ArcadiaAppData
     */
-    public Map<String, ArcadiaAppData> getAvailableUpdates() {
-        if (this.availableUpdates != null) {
+    public Map<String, ArcadiaAppData> getAvailableUpdates(Path updatesDir) {
+        if (!this.availableUpdates.isEmpty()) {
             return availableUpdates;
         }
         System.out.println("Checking available updates...");
         // Search updates
-        File[] updatesSubdirs = this.arcadiaUpdatesRepository.toFile().listFiles((FileFilter) DirectoryFileFilter.DIRECTORY);
+
+        FilenameFilter ff = new FilenameFilter() {
+            public boolean accept(File directory, String fileName) {
+                return validArcadiaDirectories().contains(fileName);
+            }
+        };
+        File[] updatesSubdirs = updatesDir.toFile().listFiles((FileFilter) DirectoryFileFilter.DIRECTORY);
+        //List<ArcadiaApp> list = Collections.list(ArcadiaApp.values());
+//                ArcadiaApp.values()
+
         if (updatesSubdirs.length > 0)
             for (File directory : updatesSubdirs) {
                 System.out.printf("Checking version from %s\n", directory);
                 ArcadiaAppData arcadiaAppData = new ArcadiaAppData();
                 SystemCommons systemCommons = new SystemCommons();
-                File newestVersion = systemCommons.sortDirectoriesByVersion(directory.listFiles())[0];
-                arcadiaAppData.setDirectory(newestVersion);
-                arcadiaAppData.setVersion(new Version(systemCommons.normalizeVersion(FilenameUtils.getName(newestVersion.getAbsolutePath()))).toString());
-                availableUpdates.put(directory.getName(), arcadiaAppData);
+
+
+                if (directory.listFiles(ff).length > 0) {
+                    File newestVersion = systemCommons.sortDirectoriesByVersion(directory.listFiles())[0];
+                    arcadiaAppData.setDirectory(newestVersion);
+                    arcadiaAppData.setVersion(new Version(systemCommons.normalizeVersion(FilenameUtils.getName(newestVersion.getAbsolutePath()))).toString());
+                    availableUpdates.put(directory.getName(), arcadiaAppData);
+                } else System.out.printf("ERROR: empty updates directory %s\n", directory);
             }
         return availableUpdates;
+    }
+
+    /*
+        Generate a List with Arcadia shortnames
+     */
+    private List<String> validArcadiaDirectories() {
+        List<String> appnames = new ArrayList<>();
+        for (ArcadiaApp app : ArcadiaApp.values())
+            appnames.add(app.getShortName());
+        return appnames;
     }
 }

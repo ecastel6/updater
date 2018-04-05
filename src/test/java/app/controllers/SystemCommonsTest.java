@@ -37,7 +37,7 @@ class SystemCommonsTest
     void sortDirectoriesByVersionTest() {
         ArcadiaController arcadiaController = ArcadiaController.getInstance();
         File updatesRepository = Paths.get(
-                arcadiaController.getArcadiaUpdatesRepository().toString(),
+                arcadiaController.getArcadiaUpdatesRepository(null).toString(),
                 ArcadiaApp.CBOS.getShortName()).toFile();
         System.out.printf("UpdatesRepository: %s\n", updatesRepository);
         File[] updatesDirList = updatesRepository

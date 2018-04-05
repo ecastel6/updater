@@ -5,6 +5,7 @@ import app.models.ArcadiaAppData;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -55,7 +56,9 @@ class ArcadiaControllerTest {
     @Test
     void getAvailableUpdatesTest() {
         Map<String, ArcadiaAppData> testMap = new HashMap<>();
-        testMap = ArcadiaController.getInstance().getAvailableUpdates();
-
+        testMap = ArcadiaController.getInstance().getAvailableUpdates(Paths.get("D:\\Synology\\CloudStation\\opt\\arcadiaVersions"));
+        for (Map.Entry<String, ArcadiaAppData> entry : testMap.entrySet()) {
+            System.out.printf("App: %s -> Version: %s Directory: %s\n", entry.getKey(), entry.getValue().getVersion(), entry.getValue().getDirectory());
+        }
     }
 }

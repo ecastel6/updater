@@ -18,7 +18,7 @@ class UpdateControllerTest
     void getLatestUpdate() {
         ArcadiaController arcadiaController = ArcadiaController.getInstance();
         for (ArcadiaApp app : ArcadiaApp.values()) {
-            Path eachApp = Paths.get(arcadiaController.getArcadiaUpdatesRepository().toString(), app.getShortName());
+            Path eachApp = Paths.get(arcadiaController.getArcadiaUpdatesRepository(null).toString(), app.getShortName());
             File[] subdirs = eachApp.toFile().listFiles((FileFilter) DirectoryFileFilter.DIRECTORY);
             if (subdirs.length > 0)
                 System.out.printf("%s latest update: %s\n",
