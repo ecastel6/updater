@@ -10,7 +10,6 @@ import org.apache.commons.configuration2.builder.fluent.Configurations;
 import org.apache.commons.configuration2.ex.ConfigurationException;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.io.filefilter.DirectoryFileFilter;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
@@ -27,7 +26,8 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class ArcadiaController {
+public class ArcadiaController
+{
 
     private static ArcadiaController ourInstance = new ArcadiaController();
     Path arcadiaUpdatesRepository;
@@ -217,27 +217,30 @@ public class ArcadiaController {
         System.out.println("Checking available updates...");
         // Search updates
 
-        FilenameFilter ff = new FilenameFilter() {
+        final List<String> validArcadiaDirectories = validArcadiaDirectories();
+        FilenameFilter validAppUpdateDirectories = new FilenameFilter()
+        {
             public boolean accept(File directory, String fileName) {
-                return validArcadiaDirectories().contains(fileName);
+                return directory.isDirectory() && validArcadiaDirectories.contains(fileName);
             }
         };
-        File[] updatesSubdirs = updatesDir.toFile().listFiles((FileFilter) DirectoryFileFilter.DIRECTORY);
-        //List<ArcadiaApp> list = Collections.list(ArcadiaApp.values());
-//                ArcadiaApp.values()
-
+        File[] updatesSubdirs = updatesDir.toFile().listFiles(validAppUpdateDirectories);
         if (updatesSubdirs.length > 0)
             for (File directory : updatesSubdirs) {
                 System.out.printf("Checking version from %s\n", directory);
                 ArcadiaAppData arcadiaAppData = new ArcadiaAppData();
                 SystemCommons systemCommons = new SystemCommons();
-
-
-                if (directory.listFiles(ff).length > 0) {
-                    File newestVersion = systemCommons.sortDirectoriesByVersion(directory.listFiles())[0];
-                    arcadiaAppData.setDirectory(newestVersion);
-                    arcadiaAppData.setVersion(new Version(systemCommons.normalizeVersion(FilenameUtils.getName(newestVersion.getAbsolutePath()))).toString());
-                    availableUpdates.put(directory.getName(), arcadiaAppData);
+                if (directory.listFiles().length > 0) {
+                    File[] sortedDirectoryList = systemCommons.sortDirectoriesByVersion(directory.listFiles());
+                    File newestVersion = (sortedDirectoryList == null) ? null : sortedDirectoryList[0];
+                    if (newestVersion != null) {
+                        arcadiaAppData.setDirectory(newestVersion);
+                        arcadiaAppData.setVersion(
+                                new Version(systemCommons.normalizeVersion(
+                                        FilenameUtils.getName(newestVersion.getAbsolutePath()))
+                                ).toString());
+                        availableUpdates.put(directory.getName(), arcadiaAppData);
+                    }
                 } else System.out.printf("ERROR: empty updates directory %s\n", directory);
             }
         return availableUpdates;
