@@ -1,7 +1,6 @@
 package app;
 
 import app.controllers.ArcadiaController;
-import app.controllers.UpdateController;
 import app.models.ArcadiaAppData;
 import app.models.Errorlevels;
 import org.apache.commons.cli.*;
@@ -22,6 +21,7 @@ public class ArcadiaUpdater {
 
         // create the Options
         Options options = new Options();
+        options.addOption("S", "standalone", false, "Standalone run. Search local updates repository");
         options.addOption("F", "force", false, "Forced update. do not check servers for version");
         options.addOption(Option.builder("R").longOpt("repository").hasArg(true)
                 .argName("repodir").desc("Update repository e.g. ./updates or /opt/arcadiaVersions")
@@ -38,7 +38,7 @@ public class ArcadiaUpdater {
             commandLine = parser.parse(options, args);
 
             // validate that block-size has been set
-            if ((commandLine.hasOption("h") || (args.length == 0)) || (!commandLine.hasOption("S") && !commandLine.hasOption("T"))) {
+            if ((commandLine.hasOption("h") || (args.length == 0)) || (!commandLine.hasOption("S"))) {
                 // display help
                 HelpFormatter formatter = new HelpFormatter();
                 formatter.printHelp("arcadia-updater", options);
@@ -48,30 +48,28 @@ public class ArcadiaUpdater {
                 System.out.printf("%s %s\n", commandLine.getOptionValue("repository"), Errorlevels.E2.getErrorDescription());
                 System.exit(Errorlevels.E2.getErrorLevel());
             }
+
         } catch (ParseException exp) {
             System.out.println(exp.getMessage());
         }
 
-        if (commandLine.hasOption("S")) {
-            ArcadiaController arcadiaController = ArcadiaController.getInstance();
-            arcadiaController.getInstalledApps();
-            System.out.printf("%s valid app targets\n", arcadiaController.getInstalledApps().size());
-            for (ArcadiaAppData arcadiaAppData : arcadiaController.getInstalledApps().values()) {
-                System.out.printf("Updating %s ...\n", arcadiaAppData.toString());
-                boolean result;
-                UpdateController updateController = new UpdateController(commandLine, arcadiaAppData);
-                try {
-                    result = updateController.updateApp(arcadiaAppData);
-                } catch (RuntimeException e) {
-                    System.out.println(e.getMessage());
-                }
-            }
-            System.exit(0);
+        ArcadiaController arcadiaController = ArcadiaController.getInstance();
+        //System.out.printf("%s updates found.\n", arcadiaController.getInstalledApps().size());
+        for (String update : arcadiaController.getAvailableUpdates(
+                arcadiaController.getArcadiaUpdatesRepository(commandLine)).keySet()) {
+            System.out.printf("Update: %s\n", update);
+//        for (ArcadiaAppData arcadiaAppData : arcadiaController.getAvailableUpdates(
+//                arcadiaController.getArcadiaUpdatesRepository(commandLine)).values()) {
+//            System.out.printf("Update: %s\n", arcadiaAppData.getApp());
+            /*
+            boolean result;
+            UpdateController updateController = new UpdateController(commandLine, arcadiaAppData);
+            try {
+                result = updateController.updateApp(arcadiaAppData);
+            } catch (RuntimeException e) {
+                System.out.println(e.getMessage());
+            }*/
         }
-        if (commandLine.hasOption("T") && !commandLine.hasOption("repository")) {
-            System.out.println(Errorlevels.E4.getErrorDescription());
-            System.exit(Errorlevels.E4.getErrorLevel());
-        }
-
+        System.exit(0);
     }
 }

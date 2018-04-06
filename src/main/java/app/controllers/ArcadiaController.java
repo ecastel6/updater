@@ -227,11 +227,10 @@ public class ArcadiaController
                                 && validArcadiaDirectories.contains(pathname.getName());
                     }
                 });
+        SystemCommons systemCommons = new SystemCommons();
         if (updatesSubdirs.length > 0)
             for (File directory : updatesSubdirs) {
-                System.out.printf("Checking version from %s\n", directory);
-                ArcadiaAppData arcadiaAppData = new ArcadiaAppData();
-                SystemCommons systemCommons = new SystemCommons();
+                System.out.printf("Checking versions from %s\n", directory);
                 File[] versionDirs = directory.listFiles(new FileFilter() {
                     @Override
                     public boolean accept(File pathname) {
@@ -244,6 +243,7 @@ public class ArcadiaController
                     File[] sortedDirectoryList = systemCommons.sortDirectoriesByVersion(versionDirs);
                     File newestVersion = (sortedDirectoryList == null) ? null : sortedDirectoryList[0];
                     if (newestVersion != null) {
+                        ArcadiaAppData arcadiaAppData = new ArcadiaAppData();
                         arcadiaAppData.setDirectory(newestVersion);
                         arcadiaAppData.setVersion(
                                 new Version(systemCommons.normalizeVersion(
