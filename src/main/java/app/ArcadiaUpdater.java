@@ -22,17 +22,6 @@ public class ArcadiaUpdater {
 
         // create the Options
         Options options = new Options();
-
-        Option s = Option.builder("S").longOpt("standalone")
-                .hasArg(false).desc("standalone legacy update.").build();
-        Option t = Option.builder("T").longOpt("targetted")
-                .hasArg(false).desc("targetted update.").build();
-        OptionGroup executionMode = new OptionGroup();
-        executionMode.setRequired(false);
-        executionMode.addOption(s);
-        executionMode.addOption(t);
-        options.addOptionGroup(executionMode);
-
         options.addOption("F", "force", false, "Forced update. do not check servers for version");
         options.addOption(Option.builder("R").longOpt("repository").hasArg(true)
                 .argName("repodir").desc("Update repository e.g. ./updates or /opt/arcadiaVersions")

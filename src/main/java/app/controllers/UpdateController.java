@@ -19,7 +19,9 @@ import java.util.Collection;
 
 public class UpdateController
 {
-    final static int DBTHRESHOLD = 3;
+    final static int dbThreshold = 3;
+    final static long defaultTimeout = 20000;
+
     // instance BackupsController
     private BackupsController backupsController = BackupsController.getInstance();
     // instance ServiceController
@@ -78,7 +80,7 @@ public class UpdateController
     }
 
     private boolean currentBackupSizeMismatch(Long lastBackupSize, Long databaseBackupDirSize) {
-        return backupsController.differencePercentage(lastBackupSize, databaseBackupDirSize) > DBTHRESHOLD;
+        return backupsController.differencePercentage(lastBackupSize, databaseBackupDirSize) > dbThreshold;
     }
 
     private void sysinit(ArcadiaAppData arcadiaApp) throws RuntimeException {
@@ -112,6 +114,7 @@ public class UpdateController
         System.out.printf("New version detected %s. Updating in progress...\n", latestUpdatesVersionDir.toString());
         */
         installedAppDir = this.appData.getDirectory();
+
     }
 
     private void checkDbServer() throws RuntimeException {
@@ -295,19 +298,17 @@ public class UpdateController
 
     private void stopAppServer(ArcadiaApp app) throws RuntimeException {
         // Stop tomcat service
+        String service = "tomcat_" + app.getShortName();
         ReturnValues returnValues = serviceController.serviceAction(
-                "tomcat_" + app.getShortName(), "stop");
+                service, "stop");
 
         // Check tomcat stopped
         try {
-            Thread.sleep(10000);
+            Long timeout = (this.commandLine.hasOption("t")) ? Long.valueOf(this.commandLine.getOptionValue("timeout")) : defaultTimeout;
+            SystemCommons.timedServiceStop(timeout, service);
         } catch (InterruptedException e) {
-            e.printStackTrace();
+            System.out.println("Timer interrupt");
         }
-        System.out.printf("Checking if tomcat_%s server is stopped.", app.getShortName());
-        if (serviceController.serviceAlive("tomcat_" + app.getShortName())) {
-            throw new RuntimeException("Tomcat not stopped!!");
-        } else System.out.println("OK: Tomcat is stopped");
     }
 
     private void startAppServer(ArcadiaApp app) throws RuntimeException {

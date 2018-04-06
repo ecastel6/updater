@@ -24,7 +24,6 @@ public class SystemCommons {
     /*
         check with timeout every 2 seconds
     */
-
     public static void timedServiceStop(long timeout, String service) throws InterruptedException {
         long startTime = System.currentTimeMillis();
         int count = 0;
