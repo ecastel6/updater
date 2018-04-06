@@ -4,8 +4,10 @@ import app.controllers.ArcadiaController;
 import app.models.ArcadiaAppData;
 import app.models.Errorlevels;
 import org.apache.commons.cli.*;
+import org.apache.commons.collections.CollectionUtils;
 
 import java.io.File;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -55,13 +57,23 @@ public class ArcadiaUpdater {
 
         ArcadiaController arcadiaController = ArcadiaController.getInstance();
         //System.out.printf("%s updates found.\n", arcadiaController.getInstalledApps().size());
-        for (String update : arcadiaController.getAvailableUpdates(
-                arcadiaController.getArcadiaUpdatesRepository(commandLine)).keySet()) {
-            System.out.printf("Update: %s\n", update);
-//        for (ArcadiaAppData arcadiaAppData : arcadiaController.getAvailableUpdates(
-//                arcadiaController.getArcadiaUpdatesRepository(commandLine)).values()) {
-//            System.out.printf("Update: %s\n", arcadiaAppData.getApp());
-            /*
+        Map<String, ArcadiaAppData> availableUpdates = arcadiaController.getAvailableUpdates(
+                arcadiaController.getArcadiaUpdatesRepository(commandLine));
+        for (Map.Entry<String, ArcadiaAppData> app : availableUpdates.entrySet()) {
+            System.out.printf("Updates found: %s version: %s\n", app.getKey(), app.getValue().getVersion());
+        }
+
+        Map<String, ArcadiaAppData> installedApps = arcadiaController.getInstalledApps();
+        Collection intersection = CollectionUtils.intersection(availableUpdates.keySet(), installedApps.keySet());
+        for (Object app : intersection) {
+            System.out.printf("Checking %s Update version %s with installed app %s\n",
+                    app,
+                    availableUpdates.get(app).getVersion(),
+                    installedApps.get(app).getVersion());
+
+        }
+
+/*
             boolean result;
             UpdateController updateController = new UpdateController(commandLine, arcadiaAppData);
             try {
@@ -69,7 +81,7 @@ public class ArcadiaUpdater {
             } catch (RuntimeException e) {
                 System.out.println(e.getMessage());
             }*/
-        }
+
         System.exit(0);
     }
 }

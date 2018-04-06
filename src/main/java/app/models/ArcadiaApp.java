@@ -6,7 +6,6 @@ public enum ArcadiaApp {
     OPENCARD("opencard", "oc", "openCard", "opencard"),
     ELLIOTT("elliott", "elliott", "elliott", "elliott");
     /*
-    ,
     EVENTDETECT("EventDetect", "event", "event", "eventdetect"),
     INTERFACES("interfaces", "interfaces", "interfaceMonitor", "interfaces");*/
 

@@ -45,17 +45,6 @@ public class ArcadiaController
         return ourInstance;
     }
 
-    public static void main(String[] args) {
-        List<String> appnames = new ArrayList<>();
-        for (ArcadiaApp app : ArcadiaApp.values()) {
-            appnames.add(app.getShortName());
-        }
-        if (appnames.contains("cbos")) {
-            System.out.println("contenido");
-        }
-
-    }
-
     /*
             Read tomcat conf get HTTP connector port
     */
@@ -249,7 +238,7 @@ public class ArcadiaController
                                 new Version(systemCommons.normalizeVersion(
                                         FilenameUtils.getName(newestVersion.getAbsolutePath()))
                                 ).toString());
-                        availableUpdates.put(directory.getName(), arcadiaAppData);
+                        availableUpdates.put(directory.getName().toUpperCase(), arcadiaAppData);
                     }
                 } else System.out.printf("ERROR: empty updates directory %s\n", directory);
             }
@@ -257,12 +246,30 @@ public class ArcadiaController
     }
 
     /*
-        Generate a List with Arcadia shortnames
-     */
-    private List<String> validArcadiaDirectories() {
+            Generate a List with Arcadia shortnames
+    */
+    public List<String> validArcadiaDirectories() {
         List<String> appnames = new ArrayList<>();
         for (ArcadiaApp app : ArcadiaApp.values())
             appnames.add(app.getShortName());
         return appnames;
     }
+
+    /*
+        Returns intersect between Maps by keys
+
+    public Map<String, ArcadiaAppData> intersect(Map<String, ArcadiaAppData> first, Map<String, ArcadiaAppData> second) {
+        Map<String, ArcadiaAppData> output = new HashMap<>(); // combined output
+        Set result=new (first.keySet())
+        return first.keySet().retainAll(second.keySet());
+        // goes through each key in common and checks to see if they reference to the same value
+        Iterator<String> keyFirstItr = first.keySet().iterator();
+        while (keyFirstItr.hasNext()) {
+            String keyTemp = keyFirstItr.next();
+            if (first.get(keyTemp).equals(second.get(keyTemp))) {
+                output.put(keyTemp, first.get(keyTemp));
+            }
+        }
+        return output;
+    }*/
 }

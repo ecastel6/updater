@@ -21,7 +21,7 @@ public class ServiceController {
 
     private ServiceController() {
         this.os = getOs();
-        System.out.printf("OS: %s\n", osToString(os));
+        //System.out.printf("OS: %s\n", osToString(os));
     }
 
     public OS getOs() {
