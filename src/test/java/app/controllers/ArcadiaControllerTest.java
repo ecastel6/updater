@@ -56,17 +56,10 @@ class ArcadiaControllerTest {
     @Test
     void getAvailableUpdatesTest() {
         Map<String, ArcadiaAppData> testMap = new HashMap<>();
-        testMap = ArcadiaController.getInstance().getAvailableUpdates(Paths.get("/home/ecastel/opt/arcadiaVersions"));
+        //testMap = ArcadiaController.getInstance().getAvailableUpdates(Paths.get("/home/ecastel/opt/arcadiaVersions"));
+        testMap = ArcadiaController.getInstance().getAvailableUpdates(Paths.get("D:\\Synology\\CloudStation\\opt\\arcadiaVersions"));
         for (Map.Entry<String, ArcadiaAppData> entry : testMap.entrySet()) {
             System.out.printf("App: %s -> Version: %s Directory: %s\n", entry.getKey(), entry.getValue().getVersion(), entry.getValue().getDirectory());
-        }
-    }
-
-    @Test
-    void pp() {
-        String version = "latest";
-        if (!version.matches("[0-9]+(\\.[0-9]+)*.*")) {
-            System.out.println("Dont match");
         }
     }
 }

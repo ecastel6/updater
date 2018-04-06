@@ -278,6 +278,7 @@ public class UpdateController
         // Backup ArcadiaResources
         String separator = File.separator;
         ZipHandler zipHandler = new ZipHandler();
+        // todo migrate to zip4j
     }
 
 
@@ -380,13 +381,5 @@ public class UpdateController
                     throw new RuntimeException("Error copying " + source + " to " + target);
                 }
         }
-    }
-
-
-    // Input Array of directories
-    // returns first sorted
-    public File getLatestUpdate(File[] updatesDir) {
-        new SystemCommons().sortDirectoriesByDate(updatesDir);
-        return updatesDir[0];
     }
 }

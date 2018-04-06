@@ -17,7 +17,7 @@ public class Version implements Comparable<Version>
     private String version;
 
     public Version(String version) {
-        System.out.println(version);
+        //System.out.println(version);
         if (version == null)
             throw new IllegalArgumentException("Version can not be null");
         if (!version.matches("[0-9]+(\\.[0-9]+)*"))

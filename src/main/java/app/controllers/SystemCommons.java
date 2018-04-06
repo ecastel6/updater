@@ -79,8 +79,6 @@ public class SystemCommons {
     }
 
     public File[] sortDirectoriesByVersion(File[] listDirectories) {
-
-        try {
             Arrays.sort(listDirectories, new Comparator<File>()
             {
                 public int compare(File f1, File f2) {
@@ -88,11 +86,6 @@ public class SystemCommons {
                             .compareTo(new Version(normalizeVersion(f1.getName())));
                 }
             });
-        } catch (Exception e) {
-            System.out.println(e.getMessage());
-            System.out.println("Unable to sort directory list invalid Version format.");
-            return null;
-        }
         return listDirectories;
     }
 

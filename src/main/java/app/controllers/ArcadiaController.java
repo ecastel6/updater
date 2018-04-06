@@ -218,20 +218,30 @@ public class ArcadiaController
         // Search updates
 
         final List<String> validArcadiaDirectories = validArcadiaDirectories();
-        FilenameFilter validAppUpdateDirectories = new FilenameFilter()
-        {
-            public boolean accept(File directory, String fileName) {
-                return directory.isDirectory() && validArcadiaDirectories.contains(fileName);
-            }
-        };
-        File[] updatesSubdirs = updatesDir.toFile().listFiles(validAppUpdateDirectories);
+
+        File[] updatesSubdirs = updatesDir.toFile().listFiles(
+                new FileFilter() {
+                    @Override
+                    public boolean accept(File pathname) {
+                        return pathname.isDirectory()
+                                && validArcadiaDirectories.contains(pathname.getName());
+                    }
+                });
         if (updatesSubdirs.length > 0)
             for (File directory : updatesSubdirs) {
                 System.out.printf("Checking version from %s\n", directory);
                 ArcadiaAppData arcadiaAppData = new ArcadiaAppData();
                 SystemCommons systemCommons = new SystemCommons();
-                if (directory.listFiles().length > 0) {
-                    File[] sortedDirectoryList = systemCommons.sortDirectoriesByVersion(directory.listFiles());
+                File[] versionDirs = directory.listFiles(new FileFilter() {
+                    @Override
+                    public boolean accept(File pathname) {
+                        return pathname.getName().matches("[0-9]+?(\\.[0-9]+)(R[0-9]+)?");
+                    }
+                });
+                if (versionDirs.length != directory.listFiles().length)
+                    System.out.printf("WARNING: update directory %s contains invalid folders\n", directory);
+                if (versionDirs.length > 0) {
+                    File[] sortedDirectoryList = systemCommons.sortDirectoriesByVersion(versionDirs);
                     File newestVersion = (sortedDirectoryList == null) ? null : sortedDirectoryList[0];
                     if (newestVersion != null) {
                         arcadiaAppData.setDirectory(newestVersion);
