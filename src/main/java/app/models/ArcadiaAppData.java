@@ -1,5 +1,7 @@
 package app.models;
 
+import app.core.Version;
+
 import java.io.File;
 
 public class ArcadiaAppData
@@ -7,9 +9,9 @@ public class ArcadiaAppData
     ArcadiaApp app;
     File directory;
     String portNumber;
-    String version;
+    Version version;
 
-    public ArcadiaAppData(ArcadiaApp app, File directory, String portNumber, String version) {
+    public ArcadiaAppData(ArcadiaApp app, File directory, String portNumber, Version version) {
         this.app = app;
         this.directory = directory;
         this.portNumber = portNumber;
@@ -43,11 +45,11 @@ public class ArcadiaAppData
         this.portNumber = portNumber;
     }
 
-    public String getVersion() {
+    public Version getVersion() {
         return version;
     }
 
-    public void setVersion(String version) {
+    public void setVersion(Version version) {
         this.version = version;
     }
 

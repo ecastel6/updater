@@ -1,6 +1,8 @@
 package app;
 
 import app.controllers.ArcadiaController;
+import app.controllers.UpdateController;
+import app.core.Version;
 import app.models.ArcadiaAppData;
 import app.models.Errorlevels;
 import org.apache.commons.cli.*;
@@ -11,7 +13,8 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
-public class ArcadiaUpdater {
+public class ArcadiaUpdater
+{
 
     private static Map<String, ArcadiaAppData> testInstalledApps = new HashMap<>();
     private ArcadiaController arcadiaController = ArcadiaController.getInstance();
@@ -20,6 +23,7 @@ public class ArcadiaUpdater {
         // create the command line parser
         CommandLine commandLine = null;
         CommandLineParser parser = new DefaultParser();
+        ArcadiaController arcadiaController = ArcadiaController.getInstance();
 
         // create the Options
         Options options = new Options();
@@ -46,36 +50,47 @@ public class ArcadiaUpdater {
                 formatter.printHelp("arcadia-updater", options);
                 System.exit(1);
             }
-            if (commandLine.hasOption("repository") && (!new File(commandLine.getOptionValue("repository")).exists())) {
-                System.out.printf("%s %s\n", commandLine.getOptionValue("repository"), Errorlevels.E2.getErrorDescription());
-                System.exit(Errorlevels.E2.getErrorLevel());
+            if (commandLine.hasOption("repository")) {
+                if (!new File(commandLine.getOptionValue("repository")).exists()) {
+                    System.out.printf("%s %s\n", commandLine.getOptionValue("repository"), Errorlevels.E2.getErrorDescription());
+                    System.exit(Errorlevels.E2.getErrorLevel());
+                } else {
+                    arcadiaController.setUpdatesFromCommandline(commandLine.getOptionValue("repository"));
+                }
             }
-
         } catch (ParseException exp) {
             System.out.println(exp.getMessage());
         }
 
-        ArcadiaController arcadiaController = ArcadiaController.getInstance();
+        arcadiaController.setCommandLine(commandLine);
         //System.out.printf("%s updates found.\n", arcadiaController.getInstalledApps().size());
         Map<String, ArcadiaAppData> availableUpdates = arcadiaController.getAvailableUpdates(
-                arcadiaController.getArcadiaUpdatesRepository(commandLine));
+                arcadiaController.getArcadiaUpdatesRepository(arcadiaController.getUpdatesFromCommandline()));
         for (Map.Entry<String, ArcadiaAppData> app : availableUpdates.entrySet()) {
             System.out.printf("Updates found: %s version: %s\n", app.getKey(), app.getValue().getVersion());
         }
 
         Map<String, ArcadiaAppData> installedApps = arcadiaController.getInstalledApps();
-        Collection intersection = CollectionUtils.intersection(availableUpdates.keySet(), installedApps.keySet());
-        for (Object app : intersection) {
-            System.out.printf("Checking %s Update version %s with installed app %s\n",
-                    app,
-                    availableUpdates.get(app).getVersion(),
-                    installedApps.get(app).getVersion());
+        for (Map.Entry<String, ArcadiaAppData> app : installedApps.entrySet()) {
+            System.out.printf("Installed apps found: %s version: %s\n", app.getKey(), app.getValue().getVersion());
+        }
 
+        System.out.printf("updates keys : %s install keys: %s\n", availableUpdates.keySet(), installedApps.keySet());
+        Collection intersection = CollectionUtils.intersection(availableUpdates.keySet(), installedApps.keySet());
+        for (Object appData : intersection) {
+            Version installedVersion = installedApps.get(appData).getVersion();
+            Version updateVersion = availableUpdates.get(appData).getVersion();
+            System.out.printf("Checking %s Update version %s with installed app %s\n",
+                    appData,
+                    updateVersion,
+                    installedVersion);
+            if (updateVersion.compareTo(installedVersion) > 0) {
+                UpdateController updateController = new UpdateController((String) appData);
+            }
         }
 
 /*
-            boolean result;
-            UpdateController updateController = new UpdateController(commandLine, arcadiaAppData);
+
             try {
                 result = updateController.updateApp(arcadiaAppData);
             } catch (RuntimeException e) {

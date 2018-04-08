@@ -2,10 +2,6 @@ package app.controllers;
 
 import app.core.Version;
 import app.models.ArcadiaApp;
-import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.DefaultParser;
-import org.apache.commons.cli.Options;
-import org.apache.commons.cli.ParseException;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.DirectoryFileFilter;
 import org.junit.jupiter.api.Test;
@@ -38,11 +34,9 @@ class SystemCommonsTest
     }
 
     @Test
-    void sortDirectoriesByVersionTest() throws ParseException {
+    void sortDirectoriesByVersionTest() {
         ArcadiaController arcadiaController = ArcadiaController.getInstance();
-        CommandLine commandLine;
-        commandLine = new DefaultParser().parse(new Options(), null);
-        File updatesRepository = FileUtils.getFile(arcadiaController.getArcadiaUpdatesRepository(commandLine).toString(),
+        File updatesRepository = FileUtils.getFile(arcadiaController.getArcadiaUpdatesRepository(null).toString(),
                 ArcadiaApp.CBOS.getShortName());
         System.out.printf("UpdatesRepository: %s\n", updatesRepository);
         File[] updatesDirList = updatesRepository

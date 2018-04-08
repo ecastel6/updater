@@ -3,6 +3,7 @@ package app.controllers;
 import app.core.ZipHandler;
 import app.models.ArcadiaApp;
 import app.models.ArcadiaAppData;
+import app.models.CompresionLevel;
 import app.models.ReturnValues;
 import net.lingala.zip4j.core.ZipFile;
 import net.lingala.zip4j.exception.ZipException;
@@ -13,6 +14,8 @@ import org.apache.commons.io.filefilter.*;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -26,21 +29,23 @@ public class UpdateController
     private BackupsController backupsController = BackupsController.getInstance();
     // instance ServiceController
     private ServiceController serviceController = ServiceController.getInstance();
-
-    // this appupdater
-    private ArcadiaAppData appData;
     // instance ArcadiaController
-    // access installed apps details
     private ArcadiaController arcadiaController = ArcadiaController.getInstance();
-    private CommandLine commandLine;
 
+    // values from ArcadiaController
+    private CommandLine commandLine;
+    private ArcadiaAppData installedAppData;
+
+    // general variables
     private File arcadiaUpdatesRepository;
     private File latestUpdatesVersionDir;
     private File installedAppDir;
 
-    public UpdateController(CommandLine commandLine, ArcadiaAppData arcadiaAppData) {
-        this.commandLine = commandLine;
-        this.appData = appData;
+    public UpdateController(String appName) {
+        this.installedAppData = arcadiaController.getInstalledApps().get(appName);
+        this.installedAppDir = installedAppData.getDirectory();
+        Path p = Paths.get(arcadiaController.getUpdatesFromCommandline());
+        this.latestUpdatesVersionDir = arcadiaController.getAvailableUpdates(p).get(appName).getDirectory();
     }
 
     /*
@@ -48,15 +53,14 @@ public class UpdateController
      Main method
      *
      */
-    public Boolean updateApp(ArcadiaAppData app) throws RuntimeException {
-        sysinit(app);
+    public Boolean updateApp() throws RuntimeException {
         if (!this.commandLine.hasOption("n")) {
             checkRabbitmq();
             checkZookeeper();
         }
-        stopAppServer(app.getApp());
+        stopAppServer(installedAppData.getApp());
         if (!this.commandLine.hasOption("b"))
-            backupDatabase(app.getApp());
+            backupDatabase(installedAppData.getApp());
         if (!this.commandLine.hasOption("B"))
             backoutApp();
         // Now place new version
@@ -65,7 +69,7 @@ public class UpdateController
         updateSharedlib();
         updateWars();
         updateCustom();
-        startAppServer(app.getApp());
+        startAppServer(installedAppData.getApp());
         // Check schema_version all ok
         return true;
     }
@@ -81,40 +85,6 @@ public class UpdateController
 
     private boolean currentBackupSizeMismatch(Long lastBackupSize, Long databaseBackupDirSize) {
         return backupsController.differencePercentage(lastBackupSize, databaseBackupDirSize) > dbThreshold;
-    }
-
-    private void sysinit(ArcadiaAppData arcadiaApp) throws RuntimeException {
-        // Initialize general Directories variables
-
-
-        this.appData = arcadiaApp;
-
-
-        /* DEPRECATED - FUNCIONALITY REFACTORIZED TO ARCADIACONTROLLER// latest update available
-        //
-        Path eachApp = Paths.get(arcadiaController.getArcadiaUpdatesRepository().toString(), arcadiaApp.getApp().getShortName());
-        SystemCommons systemCommons = new SystemCommons();
-        Version updateVersion = null;
-        File[] subdirs = eachApp.toFile().listFiles((FileFilter) DirectoryFileFilter.DIRECTORY);
-        if (subdirs.length > 0) {
-            latestUpdatesVersionDir = systemCommons.sortDirectoriesByVersion(subdirs)[0];
-            System.out.printf("ArcadiaUpdater.updateApp latestUpdatesVersionDir:%s\n", latestUpdatesVersionDir);
-            updateVersion = new Version(systemCommons.normalizeVersion(FilenameUtils.getName(latestUpdatesVersionDir.getAbsolutePath())));
-        }
-
-        if (arcadiaApp.getVersion() == null) {
-            throw new RuntimeException(
-                    String.format("ERROR: Unable to update %s. Current version unknown. Maybe server is stopped\n",
-                            arcadiaApp.getApp().getShortName()));
-
-        }
-        if (new Version(systemCommons.normalizeVersion(arcadiaApp.getVersion())).compareTo(updateVersion) > 0) {
-            throw new RuntimeException(arcadiaApp.getApp().getLongName() + " already updated.");
-        }
-        System.out.printf("New version detected %s. Updating in progress...\n", latestUpdatesVersionDir.toString());
-        */
-        installedAppDir = this.appData.getDirectory();
-
     }
 
     private void checkDbServer() throws RuntimeException {
@@ -278,6 +248,12 @@ public class UpdateController
         // Backup ArcadiaResources
         String separator = File.separator;
         ZipHandler zipHandler = new ZipHandler();
+        zipHandler.zip(
+                FileUtils.getFile(installedAppDir, "webapps", "ArcadiaResources").toString(),
+                FileUtils.getFile(backupsController.getRootBackupsDir(),
+                        String.format("ArcadiaResources.%s_%s", installedAppData.getApp().getShortName(), new SystemCommons().getToday())).toString(),
+                CompresionLevel.UNCOMPRESSED);
+
         // todo migrate to zip4j
     }
 

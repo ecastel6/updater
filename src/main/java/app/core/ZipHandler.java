@@ -3,6 +3,7 @@ package app.core;
 // DEPRECATED GO WITH ZIP4J
 /////////////
 
+import app.models.CompresionLevel;
 import net.lingala.zip4j.core.ZipFile;
 import net.lingala.zip4j.exception.ZipException;
 import org.apache.commons.io.FileUtils;
@@ -61,12 +62,11 @@ public class ZipHandler
 
     /**
      * compress
-     *
-     * @param sourceFolder
+     *  @param sourceFolder
      * @param outputZip
      * @param level        compression level
      */
-    public void zip(String sourceFolder, String outputZip, int level) {
+    public void zip(String sourceFolder, String outputZip, CompresionLevel level) {
         byte[] buffer = new byte[1024];
         this.setFolder(sourceFolder);
         this.setZipFile(outputZip);
@@ -74,7 +74,7 @@ public class ZipHandler
         try {
             FileOutputStream fileOutputStream = new FileOutputStream(outputZip);
             ZipOutputStream zipOutputStream = new ZipOutputStream(fileOutputStream);
-            zipOutputStream.setLevel(level);
+            zipOutputStream.setLevel(level.getLevel());
             for (String file : this.fileList) {
                 File absoluteFilename = new File(sourceFolder + File.separator + file);
                 ZipEntry zipEntry = new ZipEntry(file);
