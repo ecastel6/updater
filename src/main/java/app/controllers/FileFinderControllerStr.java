@@ -53,6 +53,8 @@ public class FileFinderControllerStr
         // what =1 files
         // what =2 dirs
         //for (Path p: getDriveList()) System.out.println(p.toString());
+        long startTime = System.currentTimeMillis();
+
         FileFinderControllerStr finder = new FileFinderControllerStr(pattern, searchType);
 
 
@@ -69,6 +71,11 @@ public class FileFinderControllerStr
             } catch (IOException e) {
                 e.printStackTrace();
             }
+
+        long stopTime = System.currentTimeMillis();
+        long elapsedTime = stopTime - startTime;
+        System.out.printf("FileSystem search elapsed time.GlobSearch: %s\n", elapsedTime);
+
         return finder;
     }
 

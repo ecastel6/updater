@@ -14,8 +14,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
-public class ArcadiaUpdater
-{
+public class ArcadiaUpdater {
 
     private static Map<String, ArcadiaAppData> testInstalledApps = new HashMap<>();
     private ArcadiaController arcadiaController = ArcadiaController.getInstance();
@@ -84,19 +83,19 @@ public class ArcadiaUpdater
                     appName,
                     updateVersion,
                     installedVersion);
-            if (updateVersion.compareTo(installedVersion) > 0) {
+            if (installedVersion == null && !commandLine.hasOption("F")) {
+                System.out.printf("ERROR: unable to update %s. Installed version not available. Use -F (--force) to force updating.", appName);
+            } else if (updateVersion.compareTo(installedVersion) > 0) {
+                System.out.printf("OK: Updating %s to version %s\n", appName, updateVersion);
                 UpdateController updateController = new UpdateController((String) appName);
-            }
+                try {
+                    boolean result = updateController.updateApp();
+                } catch (RuntimeException e) {
+                    System.exit(1);
+                    System.out.println(e.getMessage());
+                }
+            } else System.out.printf("WARNING: Application %s already up to date\n", appName);
         }
-
-/*
-
-            try {
-                result = updateController.updateApp(arcadiaAppData);
-            } catch (RuntimeException e) {
-                System.out.println(e.getMessage());
-            }*/
-
         System.exit(0);
     }
 }

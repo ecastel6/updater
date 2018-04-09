@@ -40,6 +40,7 @@ public class UpdateController
     private File installedAppDir;
 
     public UpdateController(String appName) {
+        this.commandLine = arcadiaController.getCommandLine();
         this.installedAppData = arcadiaController.getInstalledApps().get(appName);
         this.installedAppDir = installedAppData.getDirectory();
         this.latestUpdatesVersionDir = arcadiaController.getAvailableUpdates().get(appName).getDirectory();
@@ -73,7 +74,7 @@ public class UpdateController
         checkDbServer();
         Long lastBackupSize = backupsController.getLatestBackupSize(app.getApp());
         Long databaseBackupDirSize = backupDatabase(app.getApp());
-        if (currentBackupSizeMismatch(lastBackupSize, databaseBackupDirSize) && !this.commandLine.hasOption("b"))
+        if (currentBackupSizeMismatch(lastBackupSize, databaseBackupDirSize) && !this.commandLine.hasOption("s"))
             throw new RuntimeException("ERROR: Backup size mismatch!!!");
         backupArcadiaResources();
     }
