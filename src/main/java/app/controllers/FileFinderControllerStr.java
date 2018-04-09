@@ -23,9 +23,10 @@ public class FileFinderControllerStr
 
     public FileFinderControllerStr(String pattern, SearchType searchType) {
         this.searchType = searchType;
-        if (serviceController.os.equals(OS.WINDOWS))
+        if (serviceController.os.equals(OS.WINDOWS)) {
             this.pattern = FilenameUtils.separatorsToSystem(pattern);
-        else
+            //System.out.printf("Pattern converted: %s\n", this.pattern);
+        } else
             this.pattern = pattern;
 
     }
@@ -72,6 +73,7 @@ public class FileFinderControllerStr
     }
 
     void find(Path file) {
+        //System.out.printf("find Path File: %s\n",file.toString());
         if (file != null && file.toString().endsWith(this.pattern)) {
             results.add(file);
             numMatches++;

@@ -1,8 +1,6 @@
 package app.controllers;
 
 import app.core.Version;
-import app.models.ArcadiaApp;
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.DirectoryFileFilter;
 import org.junit.jupiter.api.Test;
 
@@ -36,8 +34,7 @@ class SystemCommonsTest
     @Test
     void sortDirectoriesByVersionTest() {
         ArcadiaController arcadiaController = ArcadiaController.getInstance();
-        File updatesRepository = FileUtils.getFile(arcadiaController.getArcadiaUpdatesRepository(null).toString(),
-                ArcadiaApp.CBOS.getShortName());
+        File updatesRepository = arcadiaController.getArcadiaUpdatesRepository().toFile();
         System.out.printf("UpdatesRepository: %s\n", updatesRepository);
         File[] updatesDirList = updatesRepository
                 .listFiles((FileFilter) DirectoryFileFilter.DIRECTORY);

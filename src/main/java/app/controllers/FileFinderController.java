@@ -70,7 +70,7 @@ public class FileFinderController
     void find(Path file) {
         //Path name = file.getFileName();
         //name.toAbsolutePath().endsWith();
-
+        System.out.printf("find Path File: %s", file.toString());
         if (file != null && matcher.matches(file)) {
             results.add(file);
             numMatches++;

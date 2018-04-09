@@ -14,8 +14,6 @@ import org.apache.commons.io.filefilter.*;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -44,14 +42,11 @@ public class UpdateController
     public UpdateController(String appName) {
         this.installedAppData = arcadiaController.getInstalledApps().get(appName);
         this.installedAppDir = installedAppData.getDirectory();
-        Path p = Paths.get(arcadiaController.getUpdatesFromCommandline());
-        this.latestUpdatesVersionDir = arcadiaController.getAvailableUpdates(p).get(appName).getDirectory();
+        this.latestUpdatesVersionDir = arcadiaController.getAvailableUpdates().get(appName).getDirectory();
     }
 
     /*
-     *
      Main method
-     *
      */
     public Boolean updateApp() throws RuntimeException {
         if (!this.commandLine.hasOption("n")) {
@@ -256,7 +251,6 @@ public class UpdateController
 
         // todo migrate to zip4j
     }
-
 
     private Long backupDatabase(ArcadiaApp app) throws RuntimeException {
         //check valid backups directory

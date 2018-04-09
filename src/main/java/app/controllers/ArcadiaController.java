@@ -18,7 +18,6 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -26,33 +25,23 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class ArcadiaController
-{
+public class ArcadiaController {
 
     private static ArcadiaController ourInstance = new ArcadiaController();
     private Path arcadiaUpdatesRepository;
     private Map<String, ArcadiaAppData> installedApps = new HashMap<>();
     private Map<String, ArcadiaAppData> availableUpdates = new HashMap<>();
     private CommandLine commandLine;
+
     public ArcadiaController(Map<String, ArcadiaAppData> installedApps) {
         this.installedApps = installedApps;
     }
-
-    private String updatesFromCommandline;
 
     private ArcadiaController() {
     }
 
     public static ArcadiaController getInstance() {
         return ourInstance;
-    }
-
-    public String getUpdatesFromCommandline() {
-        return updatesFromCommandline;
-    }
-
-    public void setUpdatesFromCommandline(String updatesFromCommandline) {
-        this.updatesFromCommandline = updatesFromCommandline;
     }
 
     public CommandLine getCommandLine() {
@@ -197,29 +186,28 @@ public class ArcadiaController
         return installedApps;
     }
 
-    public Path getArcadiaUpdatesRepository(String updatesFromCommandline) {
+    public Path getArcadiaUpdatesRepository() {
         if (arcadiaUpdatesRepository != null) {
             return arcadiaUpdatesRepository;
         }
-        if (updatesFromCommandline == null) {
-            FileFinderControllerStr fileFinder = FileFinderControllerStr.doit("/", "opt/arcadiaVersions", SearchType.Directories);
-            if (fileFinder.getNumMatches() > 1)
-                this.arcadiaUpdatesRepository = ArcadiaController.getInstance().getLowerDepthDirectory(fileFinder.getResults()).toPath();
-            else this.arcadiaUpdatesRepository = fileFinder.getResults().get(0);
-            System.out.printf("ArcadiaUpdater.updateApp updatesdir:%s\n", arcadiaUpdatesRepository);
-        } else
-            arcadiaUpdatesRepository = Paths.get(updatesFromCommandline);
-
-        //this.arcadiaUpdatesRepository=arcadiaUpdatesRepository;
+        FileFinderControllerStr fileFinder = FileFinderControllerStr.doit("/", "opt/arcadiaVersions", SearchType.Directories);
+        if (fileFinder.getNumMatches() > 1)
+            this.arcadiaUpdatesRepository = getLowerDepthDirectory(fileFinder.getResults()).toPath();
+        else this.arcadiaUpdatesRepository = fileFinder.getResults().get(0);
+        System.out.printf("ArcadiaUpdater.updateApp updatesdir:%s\n", arcadiaUpdatesRepository);
         return arcadiaUpdatesRepository;
+    }
+
+    public void setArcadiaUpdatesRepository(Path arcadiaUpdatesRepository) {
+        this.arcadiaUpdatesRepository = arcadiaUpdatesRepository;
     }
 
     /*
         Search available updates within arcadiaUpdatesRepository
         returns Map String -> ArcadiaAppData
     */
-    public Map<String, ArcadiaAppData> getAvailableUpdates(Path updatesDir) {
-        if (!this.availableUpdates.isEmpty()) {
+    public Map<String, ArcadiaAppData> getAvailableUpdates() {
+        if (!availableUpdates.isEmpty()) {
             return availableUpdates;
         }
         System.out.println("Checking available updates...");
@@ -227,9 +215,8 @@ public class ArcadiaController
 
         final List<String> validArcadiaDirectories = validArcadiaDirectories();
 
-        File[] updatesSubdirs = updatesDir.toFile().listFiles(
-                new FileFilter()
-                {
+        File[] updatesSubdirs = getArcadiaUpdatesRepository().toFile().listFiles(
+                new FileFilter() {
                     @Override
                     public boolean accept(File pathname) {
                         return pathname.isDirectory()
@@ -240,8 +227,7 @@ public class ArcadiaController
         if (updatesSubdirs.length > 0)
             for (File directory : updatesSubdirs) {
                 System.out.printf("Checking versions from %s\n", directory);
-                File[] versionDirs = directory.listFiles(new FileFilter()
-                {
+                File[] versionDirs = directory.listFiles(new FileFilter() {
                     @Override
                     public boolean accept(File pathname) {
                         return pathname.getName().matches("[0-9]+?(\\.[0-9]+)(R[0-9]+)?");
@@ -276,21 +262,4 @@ public class ArcadiaController
         return appnames;
     }
 
-    /*
-        Returns intersect between Maps by keys
-
-    public Map<String, ArcadiaAppData> intersect(Map<String, ArcadiaAppData> first, Map<String, ArcadiaAppData> second) {
-        Map<String, ArcadiaAppData> output = new HashMap<>(); // combined output
-        Set result=new (first.keySet())
-        return first.keySet().retainAll(second.keySet());
-        // goes through each key in common and checks to see if they reference to the same value
-        Iterator<String> keyFirstItr = first.keySet().iterator();
-        while (keyFirstItr.hasNext()) {
-            String keyTemp = keyFirstItr.next();
-            if (first.get(keyTemp).equals(second.get(keyTemp))) {
-                output.put(keyTemp, first.get(keyTemp));
-            }
-        }
-        return output;
-    }*/
 }

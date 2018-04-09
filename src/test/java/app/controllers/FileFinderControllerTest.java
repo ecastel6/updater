@@ -5,6 +5,8 @@ import app.models.SearchType;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.nio.file.Path;
+
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class FileFinderControllerTest {
@@ -19,7 +21,7 @@ class FileFinderControllerTest {
             testFile = "opt/pgsql/share/psqlrc.sample";
         } else {
             if (serviceController.os.equals(OS.WINDOWS)) {
-                startPath = "/windows/system32";
+                startPath = "/";
                 testPattern = "drivers";
                 testFile = "hosts";
             }
@@ -60,7 +62,7 @@ class FileFinderControllerTest {
 
     @Test
     void checkFindDirectory() {
-        testPattern = "/daily";
+        testPattern = "opt/arcadiaVersions";
         /* long startTime = System.currentTimeMillis();
         FileFinderController fileFinder = FileFinderController.doit(startPath, testPattern, SearchType.Directories);
         System.out.println(fileFinder.getResults().toString());
@@ -80,7 +82,9 @@ class FileFinderControllerTest {
 
     @Test
     void checkFindFileAndDirectory() {
-        FileFinderController fileFinder = FileFinderController.doit(startPath, testPattern, SearchType.All);
+        FileFinderControllerStr fileFinder = FileFinderControllerStr.doit(startPath, testPattern, SearchType.All);
+        for (Path path : fileFinder.getResults())
+            System.out.printf("Path: %s\n", path.toString());
         assertTrue(fileFinder.getNumMatches() > 0);
     }
 }

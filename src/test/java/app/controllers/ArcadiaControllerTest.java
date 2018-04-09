@@ -56,7 +56,7 @@ class ArcadiaControllerTest {
     void getAvailableUpdatesTest() {
         Map<String, ArcadiaAppData> testMap = new HashMap<>();
         ArcadiaController arcadiaController = ArcadiaController.getInstance();
-        testMap = arcadiaController.getAvailableUpdates(arcadiaController.getArcadiaUpdatesRepository(null));
+        testMap = arcadiaController.getAvailableUpdates();
         for (Map.Entry<String, ArcadiaAppData> entry : testMap.entrySet()) {
             System.out.printf("App: %s -> Version: %s Directory: %s\n", entry.getKey(), entry.getValue().getVersion(), entry.getValue().getDirectory());
         }

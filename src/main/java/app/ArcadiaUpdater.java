@@ -8,7 +8,8 @@ import app.models.Errorlevels;
 import org.apache.commons.cli.*;
 import org.apache.commons.collections.CollectionUtils;
 
-import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -51,11 +52,11 @@ public class ArcadiaUpdater
                 System.exit(1);
             }
             if (commandLine.hasOption("repository")) {
-                if (!new File(commandLine.getOptionValue("repository")).exists()) {
+                if (!Files.isDirectory(Paths.get(commandLine.getOptionValue("repository")))) {
                     System.out.printf("%s %s\n", commandLine.getOptionValue("repository"), Errorlevels.E2.getErrorDescription());
                     System.exit(Errorlevels.E2.getErrorLevel());
                 } else {
-                    arcadiaController.setUpdatesFromCommandline(commandLine.getOptionValue("repository"));
+                    arcadiaController.setArcadiaUpdatesRepository(Paths.get(commandLine.getOptionValue("repository")));
                 }
             }
         } catch (ParseException exp) {
@@ -64,8 +65,7 @@ public class ArcadiaUpdater
 
         arcadiaController.setCommandLine(commandLine);
         //System.out.printf("%s updates found.\n", arcadiaController.getInstalledApps().size());
-        Map<String, ArcadiaAppData> availableUpdates = arcadiaController.getAvailableUpdates(
-                arcadiaController.getArcadiaUpdatesRepository(arcadiaController.getUpdatesFromCommandline()));
+        Map<String, ArcadiaAppData> availableUpdates = arcadiaController.getAvailableUpdates();
         for (Map.Entry<String, ArcadiaAppData> app : availableUpdates.entrySet()) {
             System.out.printf("Updates found: %s version: %s\n", app.getKey(), app.getValue().getVersion());
         }
@@ -77,15 +77,15 @@ public class ArcadiaUpdater
 
         System.out.printf("updates keys : %s install keys: %s\n", availableUpdates.keySet(), installedApps.keySet());
         Collection intersection = CollectionUtils.intersection(availableUpdates.keySet(), installedApps.keySet());
-        for (Object appData : intersection) {
-            Version installedVersion = installedApps.get(appData).getVersion();
-            Version updateVersion = availableUpdates.get(appData).getVersion();
+        for (Object appName : intersection) {
+            Version installedVersion = installedApps.get(appName).getVersion();
+            Version updateVersion = availableUpdates.get(appName).getVersion();
             System.out.printf("Checking %s Update version %s with installed app %s\n",
-                    appData,
+                    appName,
                     updateVersion,
                     installedVersion);
             if (updateVersion.compareTo(installedVersion) > 0) {
-                UpdateController updateController = new UpdateController((String) appData);
+                UpdateController updateController = new UpdateController((String) appName);
             }
         }
 
