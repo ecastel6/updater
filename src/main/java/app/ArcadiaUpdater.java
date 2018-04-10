@@ -86,7 +86,7 @@ public class ArcadiaUpdater {
                     installedVersion);
             if (installedVersion == null && !commandLine.hasOption("F")) {
                 System.out.printf("ERROR: unable to update %s. Installed version not available. Use -F (--force) to force updating.", appName);
-            } else if (updateVersion.compareTo(installedVersion) > 0) {
+            } else if ((updateVersion.compareTo(installedVersion) > 0) || commandLine.hasOption("F")) {
                 System.out.printf("OK: Updating %s to version %s\n", appName, updateVersion);
                 UpdateController updateController = new UpdateController((String) appName);
                 try {
