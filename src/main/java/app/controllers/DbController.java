@@ -87,7 +87,7 @@ public class DbController
             if (postgresConf.getNumMatches() > 1) {
                 logController.log.warning("Multiple postgres conf file detected. Guessing correct one");
                 for (Path path : results) {
-                    logController.log.config(String.format("Path: %s. depth=%d\n", path.toString(), path.getNameCount()));
+                    logController.log.config(String.format("Path: %s. depth=%d", path.toString(), path.getNameCount()));
                     if ((path.toString().contains("opt")) && (path.getNameCount() < 5)) {
                         logController.log.info(String.format("Guessed dir: %s ", path.toString()));
                         return path.toString();

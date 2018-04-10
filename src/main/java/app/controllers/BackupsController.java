@@ -29,7 +29,7 @@ public class BackupsController {
 
     public File getLastBackupDir(ArcadiaApp app) {
         File directory = FileUtils.getFile(this.getRootBackupsDir(), app.getDatabaseName());
-        logController.log.info(String.format("Checking %s directory. Searching latest backup.\n", directory));
+        logController.log.info(String.format("Checking %s directory. Searching latest backup.", directory));
 
         // app backups directory not found
         if (!directory.exists()) return null;

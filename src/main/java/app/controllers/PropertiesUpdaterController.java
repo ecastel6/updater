@@ -69,7 +69,6 @@ public class PropertiesUpdaterController {
             Object[] results = patchObj.patch_apply(patches, oldProps);
 
             logController.log.config(String.format("DiffPatch firstFile=" + oldPropertyFile + " newFile=" + newPropertyFile));
-            logController.log.info(String.format("Writing patched file %s", results[0].toString()));
             writeFile(tempFile, results[0].toString(), StandardCharsets.UTF_8);
 
             // Mix properties
@@ -148,7 +147,7 @@ public class PropertiesUpdaterController {
             File oldPropertiesFile = FileUtils.getFile(sourceCustomOldDir, newRelativePath);
 
             if (oldPropertiesFile.exists()) { // Previous version found merging
-                logController.log.config(String.format("Merging %s with new %s\n",
+                logController.log.config(String.format("Merging %s with new %s",
                         oldPropertiesFile,
                         newPropertiesFile));
                 FileUtils.copyFile(
@@ -156,7 +155,7 @@ public class PropertiesUpdaterController {
                         targetPropertiesFile,
                         true);
             } else {
-                logController.log.config(String.format("Copying source file %s to %s\n",
+                logController.log.config(String.format("Copying source file %s to %s",
                         newPropertiesFile,
                         FileUtils.getFile(targetCustomDir, newRelativePath)));
                 FileUtils.copyFile(

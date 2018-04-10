@@ -16,19 +16,15 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class ArcadiaUpdater {
-
-    private static Map<String, ArcadiaAppData> testInstalledApps = new HashMap<>();
-    //private static Logger log = Logger.getLogger(ArcadiaUpdater.class.getName());
-    private static ArcadiaController arcadiaController = ArcadiaController.getInstance();
     private static LogController logController = LogController.getInstance();
 
+    private static Map<String, ArcadiaAppData> testInstalledApps = new HashMap<>();
+    private static ArcadiaController arcadiaController = ArcadiaController.getInstance();
 
     public ArcadiaUpdater() {
     }
 
-
     public static void main(String[] args) {
-
 
         // create the command line parser
         CommandLine commandLine = null;
@@ -46,7 +42,7 @@ public class ArcadiaUpdater {
                 .required(false).build());
         options.addOption("s", "ignore-backups-size", false, "do not check backups size");
         options.addOption("b", "override-backups", false, "Do not make security backups");
-        //options.addOption("B", "override-backout", false, "Do not move old version to backout");
+        options.addOption("B", "force-backout", false, "Cleanout backout directory before backout");
         options.addOption("n", "ignore-checkservices", false, "do not check services availability (Rabbitmq,Zookeeper).");
         try {
             // parse the command line arguments

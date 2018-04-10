@@ -59,8 +59,15 @@ public class UpdateController
         stopAppServer(installedAppData.getApp());
         if (!this.commandLine.hasOption("b"))
             backupDatabase(installedAppData.getApp());
-        if (!this.commandLine.hasOption("B"))
-            backoutApp();
+        if (this.commandLine.hasOption("B")) {
+            try {
+                FileUtils.cleanDirectory(FileUtils.getFile(latestUpdatesVersionDir, "backout"));
+            } catch (IOException e) {
+                logController.log.severe(String.format("Unable to cleanout backout. %s", e.getMessage()));
+                throw new RuntimeException("Unable to cleanout backout, please check permissions");
+            }
+        }
+        backoutApp();
         // Now place new version
         updateArcadiaResources();
         updateLogBack();
@@ -326,7 +333,7 @@ public class UpdateController
         for (File file :
                 filteredDir) {
             try {
-                logController.log.config(String.format("Moving %s to %s\n", file.toString(), target.toString()));
+                logController.log.config(String.format("Moving %s to %s", file.toString(), target.toString()));
                 if (file.isDirectory())
                     FileUtils.moveDirectoryToDirectory(file, target, true);
                 else

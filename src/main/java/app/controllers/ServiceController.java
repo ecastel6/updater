@@ -82,7 +82,7 @@ public class ServiceController {
 
     public ReturnValues serviceAction(String serviceName, String command) {
         String msg;
-        logController.log.info(String.format("Servicename: %s Command: %s\n", serviceName, command));
+        logController.log.info(String.format("Servicename: %s Command: %s", serviceName, command));
         ReturnValues returnedValues = new ReturnValues(0, "");
         final List<String> availableActions = Arrays.asList("start", "stop", "forcestop", "restart", "status");
         if (!availableActions.contains(command))

@@ -64,7 +64,7 @@ class FileCopyControllerTest {
             System.out.printf("Deleting temp dir: %s\n",testSourcePath);
             FileCopyController.delete(testSourcePath);
             System.out.printf("Deleting temp dir: %s\n",testTargetPath);
-            FileCopyController.delete(testTargetPath);
+            FileCo  pyController.delete(testTargetPath);
 
 //            FileUtils.deleteDirectory(new File(testSourcePath.toString()));
 //            FileUtils.deleteDirectory(new File(testTargetPath.toString()));
