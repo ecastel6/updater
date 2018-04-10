@@ -26,8 +26,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class ArcadiaController {
-
     private static ArcadiaController ourInstance = new ArcadiaController();
+    private static LogController logController = LogController.getInstance();
     private Path arcadiaUpdatesRepository;
     private Map<String, ArcadiaAppData> installedApps = new HashMap<>();
     private Map<String, ArcadiaAppData> availableUpdates = new HashMap<>();
@@ -38,6 +38,7 @@ public class ArcadiaController {
     }
 
     private ArcadiaController() {
+
     }
 
     public static ArcadiaController getInstance() {
@@ -57,7 +58,7 @@ public class ArcadiaController {
         */
     private String getArcadiaAppPort(File configFile) {
 
-        System.out.printf("Parsing config %s\n", configFile);
+        logController.log.info(String.format("Parsing config %s", configFile));
         // get port from config
         try {
             Configurations configs = new Configurations();
@@ -72,8 +73,8 @@ public class ArcadiaController {
                 }
             }
         } catch (ConfigurationException e) {
+            logController.log.severe(e.toString());
             return null;
-            //e.printStackTrace();
         }
         return null;
     }
@@ -101,7 +102,7 @@ public class ArcadiaController {
         try {
             url = new URL("http://localhost:" + port + "/" + app.getVersionInfo() + "/version.html");
         } catch (MalformedURLException e) {
-            System.out.printf("ERROR: invalid URL: %s", url.toString());
+            logController.log.severe(String.format("invalid URL: %s", url.toString()));
             return null;
         }
         try {
@@ -121,10 +122,10 @@ public class ArcadiaController {
                 response.append(inputLine);
             }
             bufferedReader.close();
-            //System.out.printf("Response from server: %s\n", response);
+            logController.log.finest(String.format("Response from server: %s", response));
             return (getVersionFromResponse(response.toString()));
         } catch (IOException e) {
-            System.out.printf("%s Server not listening. unable to get version in %s\n", app.getLongName(), url);
+            logController.log.severe(String.format("%s Server not listening. unable to get version in %s", app.getLongName(), url));
             return null;
         }
     }
@@ -133,7 +134,7 @@ public class ArcadiaController {
         Integer lowerDepth = Integer.MAX_VALUE;
         Path lowerDepthPath = null;
         for (Path path : alternatives) {
-            System.out.printf("Path=%s\n", path.toString());
+            logController.log.finest(String.format("Path=%s", path.toString()));
             if (path.getNameCount() < lowerDepth) {
                 lowerDepth = path.getNameCount();
                 lowerDepthPath = path;
@@ -166,17 +167,18 @@ public class ArcadiaController {
         if (this.installedApps.size() > 0) {
             return installedApps;
         }
-        System.out.println("Looking for ArcadiaApp. Please standby...");
+        logController.log.info("Looking for ArcadiaApp. Please standby...");
         // iterate Enum AppList collect relevant info
         for (ArcadiaApp app : ArcadiaApp.values()) {
-            System.out.printf("Searching for %s\n", app.getLongName());
+            logController.log.fine(String.format("Searching %s ...", app.getLongName()));
             File tomcatDir = this.getTomcatDir("opt/tomcat_" + app.getShortName());
             if (tomcatDir != null) {
                 // App found collect relevant data
-                System.out.println("App dir found collecting data...");
+                logController.log.info(String.format("App %s found collecting data...", app.getLongName()));
                 String appPort = getArcadiaAppPort(FileUtils.getFile(tomcatDir, "conf", "server.xml"));
                 Version appVersion = getArcadiaVersion(app, appPort);
-                System.out.printf("App version: %s.\n", appVersion);
+                logController.log.info(String.format("App version: %s.", appVersion));
+
                 if (appPort != null) {
                     ArcadiaAppData arcadiaAppData = new ArcadiaAppData(app, tomcatDir, appPort, appVersion);
                     installedApps.put(app.name(), arcadiaAppData);
@@ -194,7 +196,7 @@ public class ArcadiaController {
         if (fileFinder.getNumMatches() > 1)
             this.arcadiaUpdatesRepository = getLowerDepthDirectory(fileFinder.getResults()).toPath();
         else this.arcadiaUpdatesRepository = fileFinder.getResults().get(0);
-        System.out.printf("ArcadiaUpdater.updateApp updatesdir:%s\n", arcadiaUpdatesRepository);
+        logController.log.finest(String.format("ArcadiaUpdater.updateApp updatesdir:%s", arcadiaUpdatesRepository));
         return arcadiaUpdatesRepository;
     }
 
@@ -210,9 +212,7 @@ public class ArcadiaController {
         if (!availableUpdates.isEmpty()) {
             return availableUpdates;
         }
-        System.out.println("Checking available updates...");
-        // Search updates
-
+        logController.log.info("Checking available updates...");
         final List<String> validArcadiaDirectories = validArcadiaDirectories();
 
         File[] updatesSubdirs = getArcadiaUpdatesRepository().toFile().listFiles(
@@ -226,7 +226,7 @@ public class ArcadiaController {
         SystemCommons systemCommons = new SystemCommons();
         if (updatesSubdirs.length > 0)
             for (File directory : updatesSubdirs) {
-                System.out.printf("Checking versions from %s\n", directory);
+                logController.log.info(String.format("Checking versions from %s", directory));
                 File[] versionDirs = directory.listFiles(new FileFilter() {
                     @Override
                     public boolean accept(File pathname) {
@@ -234,7 +234,7 @@ public class ArcadiaController {
                     }
                 });
                 if (versionDirs.length != directory.listFiles().length)
-                    System.out.printf("WARNING: update directory %s contains invalid folders\n", directory);
+                    logController.log.warning(String.format("WARNING: update directory %s contains invalid folders", directory));
                 if (versionDirs.length > 0) {
                     File[] sortedDirectoryList = systemCommons.sortDirectoriesByVersion(versionDirs);
                     File newestVersion = (sortedDirectoryList == null) ? null : sortedDirectoryList[0];
@@ -247,7 +247,7 @@ public class ArcadiaController {
                                 ));
                         availableUpdates.put(directory.getName().toUpperCase(), arcadiaAppData);
                     }
-                } else System.out.printf("ERROR: empty updates directory %s\n", directory);
+                } else logController.log.warning(String.format("ERROR: empty updates directory %s", directory));
             }
         return availableUpdates;
     }

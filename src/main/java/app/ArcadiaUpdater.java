@@ -1,7 +1,7 @@
 package app;
 
 import app.controllers.ArcadiaController;
-import app.controllers.LoggingController;
+import app.controllers.LogController;
 import app.controllers.UpdateController;
 import app.core.Version;
 import app.models.ArcadiaAppData;
@@ -9,7 +9,6 @@ import app.models.Errorlevels;
 import org.apache.commons.cli.*;
 import org.apache.commons.collections.CollectionUtils;
 
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Collection;
@@ -19,17 +18,21 @@ import java.util.Map;
 public class ArcadiaUpdater {
 
     private static Map<String, ArcadiaAppData> testInstalledApps = new HashMap<>();
-    private ArcadiaController arcadiaController = ArcadiaController.getInstance();
+    //private static Logger log = Logger.getLogger(ArcadiaUpdater.class.getName());
+    private static ArcadiaController arcadiaController = ArcadiaController.getInstance();
+    private static LogController logController = LogController.getInstance();
 
 
-    public static void main(String[] args) throws IOException {
-        // init logger
-        LoggingController loggingController = new LoggingController();
+    public ArcadiaUpdater() {
+    }
+
+
+    public static void main(String[] args) {
+
 
         // create the command line parser
         CommandLine commandLine = null;
         CommandLineParser parser = new DefaultParser();
-        ArcadiaController arcadiaController = ArcadiaController.getInstance();
 
         // create the Options
         Options options = new Options();
@@ -54,55 +57,55 @@ public class ArcadiaUpdater {
                 // display help
                 HelpFormatter formatter = new HelpFormatter();
                 formatter.printHelp("arcadia-updater", options);
-                System.exit(1);
+                System.exit(Errorlevels.E1.getErrorLevel());
             }
             if (commandLine.hasOption("repository")) {
                 if (!Files.isDirectory(Paths.get(commandLine.getOptionValue("repository")))) {
-                    System.out.printf("%s %s\n", commandLine.getOptionValue("repository"), Errorlevels.E2.getErrorDescription());
+                    logController.log.severe(String.format("Path %s %s", commandLine.getOptionValue("repository"), Errorlevels.E2.getErrorDescription()));
                     System.exit(Errorlevels.E2.getErrorLevel());
                 } else {
                     arcadiaController.setArcadiaUpdatesRepository(Paths.get(commandLine.getOptionValue("repository")));
                 }
             }
-        } catch (ParseException exp) {
-            System.out.println(exp.getMessage());
+        } catch (ParseException e) {
+            logController.log.severe(e.getMessage());
             System.exit(1);
         }
 
 
         arcadiaController.setCommandLine(commandLine);
-        //System.out.printf("%s updates found.\n", arcadiaController.getInstalledApps().size());
         Map<String, ArcadiaAppData> availableUpdates = arcadiaController.getAvailableUpdates();
+        logController.log.info(String.format("Found %s updates", availableUpdates.size()));
         for (Map.Entry<String, ArcadiaAppData> app : availableUpdates.entrySet()) {
-            System.out.printf("Updates found: %s version: %s\n", app.getKey(), app.getValue().getVersion());
+            logController.log.info(String.format("updates found. %s version: %s", app.getKey(), app.getValue().getVersion()));
         }
 
         Map<String, ArcadiaAppData> installedApps = arcadiaController.getInstalledApps();
         for (Map.Entry<String, ArcadiaAppData> app : installedApps.entrySet()) {
-            System.out.printf("Installed apps found: %s version: %s\n", app.getKey(), app.getValue().getVersion());
+            logController.log.info(String.format("Installed apps found: %s version: %s", app.getKey(), app.getValue().getVersion()));
         }
 
-        System.out.printf("updates keys : %s install keys: %s\n", availableUpdates.keySet(), installedApps.keySet());
+        logController.log.info(String.format("updates keys : %s install keys: %s", availableUpdates.keySet(), installedApps.keySet()));
         Collection intersection = CollectionUtils.intersection(availableUpdates.keySet(), installedApps.keySet());
         for (Object appName : intersection) {
             Version installedVersion = installedApps.get(appName).getVersion();
             Version updateVersion = availableUpdates.get(appName).getVersion();
-            System.out.printf("Checking %s Update version %s with installed app %s\n",
+            logController.log.info(String.format("Checking %s Update version %s with installed app %s",
                     appName,
                     updateVersion,
-                    installedVersion);
+                    installedVersion));
             if (installedVersion == null && !commandLine.hasOption("F")) {
-                System.out.printf("ERROR: unable to update %s. Installed version not available. Use -F (--force) to force updating.", appName);
+                logController.log.severe(String.format("ERROR: unable to update %s. Installed version not available. Use -F (--force) to force updating.", appName));
             } else if ((updateVersion.compareTo(installedVersion) > 0) || commandLine.hasOption("F")) {
-                System.out.printf("OK: Updating %s to version %s\n", appName, updateVersion);
+                logController.log.info(String.format("OK: Updating %s to version %s", appName, updateVersion));
                 UpdateController updateController = new UpdateController((String) appName);
                 try {
                     boolean result = updateController.updateApp();
                 } catch (RuntimeException e) {
-                    System.out.println(e.getMessage());
+                    logController.log.severe(e.getMessage());
                     System.exit(1);
                 }
-            } else System.out.printf("WARNING: Application %s already up to date\n", appName);
+            } else logController.log.info(String.format("WARNING: Application %s already up to date", appName));
         }
         System.exit(0);
     }

@@ -20,6 +20,7 @@ public class FileFinderControllerStr
     private double numMatches = 0;
     private SearchType searchType;
     private String pattern;
+    private static LogController logController = LogController.getInstance();
 
     public FileFinderControllerStr(String pattern, SearchType searchType) {
         this.searchType = searchType;
@@ -74,7 +75,7 @@ public class FileFinderControllerStr
 
         long stopTime = System.currentTimeMillis();
         long elapsedTime = stopTime - startTime;
-        System.out.printf("FileSystem search elapsed time: %s\n", elapsedTime);
+        logController.log.config(String.format("FileSystem search %s. Elapsed time: %s", pattern, elapsedTime));
 
         return finder;
     }

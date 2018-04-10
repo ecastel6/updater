@@ -19,7 +19,7 @@ public class LoggingController {
 
     public void registerTestLoggerMessages() {
 
-        //LOGGER.setLevel(Level.FINEST);
+        LOGGER.setLevel(Level.OFF);
         LOGGER.setUseParentHandlers(false);
         LOGGER.log(Level.INFO, "Mensaje INFO");
         LOGGER.log(Level.SEVERE, "Mensaje Severe");
