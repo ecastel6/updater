@@ -89,8 +89,8 @@ public class ServiceController {
             case LINUX:
                 switch (command) {
                     case "restart":
-                        returnedValues = this.runCommand(new String[]{"sudo", "service", serviceName, "stop"});
-                        returnedValues = this.runCommand(new String[]{"sudo", "service", serviceName, "start"});
+                        returnedValues = this.runCommand(new String[]{"sudo", "/etc/init.d/", serviceName, "stop", "-force"});
+                        returnedValues = this.runCommand(new String[]{"sudo", "/etc/init.d/", serviceName, "start"});
                         return returnedValues;
                     case "stop":
                         if (serviceName.startsWith("tomcat_")) {
@@ -100,8 +100,17 @@ public class ServiceController {
                             returnedValues = this.runCommand(new String[]{"sudo", "service", serviceName, command});
                         }
                         return returnedValues;
+                    case "start":
+                        if (serviceName.startsWith("tomcat_")) {
+                            returnedValues = this.runCommand(
+                                    new String[]{"sudo", "/etc/init.d/" + serviceName, "start"});
+                        } else {
+                            returnedValues = this.runCommand(new String[]{"sudo", "service", serviceName, command});
+                        }
+                        return returnedValues;
                     default:
                         returnedValues = this.runCommand(new String[]{"sudo", "service", serviceName, command});
+
                         return returnedValues;
                 }
 

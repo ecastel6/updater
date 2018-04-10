@@ -74,7 +74,7 @@ public class FileFinderControllerStr
 
         long stopTime = System.currentTimeMillis();
         long elapsedTime = stopTime - startTime;
-        System.out.printf("FileSystem search elapsed time.GlobSearch: %s\n", elapsedTime);
+        System.out.printf("FileSystem search elapsed time: %s\n", elapsedTime);
 
         return finder;
     }

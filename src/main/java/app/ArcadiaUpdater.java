@@ -37,14 +37,14 @@ public class ArcadiaUpdater {
                 .required(false).build());
         options.addOption("s", "ignore-backups-size", false, "do not check backups size");
         options.addOption("b", "override-backups", false, "Do not make security backups");
-        options.addOption("B", "override-backout", false, "Do not move old version to backout");
+        //options.addOption("B", "override-backout", false, "Do not move old version to backout");
         options.addOption("n", "ignore-checkservices", false, "do not check services availability (Rabbitmq,Zookeeper).");
         try {
             // parse the command line arguments
             commandLine = parser.parse(options, args);
 
             // validate that block-size has been set
-            if ((commandLine.hasOption("h") || (args.length == 0)) || (!commandLine.hasOption("S"))) {
+            if ((commandLine.hasOption("h") || (args.length == 0)) && (!commandLine.hasOption("S"))) {
                 // display help
                 HelpFormatter formatter = new HelpFormatter();
                 formatter.printHelp("arcadia-updater", options);
@@ -60,6 +60,7 @@ public class ArcadiaUpdater {
             }
         } catch (ParseException exp) {
             System.out.println(exp.getMessage());
+            System.exit(1);
         }
 
         arcadiaController.setCommandLine(commandLine);
@@ -91,8 +92,8 @@ public class ArcadiaUpdater {
                 try {
                     boolean result = updateController.updateApp();
                 } catch (RuntimeException e) {
-                    System.exit(1);
                     System.out.println(e.getMessage());
+                    System.exit(1);
                 }
             } else System.out.printf("WARNING: Application %s already up to date\n", appName);
         }
