@@ -58,15 +58,6 @@ class FileCopyControllerTest {
         }
     }
 
-    @Test
-    void testRename() {
-        System.out.printf("Renaming directory %s to %s\n",
-                testSourcePath.toString(),
-                testEmptyTargetPath.toString());
-        FileCopyController.move(testSourcePath, testEmptyTargetPath, StandardCopyOption.REPLACE_EXISTING);
-    }
-
-
 /*@AfterEach
     void Cleanup() {
         try {

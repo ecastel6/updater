@@ -12,6 +12,8 @@ import java.util.ArrayList;
 
 public class DbController
 {
+    private static LogController logController = LogController.getInstance();
+
     private static DbController ourInstance;
 
     static {
@@ -75,6 +77,7 @@ public class DbController
 
     public String getServerConfFilename() throws IOException {
         //todo getServerConf other database servers
+        logController.log.info("Looking for directory pattern data/postgresql.conf");
         FileFinderControllerStr postgresConf = FileFinderControllerStr.doit("/", "data/postgresql.conf", SearchType.Files);
 
         if (postgresConf.getNumMatches() == 0) {
@@ -82,16 +85,17 @@ public class DbController
         } else {
             ArrayList<Path> results = postgresConf.getResults();
             if (postgresConf.getNumMatches() > 1) {
-                //System.out.println("Multiple postgres conf file detected. Guessing correct one");
+                logController.log.warning("Multiple postgres conf file detected. Guessing correct one");
                 for (Path path : results) {
-                    //System.out.printf("Path: %s. depth=%d\n", path.toString(), path.getNameCount());
+                    logController.log.config(String.format("Path: %s. depth=%d\n", path.toString(), path.getNameCount()));
                     if ((path.toString().contains("opt")) && (path.getNameCount() < 5)) {
-                        // System.out.printf("Guessed dir: %s ", path.toString());
+                        logController.log.info(String.format("Guessed dir: %s ", path.toString()));
                         return path.toString();
                     }
                 }
-                //System.out.println("Unable to guess returning the first one.");
+                logController.log.warning("Unable to guess returning the first one.");
             } else {
+                logController.log.config(String.format("Exact match %s", results.get(0).toString()));
                 return results.get(0).toString();
             }
 

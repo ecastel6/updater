@@ -31,23 +31,24 @@ class FileFinderControllerTest {
     @Test
     void checkFindFile() {
         /// Check GlobSearch
-        long startTime = System.currentTimeMillis();
+        /*long startTime = System.currentTimeMillis();
         FileFinderController fileFinder = FileFinderController.doit(
                 startPath, testFile, SearchType.Files);
         System.out.println(fileFinder.getResults().toString());
         long stopTime = System.currentTimeMillis();
         long elapsedTime = stopTime - startTime;
         System.out.printf("Elapsed time.GlobSearch: %s\n", elapsedTime);
-
+        */
         /// Check StringSearch
-        startTime = System.currentTimeMillis();
+        long startTime = System.currentTimeMillis();
         FileFinderControllerStr fileFinderStr = FileFinderControllerStr.doit(
                 startPath, testFile, SearchType.Files);
         System.out.println(fileFinderStr.getResults().toString());
-        stopTime = System.currentTimeMillis();
-        elapsedTime = stopTime - startTime;
+        long stopTime = System.currentTimeMillis();
+        long elapsedTime = stopTime - startTime;
         System.out.printf("Elapsed time.StringSearch: %s\n", elapsedTime);
 
+        /*
         /// Check StringUtilsSearch
         startTime = System.currentTimeMillis();
         FileFinderControllerStrUtl fileFinderStrUtl = FileFinderControllerStrUtl.doit(
@@ -55,7 +56,7 @@ class FileFinderControllerTest {
         System.out.println(fileFinderStrUtl.getResults().toString());
         stopTime = System.currentTimeMillis();
         elapsedTime = stopTime - startTime;
-        System.out.printf("Elapsed time.StringUtilsSearch: %s\n", elapsedTime);
+        System.out.printf("Elapsed time.StringUtilsSearch: %s\n", elapsedTime);*/
 
         assertTrue(fileFinderStr.getNumMatches() > 0);
     }

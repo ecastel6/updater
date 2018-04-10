@@ -23,6 +23,8 @@ public class UpdateController
     final static int dbThreshold = 3;
     final static long defaultTimeout = 20000;
 
+    //Instance LogController
+    private static LogController logController = LogController.getInstance();
     // instance BackupsController
     private BackupsController backupsController = BackupsController.getInstance();
     // instance ServiceController
@@ -86,8 +88,8 @@ public class UpdateController
     private void checkDbServer() throws RuntimeException {
         // Check database service
         if (!serviceController.serviceAlive("postgres")) {
-            throw new RuntimeException("Database not started");
-        } else System.out.println("OK: Database Server available");
+            throw new RuntimeException("Database server not available");
+        } else logController.log.info("OK: Database Server available");
     }
 
     private void updateCustom() throws RuntimeException {
@@ -279,7 +281,7 @@ public class UpdateController
             Long timeout = (this.commandLine.hasOption("t")) ? Long.valueOf(this.commandLine.getOptionValue("timeout")) : defaultTimeout;
             SystemCommons.timedServiceStop(timeout, service);
         } catch (InterruptedException e) {
-            System.out.println("Timer interrupt");
+            logController.log.severe(String.format("Timer interrupt. %s", e.getMessage()));
         }
     }
 
@@ -290,7 +292,7 @@ public class UpdateController
 
         // Check tomcat started-ing
         if (serviceController.serviceAlive("tomcat_" + app.getShortName())) {
-            System.out.println("OK: Tomcat started");
+            logController.log.info("OK: Tomcat started");
         } else
             throw new RuntimeException("ERROR: Tomcat not started!!");
     }
@@ -298,17 +300,17 @@ public class UpdateController
     private void checkZookeeper() {
         // Check zookeeper
         if (!serviceController.serviceAlive("zookeeper")) {
-            System.out.println("ERROR: Zookeeper not started");
+            logController.log.severe("ERROR: Zookeeper not started");
             //throw new RuntimeException("ERROR: Zookeeper not started");
-        } else System.out.println("OK: Zookeeper Server available");
+        } else logController.log.info("OK: Zookeeper Server available");
     }
 
     private void checkRabbitmq() {
         // Check rabbitmq
         if (!serviceController.serviceAlive("rabbitmq")) {
-            System.out.println("ERROR: Rabbitmq not started");
+            logController.log.severe("ERROR: Rabbitmq not started");
             //throw new RuntimeException("ERROR: Rabbitmq not started");
-        } else System.out.println("OK: RabbitMq Server available");
+        } else logController.log.info("OK: RabbitMq Server available");
     }
 
     private void moveFilteredDir(File source, File target, FilenameFilter filter) throws RuntimeException {
@@ -324,7 +326,7 @@ public class UpdateController
         for (File file :
                 filteredDir) {
             try {
-                System.out.printf("Moving %s to %s\n", file.toString(), target.toString());
+                logController.log.config(String.format("Moving %s to %s\n", file.toString(), target.toString()));
                 if (file.isDirectory())
                     FileUtils.moveDirectoryToDirectory(file, target, true);
                 else

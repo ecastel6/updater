@@ -10,7 +10,9 @@ import java.util.regex.Pattern;
 
 import static java.lang.Thread.sleep;
 
-public class SystemCommons {
+public class SystemCommons
+{
+    private static LogController logController = LogController.getInstance();
 
     public static void main(String[] args) {
         ServiceController.getInstance().serviceAction("tomcat_cbos", "stop");
@@ -29,19 +31,20 @@ public class SystemCommons {
         int count = 0;
         while (true) {
             if (!ServiceController.getInstance().serviceAlive(service)) {
-                System.out.println("OK. Service stoped");
+                logController.log.config("OK. Service stoped");
                 break;
             }
             sleep(2000);
             long elapsed = System.currentTimeMillis() - startTime;
-            System.out.printf("Check %s Elapsed: %s\n", count++, elapsed);
+            logController.log.config(String.format("Check %s Elapsed: %s", count++, elapsed));
             if (elapsed > timeout)
-                throw new RuntimeException("Service not stopped. Stop timeout");
+                throw new RuntimeException("Timeout unable to stop service");
         }
     }
 
     public File[] sortDirectoriesByDate(File[] listDirectories) {
-        Arrays.sort(listDirectories, new Comparator<File>() {
+        Arrays.sort(listDirectories, new Comparator<File>()
+        {
             public int compare(File f1, File f2) {
                 return Long.valueOf(f2.lastModified()).compareTo(f1.lastModified());
             }
@@ -79,13 +82,13 @@ public class SystemCommons {
     }
 
     public File[] sortDirectoriesByVersion(File[] listDirectories) {
-            Arrays.sort(listDirectories, new Comparator<File>()
-            {
-                public int compare(File f1, File f2) {
-                    return new Version(normalizeVersion(f2.getName()))
-                            .compareTo(new Version(normalizeVersion(f1.getName())));
-                }
-            });
+        Arrays.sort(listDirectories, new Comparator<File>()
+        {
+            public int compare(File f1, File f2) {
+                return new Version(normalizeVersion(f2.getName()))
+                        .compareTo(new Version(normalizeVersion(f1.getName())));
+            }
+        });
         return listDirectories;
     }
 

@@ -11,6 +11,8 @@ import java.util.Arrays;
 import java.util.List;
 
 public class ServiceController {
+    private static LogController logController = LogController.getInstance();
+
     private static ServiceController ourInstance = new ServiceController();
 
     public static ServiceController getInstance() {
@@ -21,7 +23,7 @@ public class ServiceController {
 
     private ServiceController() {
         this.os = getOs();
-        //System.out.printf("OS: %s\n", osToString(os));
+        logController.log.info(String.format("Detected OS: %s", osToString(os)));
     }
 
     public OS getOs() {
@@ -80,7 +82,7 @@ public class ServiceController {
 
     public ReturnValues serviceAction(String serviceName, String command) {
         String msg;
-        System.out.printf("Servicename: %s Command: %s\n", serviceName, command);
+        logController.log.info(String.format("Servicename: %s Command: %s\n", serviceName, command));
         ReturnValues returnedValues = new ReturnValues(0, "");
         final List<String> availableActions = Arrays.asList("start", "stop", "forcestop", "restart", "status");
         if (!availableActions.contains(command))
@@ -132,7 +134,7 @@ public class ServiceController {
                 }
                 break;
             case OTHER:
-                System.out.println("Unhandled OS");
+                logController.log.severe("Unhandled OS");
                 break;
         }
         return returnedValues;

@@ -1,5 +1,6 @@
 package app.core;
 
+import app.controllers.LogController;
 import org.apache.commons.configuration2.CombinedConfiguration;
 import org.apache.commons.configuration2.Configuration;
 import org.apache.commons.configuration2.FileBasedConfiguration;
@@ -15,6 +16,9 @@ import java.util.List;
 public class FileBasedConfigurationHandler {
     //todo change property String propertiesFilename to File propertiesFilename
     private String fileName;
+
+    // logController instance
+    LogController logController = LogController.getInstance();
 
     FileBasedConfigurationBuilder<FileBasedConfiguration> builder;
 
@@ -89,7 +93,7 @@ public class FileBasedConfigurationHandler {
 
         // Deleting deprecated properties
         for (int i = 0; i < propertiesToDelete.size(); i++) {
-            // TODO logger System.out.println("Borrando: " + propertiesToDelete.get(i));
+            logController.log.info(String.format("Borrando: " + propertiesToDelete.get(i)));
             combined.clearProperty(propertiesToDelete.get(i));
             this.getConfig().clearProperty(propertiesToDelete.get(i));
         }

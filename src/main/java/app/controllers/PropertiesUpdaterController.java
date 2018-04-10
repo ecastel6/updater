@@ -19,6 +19,8 @@ import java.util.LinkedList;
 import java.util.List;
 
 public class PropertiesUpdaterController {
+    private static LogController logController = LogController.getInstance();
+
     File sourceCustomOldDir, sourceCustomNewDir, targetCustomDir;
 
     public PropertiesUpdaterController(File sourceCustomOldDir, File sourceCustomNewDir, File targetCustomDir) {
@@ -66,12 +68,12 @@ public class PropertiesUpdaterController {
             patches = patchObj.patch_make(oldProps, newProps);
             Object[] results = patchObj.patch_apply(patches, oldProps);
 
-            //System.out.println("DiffPatch firstFile=" + oldPropertyFile + " newFile=" + newPropertyFile);
-            // System.out.println("Writing patched ...");
+            logController.log.config(String.format("DiffPatch firstFile=" + oldPropertyFile + " newFile=" + newPropertyFile));
+            logController.log.info(String.format("Writing patched file %s", results[0].toString()));
             writeFile(tempFile, results[0].toString(), StandardCharsets.UTF_8);
 
             // Mix properties
-            // System.out.println("Merging properties ...");
+            logController.log.info("Merging properties ...");
             FileBasedConfigurationHandler oldConfigurationHandler = new FileBasedConfigurationHandler(oldPropertyFile.toString());
             FileBasedConfigurationHandler newConfigurationHandler = new FileBasedConfigurationHandler(newPropertyFile.toString());
 
@@ -80,7 +82,7 @@ public class PropertiesUpdaterController {
             CombinedConfiguration finalProperties = oldConfigurationHandler
                     .patchPropertiesFile(newConfigurationHandler);
 
-            // System.out.println("Loading preserved properties...");
+            logController.log.info("Loading preserved properties...");
             // key updatedProperties list properties which update must be forced
             List<Object> updated = finalProperties.getList("updatedProperties");
 
@@ -88,9 +90,9 @@ public class PropertiesUpdaterController {
             while (keys.hasNext()) {
                 String key = keys.next();
                 if (updated.contains(key)) {
-                    // System.out.println("update value key= " + key);
+                    logController.log.config(String.format("update value key= " + key));
                 } else {
-                    // System.out.println("preserve value key= " + key + ": Value= " +
+                    logController.log.config(String.format("preserve value key= " + key + ": Value= %s", key, finalProperties.getString(key)));
                     targetConfigurationHandler.getConfig().setProperty(key, finalProperties.getString(key));
                 }
             }
@@ -98,10 +100,9 @@ public class PropertiesUpdaterController {
             //java.nio.file.Files.move(tempFile.toPath(), targetFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
 
         } catch (IOException e) {
-            System.out.println(e.hashCode());
-            e.printStackTrace();
+            logController.log.severe(e.getMessage());
         } catch (ConfigurationException e) {
-            e.printStackTrace();
+            logController.log.severe(e.getMessage());
         } finally {
             return tempFile;
         }
@@ -113,6 +114,7 @@ public class PropertiesUpdaterController {
         //targetCustomDir=FileUtils.getFile(FileUtils.getTempDirectory(),"tempTarget");
 
         // Copy sourceCustomOldDir to targetCustomDir
+        logController.log.config(String.format("Copying %s to %s", sourceCustomOldDir, targetCustomDir));
         FileUtils.copyDirectory(sourceCustomOldDir, targetCustomDir, true);
 
         // Copy all but properties or urlrewrite.xml from sourceCustomNewDir to targetCustomDir
@@ -122,6 +124,7 @@ public class PropertiesUpdaterController {
                         new SuffixFileFilter(".properties")
                 )
         );
+        logController.log.config(String.format("Copying all but .properties or urlrewrite %s to %s", sourceCustomNewDir, targetCustomDir));
         FileUtils.copyDirectory(this.sourceCustomNewDir, this.targetCustomDir, excludeFilter);
 
         // Process all .properties files from sourceCustomNewDir, copy all non existing files to targetCustomDir
@@ -137,7 +140,7 @@ public class PropertiesUpdaterController {
                 this.sourceCustomNewDir,
                 processFilter,
                 TrueFileFilter.INSTANCE);
-
+        logController.log.info("Processing all properties but Templates and jobs...");
         for (File newPropertiesFile : collectionProperties) {
 
             String newRelativePath = getRelativePath(newPropertiesFile, sourceCustomNewDir);
@@ -145,17 +148,17 @@ public class PropertiesUpdaterController {
             File oldPropertiesFile = FileUtils.getFile(sourceCustomOldDir, newRelativePath);
 
             if (oldPropertiesFile.exists()) { // Previous version found merging
-                System.out.printf("Merging %s with new %s\n",
+                logController.log.config(String.format("Merging %s with new %s\n",
                         oldPropertiesFile,
-                        newPropertiesFile);
+                        newPropertiesFile));
                 FileUtils.copyFile(
                         updatePropertyFile(oldPropertiesFile, newPropertiesFile),
                         targetPropertiesFile,
                         true);
             } else {
-                System.out.printf("Copying source file %s to %s\n",
+                logController.log.config(String.format("Copying source file %s to %s\n",
                         newPropertiesFile,
-                        FileUtils.getFile(targetCustomDir, newRelativePath));
+                        FileUtils.getFile(targetCustomDir, newRelativePath)));
                 FileUtils.copyFile(
                         newPropertiesFile,
                         targetPropertiesFile,

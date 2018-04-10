@@ -8,6 +8,8 @@ import org.apache.commons.io.FileUtils;
 import java.io.File;
 
 public class BackupsController {
+    private static LogController logController = LogController.getInstance();
+
     private static BackupsController ourInstance = new BackupsController();
     private File rootBackupsDir = null;
     private String today = null;
@@ -27,7 +29,7 @@ public class BackupsController {
 
     public File getLastBackupDir(ArcadiaApp app) {
         File directory = FileUtils.getFile(this.getRootBackupsDir(), app.getDatabaseName());
-        System.out.printf("Checking %s directory. Searching latest backup.\n", directory);
+        logController.log.info(String.format("Checking %s directory. Searching latest backup.\n", directory));
 
         // app backups directory not found
         if (!directory.exists()) return null;
@@ -42,9 +44,12 @@ public class BackupsController {
         if (rootBackupsDir == null) {
             ArcadiaController arcadiaController = ArcadiaController.getInstance();
             // Simple shot, lowerDepthDirectory, guess system has daily
+            logController.log.info("Searching daily backups folder...");
             FileFinderControllerStr fileFinderController = FileFinderControllerStr.doit("/", "/daily", SearchType.Directories);
-            if (fileFinderController.getNumMatches() > 0)
+            if (fileFinderController.getNumMatches() > 0) {
+                logController.log.config(String.format("Found %s backups folder. Selecting lowestdepth one", fileFinderController.getNumMatches()));
                 rootBackupsDir = arcadiaController.getLowerDepthDirectory(fileFinderController.results);
+            }
         }
         return rootBackupsDir;
     }
@@ -77,7 +82,7 @@ public class BackupsController {
         Long z = Math.abs(v1 - v2);
         double p = (v1 + v2) / 2;
         p = Math.abs((z / p) * 100);
-        System.out.printf("Difference percentage: %s\n", p);
+        logController.log.config(String.format("Difference percentage: %s", p));
         return p;
     }
 }

@@ -3,6 +3,7 @@ package app.core;
 // DEPRECATED GO WITH ZIP4J
 /////////////
 
+import app.controllers.LogController;
 import app.models.CompresionLevel;
 import net.lingala.zip4j.core.ZipFile;
 import net.lingala.zip4j.exception.ZipException;
@@ -17,12 +18,13 @@ import java.util.zip.ZipOutputStream;
 
 public class ZipHandler
 {
+    private LogController logController = LogController.getInstance();
 
     List<String> fileList;
-    //    private static final String OUTPUT_ZIP_FILE = "C:\\tmp\\ziptest.zip";
-//    private static final String SOURCE_FOLDER = "C:\\tmp\\ziptest";
+
     String Folder;
     static String ZipFile;
+
 
     public ZipHandler() {
         fileList = new ArrayList<String>();
@@ -92,11 +94,11 @@ public class ZipHandler
             }
             zipOutputStream.closeEntry();
             zipOutputStream.close();
-            System.out.println("Done");
+            logController.log.info(String.format("Compressed file generated %s", outputZip));
         } catch (FileNotFoundException e) {
-            e.printStackTrace();
+            logController.log.severe(e.getMessage());
         } catch (IOException ex) {
-            ex.printStackTrace();
+            logController.log.severe(ex.getMessage());
         }
     }
 
@@ -156,7 +158,7 @@ public class ZipHandler
             while (zipEntry != null) {
                 String fileName = zipEntry.getName();
                 File newFile = new File(outputFolder + File.separator + fileName);
-                System.out.println("file unzip : " + newFile.getAbsoluteFile());
+                logController.log.info("file unzip : " + newFile.getAbsoluteFile());
 
                 //create all non existing folders
                 new File(newFile.getParent()).mkdirs();
@@ -169,19 +171,16 @@ public class ZipHandler
                 fileOutputStream.close();
 
                 if (!newFile.setLastModified(zipEntry.getTime()))
-                    System.out.println("ERROR: Unable to set file timestamp");
+                    logController.log.warning("Unable to set file timestamp");
                 zipEntry = zipInputStream.getNextEntry();
             }
 
             zipInputStream.closeEntry();
             zipInputStream.close();
-            System.out.println("Done");
+            logController.log.info(String.format("File %s uncompressed to %s directory", zipFile, outputFolder));
 
         } catch (IOException ex) {
-            //ex.printStackTrace();
+            logController.log.severe(ex.getMessage());
         }
     }
 }
-
-
-
