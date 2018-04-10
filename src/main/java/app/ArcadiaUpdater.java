@@ -1,6 +1,7 @@
 package app;
 
 import app.controllers.ArcadiaController;
+import app.controllers.LoggingController;
 import app.controllers.UpdateController;
 import app.core.Version;
 import app.models.ArcadiaAppData;
@@ -8,6 +9,7 @@ import app.models.Errorlevels;
 import org.apache.commons.cli.*;
 import org.apache.commons.collections.CollectionUtils;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Collection;
@@ -19,7 +21,11 @@ public class ArcadiaUpdater {
     private static Map<String, ArcadiaAppData> testInstalledApps = new HashMap<>();
     private ArcadiaController arcadiaController = ArcadiaController.getInstance();
 
-    public static void main(String[] args) {
+
+    public static void main(String[] args) throws IOException {
+        // init logger
+        LoggingController loggingController = new LoggingController();
+
         // create the command line parser
         CommandLine commandLine = null;
         CommandLineParser parser = new DefaultParser();
@@ -62,6 +68,7 @@ public class ArcadiaUpdater {
             System.out.println(exp.getMessage());
             System.exit(1);
         }
+
 
         arcadiaController.setCommandLine(commandLine);
         //System.out.printf("%s updates found.\n", arcadiaController.getInstalledApps().size());
