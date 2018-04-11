@@ -286,6 +286,7 @@ public class UpdateController
         // Check tomcat stopped
         try {
             Long timeout = (this.commandLine.hasOption("t")) ? Long.valueOf(this.commandLine.getOptionValue("timeout")) : defaultTimeout;
+            logController.log.config(String.format("Waiting %s seconds for service to stop", timeout));
             SystemCommons.timedServiceStop(timeout, service);
         } catch (InterruptedException e) {
             logController.log.severe(String.format("Timer interrupt. %s", e.getMessage()));

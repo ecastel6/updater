@@ -12,13 +12,12 @@ import org.apache.commons.collections.CollectionUtils;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.Map;
 
 public class ArcadiaUpdater {
     private static LogController logController = LogController.getInstance();
 
-    private static Map<String, ArcadiaAppData> testInstalledApps = new HashMap<>();
+    //private static Map<String, ArcadiaAppData> installedApps = new HashMap<>();
     private static ArcadiaController arcadiaController = ArcadiaController.getInstance();
 
     public ArcadiaUpdater() {
@@ -42,7 +41,7 @@ public class ArcadiaUpdater {
                 .required(false).build());
         options.addOption("s", "ignore-backups-size", false, "do not check backups size");
         options.addOption("b", "override-backups", false, "Do not make security backups");
-        options.addOption("B", "force-backout", false, "Cleanout backout directory before backout");
+        options.addOption("B", "force-Backout", false, "Cleanout backout directory before backout");
         options.addOption("n", "ignore-checkservices", false, "do not check services availability (Rabbitmq,Zookeeper).");
         try {
             // parse the command line arguments
@@ -68,7 +67,6 @@ public class ArcadiaUpdater {
             System.exit(1);
         }
 
-
         arcadiaController.setCommandLine(commandLine);
         Map<String, ArcadiaAppData> availableUpdates = arcadiaController.getAvailableUpdates();
         logController.log.info(String.format("Found %s updates", availableUpdates.size()));
@@ -91,7 +89,7 @@ public class ArcadiaUpdater {
                     updateVersion,
                     installedVersion));
             if (installedVersion == null && !commandLine.hasOption("F")) {
-                logController.log.severe(String.format("ERROR: unable to update %s. Installed version not available. Use -F (--force) to force updating.", appName));
+                logController.log.warning(String.format("unable to update %s. Installed version not available. Use -F (--force) to force updating.", appName));
             } else if ((updateVersion.compareTo(installedVersion) > 0) || commandLine.hasOption("F")) {
                 logController.log.info(String.format("OK: Updating %s to version %s", appName, updateVersion));
                 UpdateController updateController = new UpdateController((String) appName);

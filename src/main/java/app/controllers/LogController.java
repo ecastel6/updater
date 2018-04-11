@@ -14,7 +14,8 @@ public class LogController {
         try {
             FileInputStream fis = new FileInputStream("logging.properties");
             LogManager.getLogManager().readConfiguration(fis);
-            log.setLevel(Level.INFO);
+            // Minimum level shown either file or console logger
+            log.setLevel(Level.FINE);
             log.addHandler(new java.util.logging.ConsoleHandler());
             log.addHandler(new java.util.logging.FileHandler());
             log.setUseParentHandlers(false);

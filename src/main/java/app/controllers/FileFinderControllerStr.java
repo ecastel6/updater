@@ -13,14 +13,14 @@ import java.util.List;
 
 import static java.nio.file.FileVisitResult.CONTINUE;
 
-public class FileFinderControllerStr
-        extends SimpleFileVisitor<Path> {
-    static ServiceController serviceController = ServiceController.getInstance();
+public class FileFinderControllerStr extends SimpleFileVisitor<Path> {
+    private static LogController logController = LogController.getInstance();
+
+    private static ServiceController serviceController = ServiceController.getInstance();
     ArrayList<Path> results = new ArrayList<Path>();
     private double numMatches = 0;
     private SearchType searchType;
     private String pattern;
-    private static LogController logController = LogController.getInstance();
 
     public FileFinderControllerStr(String pattern, SearchType searchType) {
         this.searchType = searchType;
@@ -55,10 +55,7 @@ public class FileFinderControllerStr
         // what =2 dirs
         //for (Path p: getDriveList()) System.out.println(p.toString());
         long startTime = System.currentTimeMillis();
-
         FileFinderControllerStr finder = new FileFinderControllerStr(pattern, searchType);
-
-
         List<String> driveList;
         if (serviceController.os.equals(OS.LINUX)) {
             //List<String> driveList = Arrays.asList("");
@@ -66,12 +63,14 @@ public class FileFinderControllerStr
         } else {
             driveList = getDriveList();
         }
-        for (String everyDrive : driveList)
+        for (String everyDrive : driveList) {
+            logController.log.config(String.format("Walking %s drive", everyDrive));
             try {
                 Files.walkFileTree(Paths.get(everyDrive, startPath), finder);
             } catch (IOException e) {
                 e.printStackTrace();
             }
+        }
 
         long stopTime = System.currentTimeMillis();
         long elapsedTime = stopTime - startTime;
@@ -81,7 +80,7 @@ public class FileFinderControllerStr
     }
 
     void find(Path file) {
-        //System.out.printf("find Path File: %s\n",file.toString());
+        logController.log.fine(String.format("find: Path: %s", file.toString()));
         if (file != null && file.toString().endsWith(this.pattern)) {
             results.add(file);
             numMatches++;

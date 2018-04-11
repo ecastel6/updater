@@ -72,7 +72,7 @@ public class PropertiesUpdaterController {
             writeFile(tempFile, results[0].toString(), StandardCharsets.UTF_8);
 
             // Mix properties
-            logController.log.info("Merging properties ...");
+            logController.log.config("Merging properties ...");
             FileBasedConfigurationHandler oldConfigurationHandler = new FileBasedConfigurationHandler(oldPropertyFile.toString());
             FileBasedConfigurationHandler newConfigurationHandler = new FileBasedConfigurationHandler(newPropertyFile.toString());
 
@@ -81,7 +81,7 @@ public class PropertiesUpdaterController {
             CombinedConfiguration finalProperties = oldConfigurationHandler
                     .patchPropertiesFile(newConfigurationHandler);
 
-            logController.log.info("Loading preserved properties...");
+            logController.log.config("Loading preserved properties...");
             // key updatedProperties list properties which update must be forced
             List<Object> updated = finalProperties.getList("updatedProperties");
 

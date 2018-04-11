@@ -122,7 +122,7 @@ public class ArcadiaController {
                 response.append(inputLine);
             }
             bufferedReader.close();
-            logController.log.finest(String.format("Response from server: %s", response));
+            logController.log.config(String.format("Response from server: %s", response));
             return (getVersionFromResponse(response.toString()));
         } catch (IOException e) {
             logController.log.severe(String.format("%s Server not listening. unable to get version in %s", app.getLongName(), url));
@@ -134,7 +134,7 @@ public class ArcadiaController {
         Integer lowerDepth = Integer.MAX_VALUE;
         Path lowerDepthPath = null;
         for (Path path : alternatives) {
-            logController.log.finest(String.format("Path=%s", path.toString()));
+            logController.log.config(String.format("Path=%s", path.toString()));
             if (path.getNameCount() < lowerDepth) {
                 lowerDepth = path.getNameCount();
                 lowerDepthPath = path;
@@ -170,7 +170,7 @@ public class ArcadiaController {
         logController.log.info("Looking for ArcadiaApp. Please standby...");
         // iterate Enum AppList collect relevant info
         for (ArcadiaApp app : ArcadiaApp.values()) {
-            logController.log.fine(String.format("Searching %s ...", app.getLongName()));
+            logController.log.config(String.format("Searching %s ...", app.getLongName()));
             File tomcatDir = this.getTomcatDir("opt/tomcat_" + app.getShortName());
             if (tomcatDir != null) {
                 // App found collect relevant data
@@ -181,7 +181,7 @@ public class ArcadiaController {
 
                 if (appPort != null) {
                     ArcadiaAppData arcadiaAppData = new ArcadiaAppData(app, tomcatDir, appPort, appVersion);
-                    installedApps.put(app.name(), arcadiaAppData);
+                    installedApps.put(app.getShortName().toUpperCase(), arcadiaAppData);
                 }
             }
         }
@@ -192,11 +192,12 @@ public class ArcadiaController {
         if (arcadiaUpdatesRepository != null) {
             return arcadiaUpdatesRepository;
         }
+        logController.log.config("FilefinderControllerStr searching opt/arcadiaVersions in filesystem...");
         FileFinderControllerStr fileFinder = FileFinderControllerStr.doit("/", "opt/arcadiaVersions", SearchType.Directories);
         if (fileFinder.getNumMatches() > 1)
             this.arcadiaUpdatesRepository = getLowerDepthDirectory(fileFinder.getResults()).toPath();
         else this.arcadiaUpdatesRepository = fileFinder.getResults().get(0);
-        logController.log.finest(String.format("ArcadiaUpdater.updateApp updatesdir:%s", arcadiaUpdatesRepository));
+        logController.log.config(String.format("ArcadiaUpdater.updateApp updatesdir:%s", arcadiaUpdatesRepository));
         return arcadiaUpdatesRepository;
     }
 
@@ -215,6 +216,7 @@ public class ArcadiaController {
         logController.log.info("Checking available updates...");
         final List<String> validArcadiaDirectories = validArcadiaDirectories();
 
+        logController.log.info("Searching UpdatesRepository...");
         File[] updatesSubdirs = getArcadiaUpdatesRepository().toFile().listFiles(
                 new FileFilter() {
                     @Override
