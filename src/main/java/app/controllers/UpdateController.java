@@ -74,6 +74,7 @@ public class UpdateController
         updateSharedlib();
         updateWars();
         updateCustom();
+        logController.log.info(String.format("Aplicattion %s updated to %s version", installedAppData.getApp(), installedAppData.getVersion()));
         startAppServer(installedAppData.getApp());
         // Check schema_version all ok
         return true;
@@ -286,7 +287,7 @@ public class UpdateController
         // Check tomcat stopped
         try {
             Long timeout = (this.commandLine.hasOption("t")) ? Long.valueOf(this.commandLine.getOptionValue("timeout")) : defaultTimeout;
-            logController.log.config(String.format("Waiting %s seconds for service to stop", timeout));
+            logController.log.config(String.format("Waiting %s segs for service to stop", timeout / 1000));
             SystemCommons.timedServiceStop(timeout, service);
         } catch (InterruptedException e) {
             logController.log.severe(String.format("Timer interrupt. %s", e.getMessage()));

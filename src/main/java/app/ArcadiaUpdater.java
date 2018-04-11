@@ -37,7 +37,7 @@ public class ArcadiaUpdater {
                 .argName("repodir").desc("Update repository e.g. ./updates or /opt/arcadiaVersions")
                 .required(false).build());
         options.addOption(Option.builder("t").longOpt("timeout").hasArg(true)
-                .argName("time").desc("set stop tomcat services timeout")
+                .argName("time").desc("set stop tomcat services timeout (ms)")
                 .required(false).build());
         options.addOption("s", "ignore-backups-size", false, "do not check backups size");
         options.addOption("b", "override-backups", false, "Do not make security backups");
