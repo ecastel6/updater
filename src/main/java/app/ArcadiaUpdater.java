@@ -40,8 +40,8 @@ public class ArcadiaUpdater {
                 .argName("time").desc("set stop tomcat services timeout (ms)")
                 .required(false).build());
         options.addOption("s", "ignore-backups-size", false, "do not check backups size");
-        options.addOption("b", "override-backups", false, "Do not make security backups");
-        options.addOption("B", "force-Backout", false, "Cleanout backout directory before backout");
+        options.addOption("b", "override-backups", false, "Don't do security backups");
+        options.addOption("B", "force-backout", false, "Cleanout backout directory before backout");
         options.addOption("n", "ignore-checkservices", false, "do not check services availability (Rabbitmq,Zookeeper).");
         try {
             // parse the command line arguments
