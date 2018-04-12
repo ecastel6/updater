@@ -75,6 +75,9 @@ public class UpdateController
         updateWars();
         updateCustom();
         logController.log.info(String.format("Aplicattion %s updated to %s version", installedAppData.getApp(), installedAppData.getVersion()));
+        if (this.commandLine.hasOption("r")) {
+            logController.log.severe("Feature not implemented yet.");
+        }
         startAppServer(installedAppData.getApp());
         // Check schema_version all ok
         return true;
@@ -90,6 +93,7 @@ public class UpdateController
     }
 
     private boolean currentBackupSizeMismatch(Long lastBackupSize, Long databaseBackupDirSize) {
+        // todo configurable threshold through commandline option
         return backupsController.differencePercentage(lastBackupSize, databaseBackupDirSize) > dbThreshold;
     }
 
@@ -341,7 +345,7 @@ public class UpdateController
                 else
                     FileUtils.moveFileToDirectory(file, target, true);
             } catch (IOException e) {
-                throw new RuntimeException("ERROR moving " + file + " " + e.getMessage());
+                throw new RuntimeException("ERROR moving " + file + " " + e.getMessage() + ". Hint: try using -B option to empty backout first");
             }
         }
     }

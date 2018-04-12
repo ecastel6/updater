@@ -64,7 +64,7 @@ public class FileFinderControllerStr extends SimpleFileVisitor<Path> {
             driveList = getDriveList();
         }
         for (String everyDrive : driveList) {
-            logController.log.config(String.format("Walking %s drive", everyDrive));
+            logController.log.config(String.format("Searching drive %s for pattern %s ...", everyDrive, pattern));
             try {
                 Files.walkFileTree(Paths.get(everyDrive, startPath), finder);
             } catch (IOException e) {

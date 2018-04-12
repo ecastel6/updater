@@ -40,9 +40,10 @@ public class ArcadiaUpdater {
                 .argName("time").desc("set stop tomcat services timeout (ms)")
                 .required(false).build());
         options.addOption("s", "ignore-backups-size", false, "do not check backups size");
-        options.addOption("b", "override-backups", false, "Do not make security backups");
-        options.addOption("B", "force-Backout", false, "Cleanout backout directory before backout");
+        options.addOption("b", "override-backups", false, "Don't do security backups");
+        options.addOption("B", "force-backout", false, "Cleanout backout directory before backout");
         options.addOption("n", "ignore-checkservices", false, "do not check services availability (Rabbitmq,Zookeeper).");
+        options.addOption("r", "reinstall-services", false, "reinstall tomcat services.");
         try {
             // parse the command line arguments
             commandLine = parser.parse(options, args);
@@ -69,9 +70,9 @@ public class ArcadiaUpdater {
 
         arcadiaController.setCommandLine(commandLine);
         Map<String, ArcadiaAppData> availableUpdates = arcadiaController.getAvailableUpdates();
-        logController.log.info(String.format("Found %s updates", availableUpdates.size()));
+        logController.log.info(String.format("Found %s app update folders", availableUpdates.size()));
         for (Map.Entry<String, ArcadiaAppData> app : availableUpdates.entrySet()) {
-            logController.log.info(String.format("updates found. %s version: %s", app.getKey(), app.getValue().getVersion()));
+            logController.log.info(String.format("Update found. %s version: %s", app.getKey(), app.getValue().getVersion()));
         }
 
         Map<String, ArcadiaAppData> installedApps = arcadiaController.getInstalledApps();
