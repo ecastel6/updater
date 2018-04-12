@@ -37,7 +37,6 @@ public class UpdateController
     private ArcadiaAppData installedAppData;
 
     // general variables
-    private File arcadiaUpdatesRepository;
     private File latestUpdatesVersionDir;
     private File installedAppDir;
 
@@ -48,6 +47,8 @@ public class UpdateController
         this.latestUpdatesVersionDir = arcadiaController.getAvailableUpdates().get(appName).getDirectory();
     }
 
+    public UpdateController() {
+    }
     /*
      Main method
      */
@@ -76,11 +77,39 @@ public class UpdateController
         updateCustom();
         logController.log.info(String.format("Aplicattion %s updated to %s version", installedAppData.getApp(), installedAppData.getVersion()));
         if (this.commandLine.hasOption("r")) {
-            logController.log.severe("Feature not implemented yet.");
+            reinstallServices(installedAppData);
+            // todo reinstall tomcat services;
         }
         startAppServer(installedAppData.getApp());
         // Check schema_version all ok
         return true;
+    }
+
+    public void reinstallServices(ArcadiaAppData appData) {
+        switch (serviceController.os) {
+            case WINDOWS:
+                String serviceName = String.format("tomcat_%s", appData.getApp().getShortName());
+                if (serviceController.serviceAlive(serviceName)) {
+                    logController.log.severe(String.format("Could not reinstall service %s while its running", serviceName));
+                    throw new RuntimeException(String.format("Could not reinstall service %s while its running", serviceName));
+                }
+                File sourceServiceScript, targetServiceScript;
+                try {
+                    //sourceServiceScript=FileUtils.getFile(arcadiaController.getArcadiaUpdatesRepository().toString(),"base/windows/"+serviceName+".bat");
+                    sourceServiceScript = FileUtils.getFile("d:/opt/arcadiaVersions/base/windows/" + serviceName + ".bat");
+                    targetServiceScript = FileUtils.getFile(appData.getDirectory(), "bin", serviceName + ".bat");
+                    FileUtils.copyFile(sourceServiceScript, targetServiceScript, true);
+                } catch (IOException e) {
+                    logController.log.severe(String.format("Unable to copy service %s to destination", serviceName));
+                    logController.log.severe(e.getMessage());
+                    throw new RuntimeException(String.format("Unable to copy service %s to destination", serviceName));
+                }
+                serviceController.runCommand(new String[]{"cmd.exe", "/c", targetServiceScript.toString(), "remove", serviceName});
+                serviceController.runCommand(new String[]{"cmd.exe", "/c", targetServiceScript.toString(), "install", serviceName});
+                break;
+            case LINUX:
+                break;
+        }
     }
 
     private void backupDatabase(ArcadiaAppData app) throws RuntimeException {

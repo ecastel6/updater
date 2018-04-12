@@ -49,7 +49,7 @@ public class ArcadiaUpdater {
             commandLine = parser.parse(options, args);
 
             // validate that block-size has been set
-            if ((commandLine.hasOption("h") || (args.length == 0)) && (!commandLine.hasOption("S"))) {
+            if (commandLine.hasOption("h") || args.length == 0 || (!commandLine.hasOption("S") && !commandLine.hasOption("R"))) {
                 // display help
                 HelpFormatter formatter = new HelpFormatter();
                 formatter.printHelp("arcadia-updater", options);

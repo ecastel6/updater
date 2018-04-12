@@ -74,7 +74,7 @@ public class FileFinderControllerStr extends SimpleFileVisitor<Path> {
 
         long stopTime = System.currentTimeMillis();
         long elapsedTime = stopTime - startTime;
-        logController.log.config(String.format("FileSystem search %s. Elapsed time: %s", pattern, elapsedTime));
+        logController.log.config(String.format("FileSystem search %s. Elapsed time: %s segs", pattern, elapsedTime / 1000));
 
         return finder;
     }
