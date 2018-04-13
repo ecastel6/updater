@@ -9,6 +9,7 @@ import net.lingala.zip4j.core.ZipFile;
 import net.lingala.zip4j.exception.ZipException;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.filefilter.*;
 
 import java.io.File;
@@ -18,8 +19,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 
-public class UpdateController
-{
+public class UpdateController {
     final static int dbThreshold = 3;
     final static long defaultTimeout = 20000;
 
@@ -47,8 +47,7 @@ public class UpdateController
         this.latestUpdatesVersionDir = arcadiaController.getAvailableUpdates().get(appName).getDirectory();
     }
 
-    public UpdateController() {
-    }
+
     /*
      Main method
      */
@@ -78,7 +77,6 @@ public class UpdateController
         logController.log.info(String.format("Aplicattion %s updated to %s version", installedAppData.getApp(), installedAppData.getVersion()));
         if (this.commandLine.hasOption("r")) {
             reinstallServices(installedAppData);
-            // todo reinstall tomcat services;
         }
         startAppServer(installedAppData.getApp());
         // Check schema_version all ok
@@ -86,30 +84,61 @@ public class UpdateController
     }
 
     public void reinstallServices(ArcadiaAppData appData) {
+        String serviceName = String.format("tomcat_%s", appData.getApp().getShortName());
+        File sourceServiceScript, targetServiceScript;
         switch (serviceController.os) {
             case WINDOWS:
-                String serviceName = String.format("tomcat_%s", appData.getApp().getShortName());
                 if (serviceController.serviceAlive(serviceName)) {
                     logController.log.severe(String.format("Could not reinstall service %s while its running", serviceName));
                     throw new RuntimeException(String.format("Could not reinstall service %s while its running", serviceName));
                 }
-                File sourceServiceScript, targetServiceScript;
+                String drive;
                 try {
-                    //sourceServiceScript=FileUtils.getFile(arcadiaController.getArcadiaUpdatesRepository().toString(),"base/windows/"+serviceName+".bat");
-                    sourceServiceScript = FileUtils.getFile("d:/opt/arcadiaVersions/base/windows/" + serviceName + ".bat");
+                    sourceServiceScript = FileUtils.getFile(arcadiaController.getArcadiaUpdatesRepository().toString(), "base/windows/" + serviceName + ".bat");
+                    //sourceServiceScript = FileUtils.getFile("d:/opt/arcadiaVersions/base/windows/" + serviceName + ".bat");
                     targetServiceScript = FileUtils.getFile(appData.getDirectory(), "bin", serviceName + ".bat");
+                    drive = FilenameUtils.getPrefix(targetServiceScript.toString().substring(0, 2));
                     FileUtils.copyFile(sourceServiceScript, targetServiceScript, true);
                 } catch (IOException e) {
                     logController.log.severe(String.format("Unable to copy service %s to destination", serviceName));
                     logController.log.severe(e.getMessage());
                     throw new RuntimeException(String.format("Unable to copy service %s to destination", serviceName));
                 }
-                serviceController.runCommand(new String[]{"cmd.exe", "/c", targetServiceScript.toString(), "remove", serviceName});
-                serviceController.runCommand(new String[]{"cmd.exe", "/c", targetServiceScript.toString(), "install", serviceName});
+
+                ReturnValues retDestroy = serviceController.runCommand(new String[]{"cmd.exe", "/c",
+                        drive + " && " + "cd " + targetServiceScript.getParent() + " && "
+                                + targetServiceScript.toString(), "remove", serviceName});
+                logController.log.config(retDestroy.u.toString());
+                ReturnValues retCreate = serviceController.runCommand(new String[]{"cmd.exe", "/c",
+                        drive + " && " + "cd " + targetServiceScript.getParent() + " && "
+                                + targetServiceScript.toString(), "install", serviceName});
+                logController.log.config(retCreate.u.toString());
+                if (Integer.parseInt(String.valueOf(retDestroy.t)) > 0 || Integer.parseInt(String.valueOf(retCreate.t)) > 0) {
+                    logController.log.severe(String.format("Destroy retValue=%s retMsg=%s", retDestroy.t, retDestroy.u));
+                    logController.log.severe(String.format("Create retValue=%s retMsg=%s", retCreate.t, retCreate.u));
+                    //throw new RuntimeException("Got in trouble recreating services");
+                } else {
+                    logController.log.config("Configuring service to auto start");
+                    ReturnValues retConfigService = serviceController.runCommand(new String[]{"cmd.exe", "/c",
+                            "sc", "config", serviceName, "start=", "auto"});
+                    if (Integer.parseInt(String.valueOf(retConfigService.t)) > 0)
+                        logController.log.severe(String.format("Config service retValue=%s retMsg=%s", retConfigService.t, retConfigService.u));
+                }
                 break;
             case LINUX:
+                sourceServiceScript = FileUtils.getFile(arcadiaController.getArcadiaUpdatesRepository().toString(), "base/linux/" + serviceName);
+                targetServiceScript = FileUtils.getFile("/etc/init.d/");
+                drive = FilenameUtils.getPrefix(targetServiceScript.toString().substring(0, 2));
+                try {
+                    FileUtils.copyFileToDirectory(sourceServiceScript, targetServiceScript, true);
+                } catch (IOException e) {
+                    logController.log.severe(String.format("Unable to copy service %s to destination", serviceName));
+                    logController.log.severe(e.getMessage());
+                    throw new RuntimeException(String.format("Unable to copy service %s to destination", serviceName));
+                }
                 break;
         }
+        logController.log.info(String.format("Service %s reinstalled", "tomcat_" + appData.getApp().getShortName()));
     }
 
     private void backupDatabase(ArcadiaAppData app) throws RuntimeException {
@@ -311,7 +340,7 @@ public class UpdateController
         return FileUtils.sizeOfDirectory(targetBackupDir);
     }
 
-    private void stopAppServer(ArcadiaApp app) throws RuntimeException {
+    public void stopAppServer(ArcadiaApp app) throws RuntimeException {
         // Stop tomcat service
         String service = "tomcat_" + app.getShortName();
         ReturnValues returnValues = serviceController.serviceAction(
