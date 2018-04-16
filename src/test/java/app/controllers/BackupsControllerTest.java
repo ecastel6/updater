@@ -43,15 +43,15 @@ class BackupsControllerTest
 
     @Test
     void databaseBackup() {
+        Path targetFolder = null;
         BackupsController backupsController = BackupsController.getInstance();
         try {
-            Path targetFolder = Files.createTempDirectory(this.getClass().toString());
-            System.out.println(targetFolder.toString());
-            assertEquals(0, backupsController.databaseBackup("template1", targetFolder.toFile()));
+            targetFolder = Files.createTempDirectory(this.getClass().toString());
+            assertEquals(0, backupsController.databaseBackup("arcadia_cbos", targetFolder.toFile()));
+
         } catch (IOException e) {
             e.printStackTrace();
         }
+        System.out.printf("Backup done to: %s", targetFolder.toString());
     }
-
-
 }

@@ -172,7 +172,7 @@ public class ArcadiaController {
         for (ArcadiaApp app : ArcadiaApp.values()) {
             logController.log.config(String.format("Searching %s ...", app.getLongName()));
             File tomcatDir = this.getTomcatDir("opt/tomcat_" + app.getShortName());
-            if (tomcatDir != null) {
+            if (tomcatDir != null && FileUtils.getFile(tomcatDir, "conf", "server.xml").exists()) {
                 // App found collect relevant data
                 logController.log.info(String.format("App %s found collecting data...", app.getLongName()));
                 String appPort = getArcadiaAppPort(FileUtils.getFile(tomcatDir, "conf", "server.xml"));

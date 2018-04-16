@@ -60,6 +60,9 @@ public class DbController
         return rootDB.results.get(0);*/
     }
 
+    public Path getServerBin() throws IOException {
+        return Paths.get(getServerDir().toString(), "bin");
+    }
 
     public String getServerPort() {
         // todo getServerPort other database servers
@@ -89,7 +92,7 @@ public class DbController
                 for (Path path : results) {
                     logController.log.config(String.format("Path: %s. depth=%d", path.toString(), path.getNameCount()));
                     if ((path.toString().contains("opt")) && (path.getNameCount() < 5)) {
-                        logController.log.info(String.format("Guessed dir: %s ", path.toString()));
+                        logController.log.config(String.format("Guessed dir: %s ", path.toString()));
                         return path.toString();
                     }
                 }
