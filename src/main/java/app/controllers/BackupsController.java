@@ -6,6 +6,7 @@ import app.models.SearchType;
 import org.apache.commons.io.FileUtils;
 
 import java.io.File;
+import java.util.Arrays;
 
 public class BackupsController {
     private static LogController logController = LogController.getInstance();
@@ -72,6 +73,7 @@ public class BackupsController {
                 targetFolder.toString(),
                 database
         };
+        logController.log.config(String.format("Running command: %s", Arrays.toString(command)));
         ServiceController serviceController = ServiceController.getInstance();
         ReturnValues returnValues = serviceController.runCommand(command);
         return (int) returnValues.t;

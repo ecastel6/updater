@@ -24,7 +24,7 @@ class DbControllerTest {
     }
 
     @Test
-    void getServerPort() {
+    void getServerPort() throws IOException {
         DbController dbController = DbController.getInstance();
         assertTrue(dbController.getServerPort().contains("543"));
     }

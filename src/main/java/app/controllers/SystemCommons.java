@@ -36,7 +36,7 @@ public class SystemCommons
             }
             sleep(2000);
             long elapsed = System.currentTimeMillis() - startTime;
-            logController.log.config(String.format("Check %s Elapsed: %s", count++, elapsed));
+            logController.log.config(String.format("Check %s Elapsed: %s ms", count++, elapsed));
             if (elapsed > timeout)
                 throw new RuntimeException("Timeout unable to stop service");
         }

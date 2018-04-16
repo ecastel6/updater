@@ -334,6 +334,7 @@ public class UpdateController {
                 backupsController.getRootBackupsDir(),
                 app.getDatabaseName(),
                 app.getDatabaseName() + "_" + new SystemCommons().getToday());
+        logController.log.config(String.format("Backup'in %s ", app.getDatabaseName()));
         if (backupsController.databaseBackup(app.getDatabaseName(), targetBackupDir) > 0) {
             throw new RuntimeException("Error while backup'in database");
         }

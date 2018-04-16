@@ -36,9 +36,9 @@ public class DbController {
     String adminPasswd;
 
     private DbController() throws IOException {
+        this.serverConfFilename = getServerConfFilename();
         this.serverDir = getServerDir();
         this.serverPort = getServerPort();
-        this.serverConfFilename = getServerConfFilename();
         this.status = getStatus();
         this.databaseList = getDatabaseList();
         this.serverVersion = getServerVersion();
@@ -66,10 +66,11 @@ public class DbController {
         return Paths.get(getServerDir().toString(), "bin");
     }
 
-    public String getServerPort() {
+    public String getServerPort() throws IOException {
         // todo getServerPort other database servers
         try {
-            FileBasedConfigurationHandler fbch = new FileBasedConfigurationHandler(this.serverConfFilename.toString());
+            FileBasedConfigurationHandler fbch = new FileBasedConfigurationHandler(getServerConfFilename().toString());
+            // todo fix port value returns full line with comments
             if (fbch.isKeyPresent("port")) {
                 return fbch.getKeyValue("port");
             } else
@@ -82,6 +83,9 @@ public class DbController {
 
     public Path getServerConfFilename() throws IOException {
         //todo getServerConf other database servers
+        if (serverConfFilename != null) {
+            return serverConfFilename;
+        }
         logController.log.info("Looking for directory pattern data/postgresql.conf");
         FileFinderControllerStr postgresConf = FileFinderControllerStr.doit("/", "data/postgresql.conf", SearchType.Files);
 
@@ -95,15 +99,16 @@ public class DbController {
                     logController.log.config(String.format("Path: %s. depth=%d", path.toString(), path.getNameCount()));
                     if ((path.toString().contains("opt")) && (path.getNameCount() < 5)) {
                         logController.log.config(String.format("Guessed dir: %s ", path.toString()));
-                        return path;
+                        this.serverConfFilename = path;
+                        return serverConfFilename;
                     }
                 }
                 logController.log.warning("Unable to guess returning the first one.");
             } else {
                 logController.log.config(String.format("Exact match %s", results.get(0).toString()));
-                return results.get(0);
+                this.serverConfFilename = results.get(0);
+                return serverConfFilename;
             }
-
         }
         throw new IOException("Unable to find out postgres conf file!!!!");
     }
