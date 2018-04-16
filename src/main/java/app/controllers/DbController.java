@@ -5,13 +5,13 @@ import app.models.ReturnValues;
 import app.models.SearchType;
 import org.apache.commons.configuration2.ex.ConfigurationException;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 
-public class DbController
-{
+public class DbController {
     private static LogController logController = LogController.getInstance();
 
     private static DbController ourInstance;
@@ -30,10 +30,11 @@ public class DbController
     // Database status
     boolean status;
     ArrayList<String> databaseList;
-    String serverConfFilename;
+    Path serverConfFilename;
     String serverVersion;
     String adminUser;
     String adminPasswd;
+
     private DbController() throws IOException {
         this.serverDir = getServerDir();
         this.serverPort = getServerPort();
@@ -49,25 +50,26 @@ public class DbController
         return ourInstance;
     }
 
-    public Path getServerDir() throws IOException {
-        Path serverConf = Paths.get(getServerConfFilename());
-        return (serverConf.getParent().getParent());
-        /*
-        FileFinderController rootDB = FileFinderController.doit("/", "pgsql", 2);
-        if (rootDB.getNumMatches() == 0) {
-            throw new IOException("No Postgres installation detected");
+    public Path getServerDir() {
+        if (serverDir != null) return serverDir;
+        else {
+            try {
+                serverDir = getServerConfFilename().getParent().getParent();
+            } catch (IOException e) {
+                logController.log.severe("Unable to find Postgres server directory. " + e.getMessage());
+            }
+            return serverDir;
         }
-        return rootDB.results.get(0);*/
     }
 
-    public Path getServerBin() throws IOException {
+    public Path getServerBin() {
         return Paths.get(getServerDir().toString(), "bin");
     }
 
     public String getServerPort() {
         // todo getServerPort other database servers
         try {
-            FileBasedConfigurationHandler fbch = new FileBasedConfigurationHandler(this.serverConfFilename);
+            FileBasedConfigurationHandler fbch = new FileBasedConfigurationHandler(this.serverConfFilename.toString());
             if (fbch.isKeyPresent("port")) {
                 return fbch.getKeyValue("port");
             } else
@@ -78,7 +80,7 @@ public class DbController
         }
     }
 
-    public String getServerConfFilename() throws IOException {
+    public Path getServerConfFilename() throws IOException {
         //todo getServerConf other database servers
         logController.log.info("Looking for directory pattern data/postgresql.conf");
         FileFinderControllerStr postgresConf = FileFinderControllerStr.doit("/", "data/postgresql.conf", SearchType.Files);
@@ -93,13 +95,13 @@ public class DbController
                     logController.log.config(String.format("Path: %s. depth=%d", path.toString(), path.getNameCount()));
                     if ((path.toString().contains("opt")) && (path.getNameCount() < 5)) {
                         logController.log.config(String.format("Guessed dir: %s ", path.toString()));
-                        return path.toString();
+                        return path;
                     }
                 }
                 logController.log.warning("Unable to guess returning the first one.");
             } else {
                 logController.log.config(String.format("Exact match %s", results.get(0).toString()));
-                return results.get(0).toString();
+                return results.get(0);
             }
 
         }
@@ -112,7 +114,7 @@ public class DbController
     }
 
     public ArrayList<String> getDatabaseList() {
-        String[] command = new String[]{"psql", "-U", "postgres", "-c", "SELECT datname AS result FROM pg_database;"};
+        String[] command = new String[]{getServerBin().toString() + File.separator + "psql", "-U", "postgres", "-c", "SELECT datname AS result FROM pg_database;"};
         ArrayList<String> databaseList = new ArrayList<>();
         ServiceController serviceController = ServiceController.getInstance();
         ReturnValues returnValues = serviceController.runCommand(command);
@@ -125,7 +127,7 @@ public class DbController
     }
 
     public String getServerVersion() {
-        String[] command = new String[]{"psql", "-U", "postgres", "-c", "SELECT version();"};
+        String[] command = new String[]{getServerBin().toString() + File.separator + "psql", "-U", "postgres", "-c", "SELECT version();"};
         ServiceController serviceController = ServiceController.getInstance();
         ReturnValues returnValues = serviceController.runCommand(command);
         if (returnValues.t != "0") {

@@ -33,7 +33,7 @@ class DbControllerTest {
     void getServerConfFilename() {
         DbController dbController = DbController.getInstance();
         try {
-            assertTrue(dbController.getServerConfFilename().contains("postgresql.conf"));
+            assertTrue(dbController.getServerConfFilename().toString().contains("postgresql.conf"));
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -74,10 +74,6 @@ class DbControllerTest {
     @Test
     void getServerBin() {
         DbController dbController = DbController.getInstance();
-        try {
-            System.out.println(dbController.getServerBin());
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        System.out.println(dbController.getServerBin());
     }
 }

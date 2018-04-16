@@ -6,7 +6,6 @@ import app.models.SearchType;
 import org.apache.commons.io.FileUtils;
 
 import java.io.File;
-import java.io.IOException;
 
 public class BackupsController {
     private static LogController logController = LogController.getInstance();
@@ -21,7 +20,6 @@ public class BackupsController {
     public static BackupsController getInstance() {
         return ourInstance;
     }
-
 
 
     public Long getLatestBackupSize(ArcadiaApp app) {
@@ -62,15 +60,9 @@ public class BackupsController {
 
     public int databaseBackup(String database, File targetFolder) {
         DbController dbController = DbController.getInstance();
-        String dbServerBin;
-        try {
-            dbServerBin = dbController.getServerBin().toString();
-        } catch (IOException e) {
-            logController.log.severe("Cannot get bin database server path. Unable to backup database");
-            throw new RuntimeException("Cannot get bin database server path. Unable to backup database. To overide backup use -b option");
-        }
+
         String[] command = new String[]{
-                dbServerBin + File.separator +
+                dbController.getServerBin().toString() + File.separator +
                         "pg_dump",
                 "-U",
                 "postgres",
