@@ -13,10 +13,7 @@ import java.io.PrintWriter;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 
 public class PropertiesUpdaterController {
     private static LogController logController = LogController.getInstance();
@@ -81,17 +78,22 @@ public class PropertiesUpdaterController {
             CombinedConfiguration finalProperties = oldConfigurationHandler
                     .patchPropertiesFile(newConfigurationHandler);
 
-            logController.log.config("Loading preserved properties...");
+            logController.log.config("Looking for preserved (forceupdate) properties...");
             // key updatedProperties list properties which update must be forced
             List<Object> updated = finalProperties.getList("updatedProperties");
-
+            if (updated.size() > 0)
+                logController.log.config(String.format("Preserved properties for %s are %s",
+                        newConfigurationHandler.getFileName(), Arrays.asList(updated)));
+            else
+                logController.log.config("No preserved (forceupdate) properties");
             Iterator<String> keys = finalProperties.getKeys();
             while (keys.hasNext()) {
                 String key = keys.next();
                 if (updated.contains(key)) {
-                    logController.log.config(String.format("update value key= " + key));
+                    logController.log.config(String.format("Forcing update of key %s from new properties file %s",
+                            key, newConfigurationHandler.getFileName()));
                 } else {
-                    logController.log.config(String.format("preserve value key= " + key + ": Value= %s", key, finalProperties.getString(key)));
+                    logController.log.config(String.format("value key= " + key + ": Value= %s", key, finalProperties.getString(key)));
                     targetConfigurationHandler.getConfig().setProperty(key, finalProperties.getString(key));
                 }
             }
