@@ -11,6 +11,7 @@ public class LogFormatter extends Formatter {
     public String format(LogRecord record) {
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss");
         return simpleDateFormat.format(new Date(record.getMillis())) + "::" +
+                record.getLevel() + "::" +
                 record.getSourceClassName() + "::"
                 + record.getSourceMethodName() + "::"
                 + record.getMessage() + "\n";
