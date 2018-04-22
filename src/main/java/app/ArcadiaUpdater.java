@@ -11,10 +11,10 @@ import org.apache.commons.collections.CollectionUtils;
 
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.Collection;
-import java.util.Map;
+import java.util.*;
 
-public class ArcadiaUpdater {
+public class ArcadiaUpdater
+{
     private static LogController logController = LogController.getInstance();
 
     //private static Map<String, ArcadiaAppData> installedApps = new HashMap<>();
@@ -31,6 +31,7 @@ public class ArcadiaUpdater {
 
         // create the Options
         Options options = new Options();
+
         options.addOption("S", "standalone", false, "Standalone run. Search local updates repository");
         options.addOption("F", "force", false, "Forced update. do not check servers for version");
         options.addOption(Option.builder("R").longOpt("repository").hasArg(true)
@@ -44,6 +45,16 @@ public class ArcadiaUpdater {
         options.addOption("B", "force-backout", false, "Cleanout backout directory before backout");
         options.addOption("n", "ignore-checkservices", false, "do not check services availability (Rabbitmq,Zookeeper).");
         options.addOption("r", "reinstall-services", false, "reinstall tomcat services.");
+
+        /*Option apps=new Option("A",true,"Apps to install e.g -A oc cbos");
+        apps.setArgs(Option.UNLIMITED_VALUES);
+        apps.setLongOpt("apps");
+        apps.setRequired(false);
+        options.addOption(apps);
+*/
+        options.addOption(Option.builder("A").longOpt("apps").hasArg(true)
+                .argName("apps").desc("Apps to install e.g. --apps oc cbos").numberOfArgs(Option.UNLIMITED_VALUES)
+                .required(false).build());
         try {
             // parse the command line arguments
             commandLine = parser.parse(options, args);
@@ -80,8 +91,29 @@ public class ArcadiaUpdater {
             logController.log.info(String.format("Installed apps found: %s version: %s", app.getKey(), app.getValue().getVersion()));
         }
 
-        logController.log.info(String.format("updates keys : %s install keys: %s", availableUpdates.keySet(), installedApps.keySet()));
-        Collection intersection = CollectionUtils.intersection(availableUpdates.keySet(), installedApps.keySet());
+        Collection intersection;
+        if (commandLine.hasOption("A")) {
+            List<String> selectedApps = Arrays.asList(commandLine.getOptionValues("A"));
+            List<String> validArcadiaApps = arcadiaController.validArcadiaApps();
+            if (!validArcadiaApps.containsAll(selectedApps)) {
+                logController.log.severe(String.format("%s %s", Errorlevels.E5.getErrorDescription(), selectedApps));
+                System.exit(Errorlevels.E5.getErrorLevel());
+            }
+            ListIterator listIterator = selectedApps.listIterator();
+            String appCapitalized;
+            while (listIterator.hasNext()) {
+                appCapitalized = listIterator.next().toString().toUpperCase();
+                listIterator.set(appCapitalized);
+            }
+            logController.log.info(String.format("Selected applicattions to update: %s", selectedApps.toString()));
+            intersection = CollectionUtils.intersection(availableUpdates.keySet(), selectedApps);
+            intersection = CollectionUtils.intersection(intersection, installedApps.keySet());
+            logController.log.info(String.format("updates apps : %s installed apps: %s selected apps: %s Intersection: %s",
+                    availableUpdates.keySet(), installedApps.keySet(), selectedApps, intersection));
+        } else {
+            intersection = CollectionUtils.intersection(availableUpdates.keySet(), installedApps.keySet());
+            logController.log.info(String.format("updates apps : %s installed apps: %s intersection: %s", availableUpdates.keySet(), installedApps.keySet(), intersection));
+        }
         for (Object appName : intersection) {
             Version installedVersion = installedApps.get(appName).getVersion();
             Version updateVersion = availableUpdates.get(appName).getVersion();
@@ -93,6 +125,7 @@ public class ArcadiaUpdater {
                 logController.log.warning(String.format("unable to update %s. Installed version not available. Use -F (--force) to force updating.", appName));
             } else if ((updateVersion.compareTo(installedVersion) > 0) || commandLine.hasOption("F")) {
                 logController.log.info(String.format("OK: Updating %s to version %s", appName, updateVersion));
+
                 UpdateController updateController = new UpdateController((String) appName);
                 try {
                     boolean result = updateController.updateApp();

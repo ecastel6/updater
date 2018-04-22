@@ -214,7 +214,7 @@ public class ArcadiaController {
             return availableUpdates;
         }
         logController.log.info("Checking available updates...");
-        final List<String> validArcadiaDirectories = validArcadiaDirectories();
+        final List<String> validArcadiaDirectories = validArcadiaApps();
 
         logController.log.info("Searching UpdatesRepository...");
         File[] updatesSubdirs = getArcadiaUpdatesRepository().toFile().listFiles(
@@ -257,7 +257,7 @@ public class ArcadiaController {
     /*
             Generate a List with Arcadia shortnames
     */
-    public List<String> validArcadiaDirectories() {
+    public List<String> validArcadiaApps() {
         List<String> appnames = new ArrayList<>();
         for (ArcadiaApp app : ArcadiaApp.values())
             appnames.add(app.getShortName());
