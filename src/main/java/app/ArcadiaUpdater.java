@@ -55,6 +55,8 @@ public class ArcadiaUpdater
         options.addOption(Option.builder("A").longOpt("apps").hasArg(true)
                 .argName("apps").desc("Apps to install e.g. --apps oc cbos").numberOfArgs(Option.UNLIMITED_VALUES)
                 .required(false).build());
+
+        List<String> selectedApps = null;
         try {
             // parse the command line arguments
             commandLine = parser.parse(options, args);
@@ -64,19 +66,27 @@ public class ArcadiaUpdater
                 // display help
                 HelpFormatter formatter = new HelpFormatter();
                 formatter.printHelp("arcadia-updater", options);
-                System.exit(Errorlevels.E1.getErrorLevel());
+                System.exit(Errorlevels.E2.getErrorLevel());
             }
             if (commandLine.hasOption("repository")) {
                 if (!Files.isDirectory(Paths.get(commandLine.getOptionValue("repository")))) {
                     logController.log.severe(String.format("Path %s %s", commandLine.getOptionValue("repository"), Errorlevels.E2.getErrorDescription()));
-                    System.exit(Errorlevels.E2.getErrorLevel());
+                    System.exit(Errorlevels.E3.getErrorLevel());
                 } else {
                     arcadiaController.setArcadiaUpdatesRepository(Paths.get(commandLine.getOptionValue("repository")));
                 }
             }
+            if (commandLine.hasOption("A")) {
+                selectedApps = Arrays.asList(commandLine.getOptionValues("A"));
+                List<String> validArcadiaApps = arcadiaController.validArcadiaApps();
+                if (!validArcadiaApps.containsAll(selectedApps)) {
+                    logController.log.severe(String.format("%s %s", Errorlevels.E7.getErrorDescription(), selectedApps));
+                    System.exit(Errorlevels.E7.getErrorLevel());
+                }
+            }
         } catch (ParseException e) {
-            logController.log.severe(e.getMessage());
-            System.exit(1);
+            logController.log.severe(String.format("%s : %s", Errorlevels.E6.getErrorDescription(), e.getMessage()));
+            System.exit(Errorlevels.E6.getErrorLevel());
         }
 
         arcadiaController.setCommandLine(commandLine);
@@ -92,20 +102,14 @@ public class ArcadiaUpdater
         }
 
         Collection intersection;
-        if (commandLine.hasOption("A")) {
-            List<String> selectedApps = Arrays.asList(commandLine.getOptionValues("A"));
-            List<String> validArcadiaApps = arcadiaController.validArcadiaApps();
-            if (!validArcadiaApps.containsAll(selectedApps)) {
-                logController.log.severe(String.format("%s %s", Errorlevels.E5.getErrorDescription(), selectedApps));
-                System.exit(Errorlevels.E5.getErrorLevel());
-            }
+        if (selectedApps.size() > 0) {
             ListIterator listIterator = selectedApps.listIterator();
             String appCapitalized;
             while (listIterator.hasNext()) {
                 appCapitalized = listIterator.next().toString().toUpperCase();
                 listIterator.set(appCapitalized);
             }
-            logController.log.info(String.format("Selected applicattions to update: %s", selectedApps.toString()));
+            logController.log.info(String.format("Selected applications to update: %s", selectedApps.toString()));
             intersection = CollectionUtils.intersection(availableUpdates.keySet(), selectedApps);
             intersection = CollectionUtils.intersection(intersection, installedApps.keySet());
             logController.log.info(String.format("updates apps : %s installed apps: %s selected apps: %s Intersection: %s",
@@ -135,6 +139,6 @@ public class ArcadiaUpdater
                 }
             } else logController.log.info(String.format("WARNING: Application %s already up to date", appName));
         }
-        System.exit(0);
+        System.exit(Errorlevels.E0.getErrorLevel());
     }
 }

@@ -1,11 +1,14 @@
 package app.models;
 
 public enum Errorlevels {
-    E1(1, "No parameters entered"),
-    E2(2, "updates repository doesn't exists"),
-    E3(3, "Could not access or create backout directory"),
-    E4(4, "Targetted update. No update repository entered."),
-    E5(5, "Invalid command line parameter entered");
+    E0(0, "Update OK"),
+    E1(1, "Error in update process"),
+    E2(2, "No parameters entered"),
+    E3(3, "updates repository doesn't exists"),
+    E4(4, "Could not access or create backout directory"),
+    E5(5, "Targetted update. No update repository entered."),
+    E6(6, "Invalid command line parameter entered"),
+    E7(7, "Invalid application selected");
 
     private int errorLevel;
     private String errorDescription;
