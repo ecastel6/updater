@@ -69,6 +69,7 @@ public class BackupsController {
                 "postgres",
                 "-Fd",
                 "-b",
+                String.format("-j%s", new SystemCommons().getAvailableCores() / 2),
                 "-f",
                 targetFolder.toString(),
                 database
