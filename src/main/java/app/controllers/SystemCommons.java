@@ -100,6 +100,8 @@ public class SystemCommons
         return today;
     }
 
-
+    public int getAvailableCores() {
+        return Runtime.getRuntime().availableProcessors();
+    }
 }
 

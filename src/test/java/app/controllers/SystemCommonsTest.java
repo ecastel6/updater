@@ -67,4 +67,12 @@ class SystemCommonsTest
         System.out.println(today);
         assertTrue(Integer.parseInt(today.split("-")[0]) > 2000);
     }
+
+    @Test
+    void getAvailableCoresTest() {
+        SystemCommons systemCommons = new SystemCommons();
+        int availableCores = systemCommons.getAvailableCores();
+        System.out.printf("Available cores: %s\n", availableCores);
+        assertTrue(availableCores > 0);
+    }
 }
