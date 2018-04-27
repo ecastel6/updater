@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.FileFilter;
+import java.util.Stack;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -74,5 +75,26 @@ class SystemCommonsTest
         int availableCores = systemCommons.getAvailableCores();
         System.out.printf("Available cores: %s\n", availableCores);
         assertTrue(availableCores > 0);
+    }
+
+    @Test
+    void stackTest() {
+        Stack stack = new Stack();
+        assertTrue(stack.empty());
+        System.out.println("Stack push: rollbackArcadiaResources");
+        stack.push("rollbackArcadiaResources");
+        System.out.println("Stack push: rollbackLogBack");
+        stack.push("rollbackLogBack");
+        System.out.println("Stack push: rollbackSharedlib");
+        stack.push("rollbackSharedlib");
+        System.out.println("Stack push: rollbackWars");
+        stack.push("rollbackWars");
+        System.out.println("Stack push: rollbackCustom");
+        stack.push("rollbackCustom");
+        assertEquals(5, stack.size());
+        while (!stack.empty()) {
+            System.out.printf("Stack pops: %s\n", stack.pop());
+        }
+        assertTrue(stack.empty());
     }
 }
