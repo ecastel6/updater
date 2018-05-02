@@ -6,6 +6,7 @@ import org.apache.commons.io.FilenameUtils;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
+import java.util.Stack;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -37,5 +38,25 @@ class UpdateControllerTest {
         ReturnValues retCreate = serviceController.runCommand(new String[]{"cmd.exe", "/c", drive + " && " + "cd " + targetServiceScript.getParent() + " && " + targetServiceScript.toString(), "install", serviceName});
         System.out.println(String.format("Destroy retValue=%s retMsg=%s", retDestroy.t, retDestroy.u));
         System.out.println(String.format("Create retValue=%s retMsg=%s", retCreate.t, retCreate.u));
+    }
+
+    @Test
+    void rollbackApplicationTest() {
+        Stack stack = new Stack();
+        stack.push("rollbackArcadiaResources");
+        UpdateController updateController = new UpdateController();
+        updateController.rollbackApplication(stack);
+    }
+
+    @Test
+    void rollbackArcadiaResourcesTest() {
+        UpdateController updateController = new UpdateController();
+        updateController.setInstalledAppDir(new File("/home/ecastel/opt/tomcat_cbos"));
+        updateController.setLatestUpdatesVersionDir(new File("/home/ecastel/opt/arcadiaVersions/cbos/3.12R2"));
+        /*System.out.println(updateController.rollbackArcadiaResources());
+        System.out.println(updateController.rollbackLogBack());
+        System.out.println(updateController.rollbackSharedlib());
+        System.out.println(updateController.rollbackCustom());*/
+        updateController.rollbackWars();
     }
 }

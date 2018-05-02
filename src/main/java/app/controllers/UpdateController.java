@@ -15,11 +15,15 @@ import org.apache.commons.io.filefilter.*;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Stack;
 
-public class UpdateController {
+public class UpdateController
+{
     final static int dbThreshold = 3;
     final static long defaultTimeout = 20000;
 
@@ -31,11 +35,9 @@ public class UpdateController {
     private ServiceController serviceController = ServiceController.getInstance();
     // instance ArcadiaController
     private ArcadiaController arcadiaController = ArcadiaController.getInstance();
-
     // values from ArcadiaController
     private CommandLine commandLine;
     private ArcadiaAppData installedAppData;
-
     // general variables
     private File latestUpdatesVersionDir;
     private File installedAppDir;
@@ -47,11 +49,24 @@ public class UpdateController {
         this.latestUpdatesVersionDir = arcadiaController.getAvailableUpdates().get(appName).getDirectory();
     }
 
+    public UpdateController() {
+    }
+
+    public void setLatestUpdatesVersionDir(File latestUpdatesVersionDir) {
+        this.latestUpdatesVersionDir = latestUpdatesVersionDir;
+    }
+
+    public void setInstalledAppDir(File installedAppDir) {
+        this.installedAppDir = installedAppDir;
+    }
 
     /*
      Main method
      */
     public Boolean updateApp() throws RuntimeException {
+        // store completed operations jic rollback
+        Stack stack = new Stack();
+
         if (!this.commandLine.hasOption("n")) {
             checkRabbitmq();
             checkZookeeper();
@@ -69,11 +84,31 @@ public class UpdateController {
         }
         backoutApp();
         // Now place new version
-        updateArcadiaResources();
-        updateLogBack();
-        updateSharedlib();
-        updateWars();
-        updateCustom();
+        if (updateArcadiaResources())
+            stack.push("doRollbackArcadiaResources");
+        else
+            rollbackApplication(stack);
+
+        if (updateLogBack())
+            stack.push("doRollbackLogBack");
+        else
+            rollbackApplication(stack);
+
+        if (updateSharedlib())
+            stack.push("doRollbackSharedlib");
+        else
+            rollbackApplication(stack);
+
+        if (updateWars())
+            stack.push("doRollbackWars");
+        else
+            rollbackApplication(stack);
+
+        if (updateCustom())
+            stack.push("doRollbackCustom");
+        else
+            rollbackApplication(stack);
+
         logController.log.info(String.format("Aplicattion %s updated to %s version", installedAppData.getApp(), installedAppData.getVersion()));
         if (this.commandLine.hasOption("r")) {
             reinstallServices(installedAppData);
@@ -81,6 +116,33 @@ public class UpdateController {
         startAppServer(installedAppData.getApp());
         // Check schema_version all ok
         return true;
+    }
+
+    public void rollbackApplication(Stack stack) {
+        String operation;
+        Class updateClass = this.getClass();
+
+        while (!stack.empty()) {
+            operation = (String) stack.pop();
+            logController.log.info(String.format("Stack pops: %s", operation));
+
+
+            try {
+                Method method = updateClass.getMethod(operation);
+                method.invoke(updateClass.newInstance());
+                System.out.println(method.getName());
+            } catch (SecurityException e) {
+                logController.log.severe("Security exception");
+            } catch (NoSuchMethodException e) {
+                logController.log.severe(String.format("Unable to found method %s", operation));
+            } catch (IllegalAccessException e) {
+                e.printStackTrace();
+            } catch (InvocationTargetException e) {
+                e.printStackTrace();
+            } catch (InstantiationException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     public void reinstallServices(ArcadiaAppData appData) {
@@ -162,7 +224,7 @@ public class UpdateController {
         } else logController.log.info("OK: Database Server available");
     }
 
-    private void updateCustom() throws RuntimeException {
+    private boolean updateCustom() throws RuntimeException {
         // Update custom
         File sourceOldCustom = FileUtils.getFile(latestUpdatesVersionDir.toString(), "backout", "custom");
         File sourceNewCustom = FileUtils.getFile(latestUpdatesVersionDir.toString(), "custom");
@@ -172,37 +234,49 @@ public class UpdateController {
         try {
             puc.updateCustom();
         } catch (IOException e) {
-            throw new RuntimeException("Error updating custom");
+            logController.log.severe("Error updating custom");
+            return false;
         }
+        return true;
     }
 
-    private void updateWars() throws RuntimeException {
+    private boolean updateWars() {
         // Copy wars but ArcadiaResources reuse filterWebapps created before
-        copyFilteredDir(
-                FileUtils.getFile(latestUpdatesVersionDir.toString(), "wars"),
-                FileUtils.getFile(installedAppDir.toString(), "webapps"),
-                new NotFileFilter(new NameFileFilter("ArcadiaResources")));
+
+        try {
+            copyFilteredDir(
+                    FileUtils.getFile(latestUpdatesVersionDir.toString(), "wars"),
+                    FileUtils.getFile(installedAppDir.toString(), "webapps"),
+                    new NotFileFilter(new NameFileFilter("ArcadiaResources")));
+        } catch (RuntimeException e) {
+            logController.log.severe("Cannot update wars");
+            return false;
+        }
+        return true;
     }
 
-    private void updateSharedlib() throws RuntimeException {
+    private boolean updateSharedlib() {
         // Copy new sharedlib
+        // Copy jars
         try {
+            FilenameFilter jarsFilter = new SuffixFileFilter(".jar");
+            copyFilteredDir(
+                    FileUtils.getFile(latestUpdatesVersionDir.toString(), "jars"),
+                    FileUtils.getFile(installedAppDir.toString(), "sharedlib"),
+                    jarsFilter);
+
             FileUtils.copyDirectoryToDirectory(
                     FileUtils.getFile(latestUpdatesVersionDir.toString(), "sharedlib"),
                     installedAppDir
             );
         } catch (IOException e) {
-            throw new RuntimeException("Error copying sharedlib");
+            logController.log.severe("Cannot update sharedlib");
+            return false;
         }
-        // Copy jars
-        FilenameFilter jarsFilter = new SuffixFileFilter(".jar");
-        copyFilteredDir(
-                FileUtils.getFile(latestUpdatesVersionDir.toString(), "jars"),
-                FileUtils.getFile(installedAppDir.toString(), "sharedlib"),
-                jarsFilter);
+        return true;
     }
 
-    private void updateLogBack() throws RuntimeException {
+    private boolean updateLogBack() {
         // Copy new logback
         try {
             FileUtils.copyDirectoryToDirectory(
@@ -210,8 +284,10 @@ public class UpdateController {
                     installedAppDir
             );
         } catch (IOException e) {
-            throw new RuntimeException("Error copying logback configuration");
+            logController.log.severe("Error copying logback configuration");
+            return false;
         }
+        return true;
     }
 
     private void backoutApp() throws RuntimeException {
@@ -268,9 +344,7 @@ public class UpdateController {
         }
     }
 
-    private void updateArcadiaResources() throws RuntimeException {
-        // Update resources
-
+    private boolean updateArcadiaResources() throws RuntimeException {
         File tempOutputExtractZip = FileUtils.getFile(
                 FileUtils.getTempDirectory(), new SystemCommons().getToday());
         File warAr = FileUtils.getFile(latestUpdatesVersionDir.toString(),
@@ -280,7 +354,8 @@ public class UpdateController {
             ZipFile zipFile = new ZipFile(warAr);
             zipFile.extractAll(tempOutputExtractZip.toString());
         } catch (ZipException e) {
-            throw new RuntimeException("Error extracting ArcadiaResources");
+            logController.log.severe("Error extracting ArcadiaResources");
+            return false;
         }
 
         // Copy commons
@@ -295,7 +370,8 @@ public class UpdateController {
                             "ArcadiaResources")
             );
         } catch (IOException e) {
-            throw new RuntimeException("Error copying new ArcadiaResources");
+            logController.log.severe("Cannot copy commons to ArcadiaResources");
+            return false;
         }
         try {
             FileUtils.copyDirectoryToDirectory(
@@ -308,8 +384,87 @@ public class UpdateController {
                             "ArcadiaResources")
             );
         } catch (IOException e) {
-            throw new RuntimeException("Error copying new ArcadiaResources");
+            logController.log.severe("Cannot copy WEBINF to ArcadiaResources");
+            return false;
         }
+        return true;
+    }
+
+
+    public boolean rollbackArcadiaResources() {
+        logController.log.config("Rolling Back ArcadiaResources");
+        try {
+            FileUtils.deleteDirectory(FileUtils.getFile(installedAppDir.toString(), "webapps", "ArcadiaResources", "WEB-INF"));
+            FileUtils.deleteDirectory(FileUtils.getFile(installedAppDir.toString(), "webapps", "ArcadiaResources", "commons"));
+            FileUtils.copyDirectoryToDirectory(
+                    FileUtils.getFile(latestUpdatesVersionDir.toString(), "backout", "WEB-INF"),
+                    FileUtils.getFile(installedAppDir.toString(), "webapps", "ArcadiaResources"));
+            FileUtils.copyDirectoryToDirectory(
+                    FileUtils.getFile(latestUpdatesVersionDir.toString(), "backout", "commons"),
+                    FileUtils.getFile(installedAppDir.toString(), "webapps", "ArcadiaResources"));
+        } catch (IOException e) {
+            return false;
+        }
+        logController.log.info("ArcadiaResources rolled back");
+        return true;
+    }
+
+    public boolean rollbackLogBack() {
+        logController.log.config("Rolling Back LogBack");
+        try {
+            //FileUtils.copyFileToDirectory();deleteDirectory(FileUtils.getFile(installedAppDir.toString(), "webapps", "ArcadiaResources", "WEB-INF"));
+            //FileUtils.deleteDirectory(FileUtils.getFile(installedAppDir.toString(), "webapps", "ArcadiaResources", "commons"));
+            FileUtils.copyFileToDirectory(
+                    FileUtils.getFile(latestUpdatesVersionDir.toString(), "backout", "logback-common.xml"),
+                    FileUtils.getFile(installedAppDir.toString(), "lib"));
+        } catch (IOException e) {
+            return false;
+        }
+        logController.log.info("Logback-common.xml rolled back");
+        return true;
+    }
+
+    public void rollbackWars() {
+        logController.log.config("RollingBack Wars");
+        deleteFilteredDir(
+                FileUtils.getFile(installedAppDir.toString(), "webapps"),
+                new NotFileFilter(new NameFileFilter("ArcadiaResources"))
+        );
+        logController.log.config("webapps cleaned up");
+        copyFilteredDir(
+                FileUtils.getFile(latestUpdatesVersionDir.toString(), "backout", "wars"),
+                FileUtils.getFile(installedAppDir.toString(), "webapps"),
+                TrueFileFilter.TRUE
+        );
+        logController.log.info("Wars rolled back");
+    }
+
+    public boolean rollbackSharedlib() {
+        logController.log.config("Rolling Back Sharedlib");
+        try {
+            FileUtils.deleteDirectory(FileUtils.getFile(installedAppDir.toString(), "sharedlib"));
+            FileUtils.copyDirectoryToDirectory(
+                    FileUtils.getFile(latestUpdatesVersionDir.toString(), "backout", "sharedlib"),
+                    FileUtils.getFile(installedAppDir.toString()));
+        } catch (IOException e) {
+            return false;
+        }
+        logController.log.info("Sharedlib rolled back");
+        return true;
+    }
+
+    public boolean rollbackCustom() {
+        logController.log.config("Rolling Back Custom");
+        try {
+            FileUtils.deleteDirectory(FileUtils.getFile(installedAppDir.toString(), "custom"));
+            FileUtils.copyDirectoryToDirectory(
+                    FileUtils.getFile(latestUpdatesVersionDir.toString(), "backout", "custom"),
+                    FileUtils.getFile(installedAppDir.toString()));
+        } catch (IOException e) {
+            return false;
+        }
+        logController.log.info("Custom rolled back");
+        return true;
     }
 
     private void backupArcadiaResources() {
@@ -409,6 +564,7 @@ public class UpdateController {
         }
     }
 
+
     private void copyFilteredDir(File source, File target, FilenameFilter filter) throws RuntimeException {
         Collection<File> filteredDir = new ArrayList<>();
         filteredDir.addAll(Arrays.asList(source.listFiles(filter)));
@@ -425,6 +581,24 @@ public class UpdateController {
                 } catch (IOException e) {
                     throw new RuntimeException("Error copying " + source + " to " + target);
                 }
+        }
+    }
+
+    private void deleteFilteredDir(File target, FilenameFilter filter) throws RuntimeException {
+        if (filter.equals(TrueFileFilter.INSTANCE)) {
+            try {
+                FileUtils.cleanDirectory(target);
+            } catch (IOException e) {
+                throw new RuntimeException(String.format("Unable to cleanout dir %s", target.toString()));
+            }
+        } else {
+            Collection<File> filteredDir = new ArrayList<>();
+            filteredDir = Arrays.asList(target.listFiles(filter));
+            for (File file :
+                    filteredDir) {
+                logController.log.config(String.format("Deleting %s.", file.toString()));
+                FileUtils.deleteQuietly(file);
+            }
         }
     }
 }
