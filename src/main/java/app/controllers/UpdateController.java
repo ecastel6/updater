@@ -569,6 +569,7 @@ public class UpdateController
         Collection<File> filteredDir = new ArrayList<>();
         filteredDir.addAll(Arrays.asList(source.listFiles(filter)));
         for (File file : filteredDir) {
+            logController.log.config(String.format("Copying file/dir %s", file.toString()));
             if (file.isDirectory())
                 try {
                     FileUtils.copyDirectoryToDirectory(file, target);
