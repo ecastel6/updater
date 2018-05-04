@@ -22,8 +22,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Stack;
 
-public class UpdateController
-{
+public class UpdateController {
     final static int dbThreshold = 3;
     final static long defaultTimeout = 20000;
 
@@ -86,28 +85,37 @@ public class UpdateController
         // Now place new version
         if (updateArcadiaResources())
             stack.push("doRollbackArcadiaResources");
-        else
+        else {
             rollbackApplication(stack);
+            throw new RuntimeException("Cannot update ArcadiaResources");
+        }
 
         if (updateLogBack())
             stack.push("doRollbackLogBack");
-        else
+        else {
             rollbackApplication(stack);
+            throw new RuntimeException("Cannot update Logback");
+        }
 
         if (updateSharedlib())
             stack.push("doRollbackSharedlib");
-        else
+        else {
             rollbackApplication(stack);
+            throw new RuntimeException("Cannot update Sharedlib");
+        }
 
         if (updateWars())
             stack.push("doRollbackWars");
-        else
+        else {
             rollbackApplication(stack);
-
+            throw new RuntimeException("Cannot update Wars");
+        }
         if (updateCustom())
             stack.push("doRollbackCustom");
-        else
+        else {
             rollbackApplication(stack);
+            throw new RuntimeException("Cannot update Custom");
+        }
 
         logController.log.info(String.format("Aplicattion %s updated to %s version", installedAppData.getApp(), installedAppData.getVersion()));
         if (this.commandLine.hasOption("r")) {
@@ -424,19 +432,24 @@ public class UpdateController
         return true;
     }
 
-    public void rollbackWars() {
+    public boolean rollbackWars() {
         logController.log.config("RollingBack Wars");
-        deleteFilteredDir(
+        if (!deleteFilteredDir(
                 FileUtils.getFile(installedAppDir.toString(), "webapps"),
-                new NotFileFilter(new NameFileFilter("ArcadiaResources"))
-        );
+                new NotFileFilter(new NameFileFilter("ArcadiaResources")))) {
+            logController.log.severe("Cannot delete application wars");
+            return false;
+        }
         logController.log.config("webapps cleaned up");
-        copyFilteredDir(
+        if (!copyFilteredDir(
                 FileUtils.getFile(latestUpdatesVersionDir.toString(), "backout", "wars"),
                 FileUtils.getFile(installedAppDir.toString(), "webapps"),
-                TrueFileFilter.TRUE
-        );
+                TrueFileFilter.TRUE)) {
+            logController.log.severe("Unable to rollback wars. Error copying wars");
+            return false;
+        }
         logController.log.info("Wars rolled back");
+        return true;
     }
 
     public boolean rollbackSharedlib() {
@@ -565,7 +578,7 @@ public class UpdateController
     }
 
 
-    private void copyFilteredDir(File source, File target, FilenameFilter filter) throws RuntimeException {
+    private boolean copyFilteredDir(File source, File target, FilenameFilter filter) throws RuntimeException {
         Collection<File> filteredDir = new ArrayList<>();
         filteredDir.addAll(Arrays.asList(source.listFiles(filter)));
         for (File file : filteredDir) {
@@ -574,23 +587,27 @@ public class UpdateController
                 try {
                     FileUtils.copyDirectoryToDirectory(file, target);
                 } catch (IOException e) {
-                    throw new RuntimeException("Error copying " + source + " to " + target);
+                    logController.log.severe(String.format("Error copying " + source + " to " + target));
+                    return false;
                 }
             else
                 try {
                     FileUtils.copyFileToDirectory(file, target, true);
                 } catch (IOException e) {
-                    throw new RuntimeException("Error copying " + source + " to " + target);
+                    logController.log.severe(String.format("Error copying " + source + " to " + target));
+                    return false;
                 }
         }
+        return true;
     }
 
-    private void deleteFilteredDir(File target, FilenameFilter filter) throws RuntimeException {
+    private boolean deleteFilteredDir(File target, FilenameFilter filter) throws RuntimeException {
         if (filter.equals(TrueFileFilter.INSTANCE)) {
             try {
                 FileUtils.cleanDirectory(target);
             } catch (IOException e) {
-                throw new RuntimeException(String.format("Unable to cleanout dir %s", target.toString()));
+                logController.log.severe(String.format("Unable to cleanout dir %s", target.toString()));
+                return false;
             }
         } else {
             Collection<File> filteredDir = new ArrayList<>();
@@ -598,8 +615,12 @@ public class UpdateController
             for (File file :
                     filteredDir) {
                 logController.log.config(String.format("Deleting %s.", file.toString()));
-                FileUtils.deleteQuietly(file);
+                if (!FileUtils.deleteQuietly(file)) {
+                    logController.log.severe(String.format("Unexpected error while deleting %s", file));
+                    return false;
+                }
             }
         }
+        return true;
     }
 }

@@ -51,12 +51,12 @@ class UpdateControllerTest {
     @Test
     void rollbackArcadiaResourcesTest() {
         UpdateController updateController = new UpdateController();
-        updateController.setInstalledAppDir(new File("/home/ecastel/opt/tomcat_cbos"));
-        updateController.setLatestUpdatesVersionDir(new File("/home/ecastel/opt/arcadiaVersions/cbos/3.12R2"));
+        updateController.setInstalledAppDir(new File("D:\\opt\\tomcat_cbos"));
+        updateController.setLatestUpdatesVersionDir(new File("D:\\opt\\arcadiaVersions\\cbos\\3.12R4"));
         /*System.out.println(updateController.rollbackArcadiaResources());
         System.out.println(updateController.rollbackLogBack());
         System.out.println(updateController.rollbackSharedlib());
         System.out.println(updateController.rollbackCustom());*/
-        updateController.rollbackWars();
+        System.out.println(updateController.rollbackWars());
     }
 }
