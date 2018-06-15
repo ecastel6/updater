@@ -4,6 +4,8 @@ import app.core.Version;
 import app.models.ArcadiaApp;
 import app.models.ArcadiaAppData;
 import app.models.SearchType;
+import net.lingala.zip4j.core.ZipFile;
+import net.lingala.zip4j.exception.ZipException;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.configuration2.XMLConfiguration;
 import org.apache.commons.configuration2.builder.fluent.Configurations;
@@ -17,7 +19,9 @@ import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -96,7 +100,8 @@ public class ArcadiaController {
             getArcadiaVersion Get applicattion version with HTTP GET
             to version.html
     */
-    public Version getArcadiaVersion(ArcadiaApp app, String port) {
+    public Version getArcadiaVersionFromHTTP(ArcadiaApp app, String port) {
+        System.out.println(app);
         StringBuffer response = null;
         URL url = null;
         try {
@@ -128,6 +133,51 @@ public class ArcadiaController {
             logController.log.severe(String.format("%s Server not listening. unable to get version in %s", app.getLongName(), url));
             return null;
         }
+    }
+
+    public Version getVersionFromFile(String versionFileName) {
+        String content;
+        try {
+            content = new String(Files.readAllBytes(Paths.get(versionFileName)));
+        } catch (IOException e) {
+            logController.log.severe(String.format("Unable to read version file. %s", e.getMessage()));
+            return null;
+        }
+        final Pattern pattern = Pattern.compile("^(.*?)(\\-.*?)");
+        Matcher matcher = pattern.matcher(content);
+        if (matcher.find()) {
+            return new Version(new SystemCommons().normalizeVersion(matcher.group(1)));
+        } else {
+            return null;
+        }
+    }
+
+
+    public Version getArcadiaVersionFromFile(File versionFile) {
+        //File tomcatDir=installedApps.get(app.getShortName().toUpperCase()).getDirectory();
+        //File versionFile=FileUtils.getFile(tomcatDir,app.getWarJarVersionFile());
+        logController.log.config(String.format("Checking version file %s", versionFile));
+        // test if version File is in place
+        if (!versionFile.exists()) {
+            logController.log.severe(String.format("Version file %s not found. Broken App? ", versionFile.toString()));
+            return null;
+        }
+        // check if file is compressed jar/war or plain text file
+        if (versionFile.toString().toLowerCase().endsWith(".jar") || versionFile.toString().toLowerCase().endsWith(".war")) {
+            // unzip file to check version inside
+            File tempOutputExtract = FileUtils.getFile(
+                    FileUtils.getTempDirectory(), new SystemCommons().getToday());
+            logController.log.config(String.format("Unziping jar/war to %s directory", tempOutputExtract));
+            try {
+                ZipFile zipFile = new ZipFile(versionFile);
+                zipFile.extractAll(tempOutputExtract.toString());
+                return (getVersionFromFile(FileUtils.getFile(tempOutputExtract, "version").toString()));
+            } catch (ZipException e) {
+                logController.log.severe("Error extracting version jar/war");
+                return null;
+            }
+        } else
+            return getVersionFromFile(versionFile.toString());
     }
 
     public File getLowerDepthDirectory(ArrayList<Path> alternatives) {
@@ -176,7 +226,11 @@ public class ArcadiaController {
                 // App found collect relevant data
                 logController.log.info(String.format("App %s found collecting data...", app.getLongName()));
                 String appPort = getArcadiaAppPort(FileUtils.getFile(tomcatDir, "conf", "server.xml"));
-                Version appVersion = getArcadiaVersion(app, appPort);
+                //Version appVersion = getArcadiaVersion(app, appPort);
+                // Replaced. Now getting version from files
+                Version appVersion = getArcadiaVersionFromFile(
+                        FileUtils.getFile(tomcatDir, app.getWarJarVersionFile()));
+
                 logController.log.info(String.format("App version: %s.", appVersion));
 
                 if (appPort != null) {

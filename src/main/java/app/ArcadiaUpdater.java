@@ -83,7 +83,7 @@ public class ArcadiaUpdater
                     logController.log.severe(String.format("%s %s", Errorlevels.E7.getErrorDescription(), selectedApps));
                     System.exit(Errorlevels.E7.getErrorLevel());
                 }
-            }
+            } else selectedApps = arcadiaController.validArcadiaApps();
         } catch (ParseException e) {
             logController.log.severe(String.format("%s : %s", Errorlevels.E6.getErrorDescription(), e.getMessage()));
             System.exit(Errorlevels.E6.getErrorLevel());

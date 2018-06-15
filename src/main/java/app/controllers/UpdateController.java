@@ -138,7 +138,6 @@ public class UpdateController {
             try {
                 Method method = updateClass.getMethod(operation);
                 method.invoke(updateClass.newInstance());
-                System.out.println(method.getName());
             } catch (SecurityException e) {
                 logController.log.severe("Security exception");
             } catch (NoSuchMethodException e) {

@@ -48,7 +48,7 @@ class ArcadiaControllerTest {
     @Test
     void getVersionFromHTTPResponseTest() {
         ArcadiaController arcadiaController = ArcadiaController.getInstance();
-        String response = arcadiaController.getArcadiaVersion(ArcadiaApp.CBOS, "81").toString();
+        String response = arcadiaController.getArcadiaVersionFromHTTP(ArcadiaApp.CBOS, "81").toString();
         System.out.printf("Version from response: %s\n", response);
     }
 
@@ -61,4 +61,22 @@ class ArcadiaControllerTest {
             System.out.printf("App: %s -> Version: %s Directory: %s\n", entry.getKey(), entry.getValue().getVersion(), entry.getValue().getDirectory());
         }
     }
+
+    @Test
+    void getVersionFromFileTest() {
+        ArcadiaController arcadiaController = ArcadiaController.getInstance();
+        System.out.printf("Valor devuelto es %s", arcadiaController.getVersionFromFile("c:/tmp/version"));
+
+    }
+
+    /*@Test
+    void getArcadiaVersionFromFileTest() {
+        ArcadiaController arcadiaController=ArcadiaController.getInstance();
+
+        for (Map.Entry<String, ArcadiaAppData> app : arcadiaController.getInstalledApps().entrySet()) {
+            System.out.printf("Installed apps found: %s version: %s\n", app.getKey(),
+                    arcadiaController.getArcadiaVersionFromFile(app.getValue().getApp().));
+        }
+        //System.out.printf ("Versión arcadiaController.getArcadiaVersionFromFile(ArcadiaApp.CBOS);
+    }*/
 }
