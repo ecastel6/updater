@@ -82,6 +82,8 @@ public class ArcadiaUpdater
                 if (!validArcadiaApps.containsAll(selectedApps)) {
                     logController.log.severe(String.format("%s %s", Errorlevels.E7.getErrorDescription(), selectedApps));
                     System.exit(Errorlevels.E7.getErrorLevel());
+                } else {
+                    logController.log.warning(String.format("Selected to update %s", selectedApps));
                 }
             } else selectedApps = arcadiaController.validArcadiaApps();
         } catch (ParseException e) {
@@ -128,7 +130,7 @@ public class ArcadiaUpdater
             if (installedVersion == null && !commandLine.hasOption("F")) {
                 logController.log.warning(String.format("unable to update %s. Installed version not available. Use -F (--force) to force updating.", appName));
             } else if ((updateVersion.compareTo(installedVersion) > 0) || commandLine.hasOption("F")) {
-                logController.log.info(String.format("OK: Updating %s to version %s", appName, updateVersion));
+                logController.log.warning(String.format("Updating %s to version %s", appName, updateVersion));
 
                 UpdateController updateController = new UpdateController((String) appName);
                 try {
@@ -137,7 +139,7 @@ public class ArcadiaUpdater
                     logController.log.severe(e.getMessage());
                     System.exit(1);
                 }
-            } else logController.log.info(String.format("WARNING: Application %s already up to date", appName));
+            } else logController.log.warning(String.format("Application %s already up to date", appName));
         }
         System.exit(Errorlevels.E0.getErrorLevel());
     }

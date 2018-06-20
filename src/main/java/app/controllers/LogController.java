@@ -1,6 +1,6 @@
 package app.controllers;
 
-import app.core.LogFormatter;
+import app.core.FileLogFormatter;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -15,16 +15,26 @@ public class LogController {
             FileInputStream fis = new FileInputStream("logging.properties");
             LogManager.getLogManager().readConfiguration(fis);
 
+            // Define Console handler
             // Minimum level shown either file or console logger
             log.setLevel(Level.FINE);
-            log.addHandler(new java.util.logging.ConsoleHandler());
+            Handler consoleHandler = new java.util.logging.ConsoleHandler();
+            consoleHandler.setFormatter(new Formatter() {
+                @Override
+                public String format(LogRecord record) {
+                    return new String(record.getMessage() + "\n");
+                }
+            });
+            log.addHandler(consoleHandler);
+            // File handler
             Handler fileHandler = new FileHandler();
-            fileHandler.setFormatter(new LogFormatter());
+            fileHandler.setFormatter(new FileLogFormatter());
             log.addHandler(fileHandler);
             log.setUseParentHandlers(false);
             fis.close();
         } catch (IOException e) {
-            e.printStackTrace();
+            log.severe("logging.properties file not found. Running with default config.  Console output only ");
+            //e.printStackTrace();
         }
     }
 

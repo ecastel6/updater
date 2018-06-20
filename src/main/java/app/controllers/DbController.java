@@ -1,12 +1,12 @@
 package app.controllers;
 
 import app.core.FileBasedConfigurationHandler;
+import app.models.Errorlevels;
 import app.models.ReturnValues;
 import app.models.SearchType;
 import org.apache.commons.configuration2.ex.ConfigurationException;
 
 import java.io.File;
-import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -14,13 +14,21 @@ import java.util.ArrayList;
 public class DbController {
     private static LogController logController = LogController.getInstance();
 
-    private static DbController ourInstance;
+    private static DbController ourInstance = new DbController();
 
-    static {
-        try {
-            ourInstance = new DbController();
-        } catch (IOException e) {
-            e.printStackTrace();
+    private DbController() {
+        if (getStatus()) {
+            this.serverConfFilename = getServerConfFilename();
+            this.serverDir = getServerDir();
+            this.serverPort = getServerPort();
+            this.status = true;
+            this.databaseList = getDatabaseList();
+            this.serverVersion = getServerVersion();
+            this.adminUser = getAdminUser();
+            this.adminPasswd = getAdminPasswd();
+        } else {
+            logController.log.severe("Postgres server not running unable to make backups. Hint run with -b command line option");
+            System.exit(Errorlevels.E8.getErrorLevel());
         }
     }
 
@@ -35,29 +43,15 @@ public class DbController {
     String adminUser;
     String adminPasswd;
 
-    private DbController() throws IOException {
-        this.serverConfFilename = getServerConfFilename();
-        this.serverDir = getServerDir();
-        this.serverPort = getServerPort();
-        this.status = getStatus();
-        this.databaseList = getDatabaseList();
-        this.serverVersion = getServerVersion();
-        this.adminUser = getAdminUser();
-        this.adminPasswd = getAdminPasswd();
-    }
-
     public static DbController getInstance() {
         return ourInstance;
     }
 
     public Path getServerDir() {
-        if (serverDir != null) return serverDir;
+        if (serverDir != null)
+            return serverDir;
         else {
-            try {
-                serverDir = getServerConfFilename().getParent().getParent();
-            } catch (IOException e) {
-                logController.log.severe("Unable to find Postgres server directory. " + e.getMessage());
-            }
+            serverDir = getServerConfFilename().getParent().getParent();
             return serverDir;
         }
     }
@@ -66,7 +60,7 @@ public class DbController {
         return Paths.get(getServerDir().toString(), "bin");
     }
 
-    public String getServerPort() throws IOException {
+    public String getServerPort() {
         // todo getServerPort other database servers
         try {
             FileBasedConfigurationHandler fbch = new FileBasedConfigurationHandler(getServerConfFilename().toString());
@@ -81,7 +75,7 @@ public class DbController {
         }
     }
 
-    public Path getServerConfFilename() throws IOException {
+    public Path getServerConfFilename() {
         //todo getServerConf other database servers
         if (serverConfFilename != null) {
             return serverConfFilename;
@@ -90,28 +84,29 @@ public class DbController {
         FileFinderControllerStr postgresConf = FileFinderControllerStr.doit("/", "data/postgresql.conf", SearchType.Files);
 
         if (postgresConf.getNumMatches() == 0) {
-            throw new IOException("Unable to find out postgres conf file!!!!");
-        } else {
-            ArrayList<Path> results = postgresConf.getResults();
-            if (postgresConf.getNumMatches() > 1) {
-                logController.log.warning("Multiple postgres conf file detected. Guessing correct one");
-                for (Path path : results) {
-                    logController.log.config(String.format("Path: %s. depth=%d", path.toString(), path.getNameCount()));
-                    if ((path.toString().contains("opt")) && (path.getNameCount() < 5)) {
-                        logController.log.config(String.format("Guessed dir: %s ", path.toString()));
-                        this.serverConfFilename = path;
-                        return serverConfFilename;
-                    }
-                }
-                logController.log.warning("Unable to guess returning the first one.");
-            } else {
-                logController.log.config(String.format("Exact match %s", results.get(0).toString()));
-                this.serverConfFilename = results.get(0);
-                return serverConfFilename;
-            }
+            logController.log.severe("Unable to find out postgres conf file!!!!");
+            System.exit(Errorlevels.E8.getErrorLevel());
         }
-        throw new IOException("Unable to find out postgres conf file!!!!");
+        ArrayList<Path> results = postgresConf.getResults();
+        if (postgresConf.getNumMatches() > 1) {
+            logController.log.warning("Multiple postgres conf file detected. Guessing correct one");
+            for (Path path : results) {
+                logController.log.config(String.format("Path: %s. depth=%d", path.toString(), path.getNameCount()));
+                if ((path.toString().contains("opt")) && (path.getNameCount() < 5)) {
+                    logController.log.config(String.format("Guessed dir: %s ", path.toString()));
+                    this.serverConfFilename = path;
+                    return serverConfFilename;
+                }
+            }
+            logController.log.warning("Unable to guess returning the first one.");
+        } else {
+            logController.log.config(String.format("Exact match %s", results.get(0).toString()));
+            this.serverConfFilename = results.get(0);
+            return serverConfFilename;
+        }
+        return null;
     }
+
 
     public boolean getStatus() {
         ServiceController serviceController = ServiceController.getInstance();

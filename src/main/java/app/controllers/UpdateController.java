@@ -1,10 +1,7 @@
 package app.controllers;
 
 import app.core.ZipHandler;
-import app.models.ArcadiaApp;
-import app.models.ArcadiaAppData;
-import app.models.CompresionLevel;
-import app.models.ReturnValues;
+import app.models.*;
 import net.lingala.zip4j.core.ZipFile;
 import net.lingala.zip4j.exception.ZipException;
 import org.apache.commons.cli.CommandLine;
@@ -15,12 +12,9 @@ import org.apache.commons.io.filefilter.*;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Stack;
 
 public class UpdateController {
     final static int dbThreshold = 3;
@@ -40,9 +34,11 @@ public class UpdateController {
     // general variables
     private File latestUpdatesVersionDir;
     private File installedAppDir;
+    private String app;
 
     public UpdateController(String appName) {
         this.commandLine = arcadiaController.getCommandLine();
+        this.app = appName;
         this.installedAppData = arcadiaController.getInstalledApps().get(appName);
         this.installedAppDir = installedAppData.getDirectory();
         this.latestUpdatesVersionDir = arcadiaController.getAvailableUpdates().get(appName).getDirectory();
@@ -64,7 +60,7 @@ public class UpdateController {
      */
     public Boolean updateApp() throws RuntimeException {
         // store completed operations jic rollback
-        Stack stack = new Stack();
+        //Stack stack = new Stack();
 
         if (!this.commandLine.hasOption("n")) {
             checkRabbitmq();
@@ -83,41 +79,38 @@ public class UpdateController {
         }
         backoutApp();
         // Now place new version
-        if (updateArcadiaResources())
-            stack.push("doRollbackArcadiaResources");
-        else {
-            rollbackApplication(stack);
-            throw new RuntimeException("Cannot update ArcadiaResources");
+        if (!updateArcadiaResources()) {
+            logController.log.severe("Couldn't update ArcadiaResources.");
+            rollbackApp();
+            return false;
         }
 
-        if (updateLogBack())
-            stack.push("doRollbackLogBack");
-        else {
-            rollbackApplication(stack);
-            throw new RuntimeException("Cannot update Logback");
+        if (!updateLogBack()) {
+            logController.log.severe("Couldn't update logback.");
+            rollbackApp();
+            return false;
         }
 
-        if (updateSharedlib())
-            stack.push("doRollbackSharedlib");
-        else {
-            rollbackApplication(stack);
-            throw new RuntimeException("Cannot update Sharedlib");
+        if (!updateSharedlib()) {
+            logController.log.severe("Couldn't update sharedlib.");
+            rollbackApp();
+            return false;
         }
 
-        if (updateWars())
-            stack.push("doRollbackWars");
-        else {
-            rollbackApplication(stack);
-            throw new RuntimeException("Cannot update Wars");
+        if (!updateWars()) {
+            logController.log.severe("Couldn't update Wars");
+            rollbackApp();
+            return false;
         }
-        if (updateCustom())
-            stack.push("doRollbackCustom");
-        else {
-            rollbackApplication(stack);
-            throw new RuntimeException("Cannot update Custom");
+        if (!updateCustom()) {
+            logController.log.severe("Couldn't update custom");
+            rollbackApp();
+            return false;
         }
 
-        logController.log.info(String.format("Aplicattion %s updated to %s version", installedAppData.getApp(), installedAppData.getVersion()));
+        logController.log.warning(String.format("Aplication %s updated to %s version",
+                installedAppData.getApp().getLongName(),
+                arcadiaController.getAvailableUpdates().get(app).getVersion()));
         if (this.commandLine.hasOption("r")) {
             reinstallServices(installedAppData);
         }
@@ -126,18 +119,50 @@ public class UpdateController {
         return true;
     }
 
-    public void rollbackApplication(Stack stack) {
+    private void rollbackApp() {
+        if (!rollbackWars()) {
+            logController.log.severe("Could not rollback wars");
+            System.exit(Errorlevels.E9.getErrorLevel());
+        }
+        if (!rollbackArcadiaResources()) {
+            logController.log.severe("Could not rollback ArcadiaResources");
+            System.exit(Errorlevels.E9.getErrorLevel());
+        }
+        if (!rollbackCustom()) {
+            logController.log.severe("Could not rollback Custom");
+            System.exit(Errorlevels.E9.getErrorLevel());
+        }
+        if (!rollbackLogBack()) {
+            logController.log.severe("Could not rollback logback");
+            System.exit(Errorlevels.E9.getErrorLevel());
+        }
+        if (!rollbackSharedlib()) {
+            logController.log.severe("Could not rollback sharedlib");
+            System.exit(Errorlevels.E9.getErrorLevel());
+        }
+        // Cleanup backout directory content to avoid error when re-applying update
+        try {
+            FileUtils.cleanDirectory(FileUtils.getFile(latestUpdatesVersionDir, "backout"));
+        } catch (IOException e) {
+            logController.log.config("Couldn't' delete content of backout directory");
+        }
+    }
+
+
+    /*public void rollbackApplication(Stack stack) {
+     *//* No necesario al hacerse el backout se produzca cuando sea el error hay que
+     * restablecer la aplicación entera *//*
         String operation;
         Class updateClass = this.getClass();
-
+        logController.log.config(updateClass.toString());
         while (!stack.empty()) {
             operation = (String) stack.pop();
             logController.log.info(String.format("Stack pops: %s", operation));
 
-
             try {
                 Method method = updateClass.getMethod(operation);
-                method.invoke(updateClass.newInstance());
+                logController.log.config(String.format("Calling method %s\n",method.toString()));
+                method.invoke(this);
             } catch (SecurityException e) {
                 logController.log.severe("Security exception");
             } catch (NoSuchMethodException e) {
@@ -146,11 +171,10 @@ public class UpdateController {
                 e.printStackTrace();
             } catch (InvocationTargetException e) {
                 e.printStackTrace();
-            } catch (InstantiationException e) {
-                e.printStackTrace();
+
             }
         }
-    }
+    }*/
 
     public void reinstallServices(ArcadiaAppData appData) {
         String serviceName = String.format("tomcat_%s", appData.getApp().getShortName());
@@ -228,7 +252,7 @@ public class UpdateController {
         // Check database service
         if (!serviceController.serviceAlive("postgres")) {
             throw new RuntimeException("Database server not available");
-        } else logController.log.info("OK: Database Server available");
+        } else logController.log.info("Database Server available");
     }
 
     private boolean updateCustom() throws RuntimeException {
@@ -241,7 +265,7 @@ public class UpdateController {
         try {
             puc.updateCustom();
         } catch (IOException e) {
-            logController.log.severe("Error updating custom");
+            logController.log.config("Error updating custom");
             return false;
         }
         return true;
@@ -256,7 +280,7 @@ public class UpdateController {
                     FileUtils.getFile(installedAppDir.toString(), "webapps"),
                     new NotFileFilter(new NameFileFilter("ArcadiaResources")));
         } catch (RuntimeException e) {
-            logController.log.severe("Cannot update wars");
+            logController.log.config("Cannot update wars");
             return false;
         }
         return true;
@@ -277,7 +301,7 @@ public class UpdateController {
                     installedAppDir
             );
         } catch (IOException e) {
-            logController.log.severe("Cannot update sharedlib");
+            logController.log.config("Cannot update sharedlib");
             return false;
         }
         return true;
@@ -291,7 +315,7 @@ public class UpdateController {
                     installedAppDir
             );
         } catch (IOException e) {
-            logController.log.severe("Error copying logback configuration");
+            logController.log.config("Error copying logback configuration");
             return false;
         }
         return true;
@@ -361,7 +385,7 @@ public class UpdateController {
             ZipFile zipFile = new ZipFile(warAr);
             zipFile.extractAll(tempOutputExtractZip.toString());
         } catch (ZipException e) {
-            logController.log.severe("Error extracting ArcadiaResources");
+            logController.log.config("Error extracting ArcadiaResources");
             return false;
         }
 
@@ -377,7 +401,7 @@ public class UpdateController {
                             "ArcadiaResources")
             );
         } catch (IOException e) {
-            logController.log.severe("Cannot copy commons to ArcadiaResources");
+            logController.log.config("Cannot copy commons to ArcadiaResources");
             return false;
         }
         try {
@@ -391,7 +415,7 @@ public class UpdateController {
                             "ArcadiaResources")
             );
         } catch (IOException e) {
-            logController.log.severe("Cannot copy WEBINF to ArcadiaResources");
+            logController.log.config("Cannot copy WEBINF to ArcadiaResources");
             return false;
         }
         return true;
@@ -412,7 +436,7 @@ public class UpdateController {
         } catch (IOException e) {
             return false;
         }
-        logController.log.info("ArcadiaResources rolled back");
+        logController.log.config("ArcadiaResources rolled back");
         return true;
     }
 
@@ -427,7 +451,7 @@ public class UpdateController {
         } catch (IOException e) {
             return false;
         }
-        logController.log.info("Logback-common.xml rolled back");
+        logController.log.config("Logback-common.xml rolled back");
         return true;
     }
 
@@ -436,7 +460,7 @@ public class UpdateController {
         if (!deleteFilteredDir(
                 FileUtils.getFile(installedAppDir.toString(), "webapps"),
                 new NotFileFilter(new NameFileFilter("ArcadiaResources")))) {
-            logController.log.severe("Cannot delete application wars");
+            logController.log.config("Cannot delete application wars");
             return false;
         }
         logController.log.config("webapps cleaned up");
@@ -444,10 +468,10 @@ public class UpdateController {
                 FileUtils.getFile(latestUpdatesVersionDir.toString(), "backout", "wars"),
                 FileUtils.getFile(installedAppDir.toString(), "webapps"),
                 TrueFileFilter.TRUE)) {
-            logController.log.severe("Unable to rollback wars. Error copying wars");
+            logController.log.config("Unable to rollback wars. Error copying wars");
             return false;
         }
-        logController.log.info("Wars rolled back");
+        logController.log.config("Wars rolled back");
         return true;
     }
 
@@ -461,7 +485,7 @@ public class UpdateController {
         } catch (IOException e) {
             return false;
         }
-        logController.log.info("Sharedlib rolled back");
+        logController.log.config("Sharedlib rolled back");
         return true;
     }
 
@@ -475,7 +499,7 @@ public class UpdateController {
         } catch (IOException e) {
             return false;
         }
-        logController.log.info("Custom rolled back");
+        logController.log.config("Custom rolled back");
         return true;
     }
 
@@ -501,7 +525,7 @@ public class UpdateController {
                 backupsController.getRootBackupsDir(),
                 app.getDatabaseName(),
                 app.getDatabaseName() + "_" + new SystemCommons().getToday());
-        logController.log.config(String.format("Backup'in %s ", app.getDatabaseName()));
+        logController.log.warning(String.format("Backup'in database %s ", app.getDatabaseName()));
         if (backupsController.databaseBackup(app.getDatabaseName(), targetBackupDir) > 0) {
             throw new RuntimeException("Error while backup'in database");
         }
@@ -531,7 +555,7 @@ public class UpdateController {
 
         // Check tomcat started-ing
         if (serviceController.serviceAlive("tomcat_" + app.getShortName())) {
-            logController.log.info("OK: Tomcat started");
+            logController.log.config("OK: Tomcat started");
         } else
             throw new RuntimeException("ERROR: Tomcat not started!!");
     }
@@ -541,7 +565,7 @@ public class UpdateController {
         if (!serviceController.serviceAlive("zookeeper")) {
             logController.log.severe("ERROR: Zookeeper not started");
             //throw new RuntimeException("ERROR: Zookeeper not started");
-        } else logController.log.info("OK: Zookeeper Server available");
+        } else logController.log.config("OK: Zookeeper Server available");
     }
 
     private void checkRabbitmq() {
@@ -549,7 +573,7 @@ public class UpdateController {
         if (!serviceController.serviceAlive("rabbitmq")) {
             logController.log.severe("ERROR: Rabbitmq not started");
             //throw new RuntimeException("ERROR: Rabbitmq not started");
-        } else logController.log.info("OK: RabbitMq Server available");
+        } else logController.log.config("OK: RabbitMq Server available");
     }
 
     private void moveFilteredDir(File source, File target, FilenameFilter filter) throws RuntimeException {

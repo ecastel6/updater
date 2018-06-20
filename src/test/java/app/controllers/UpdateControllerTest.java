@@ -6,7 +6,6 @@ import org.apache.commons.io.FilenameUtils;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
-import java.util.Stack;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -40,23 +39,4 @@ class UpdateControllerTest {
         System.out.println(String.format("Create retValue=%s retMsg=%s", retCreate.t, retCreate.u));
     }
 
-    @Test
-    void rollbackApplicationTest() {
-        Stack stack = new Stack();
-        stack.push("rollbackArcadiaResources");
-        UpdateController updateController = new UpdateController();
-        updateController.rollbackApplication(stack);
-    }
-
-    @Test
-    void rollbackArcadiaResourcesTest() {
-        UpdateController updateController = new UpdateController();
-        updateController.setInstalledAppDir(new File("D:\\opt\\tomcat_cbos"));
-        updateController.setLatestUpdatesVersionDir(new File("D:\\opt\\arcadiaVersions\\cbos\\3.12R4"));
-        /*System.out.println(updateController.rollbackArcadiaResources());
-        System.out.println(updateController.rollbackLogBack());
-        System.out.println(updateController.rollbackSharedlib());
-        System.out.println(updateController.rollbackCustom());*/
-        System.out.println(updateController.rollbackWars());
-    }
 }

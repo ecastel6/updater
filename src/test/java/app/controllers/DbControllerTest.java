@@ -3,8 +3,6 @@ package app.controllers;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.io.IOException;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -24,7 +22,7 @@ class DbControllerTest {
     }
 
     @Test
-    void getServerPort() throws IOException {
+    void getServerPort() {
         DbController dbController = DbController.getInstance();
         assertTrue(dbController.getServerPort().contains("543"));
     }
@@ -32,11 +30,7 @@ class DbControllerTest {
     @Test
     void getServerConfFilename() {
         DbController dbController = DbController.getInstance();
-        try {
-            assertTrue(dbController.getServerConfFilename().toString().contains("postgresql.conf"));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        assertTrue(dbController.getServerConfFilename().toString().contains("postgresql.conf"));
     }
 
 

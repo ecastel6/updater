@@ -112,8 +112,6 @@ public class PropertiesUpdaterController {
     public void updateCustom() throws IOException {
         // main method
 
-        //targetCustomDir=FileUtils.getFile(FileUtils.getTempDirectory(),"tempTarget");
-
         // Copy sourceCustomOldDir to targetCustomDir
         logController.log.config(String.format("Copying %s to %s", sourceCustomOldDir, targetCustomDir));
         FileUtils.copyDirectory(sourceCustomOldDir, targetCustomDir, true);
