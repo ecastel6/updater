@@ -69,4 +69,9 @@ class ServiceControllerTest {
     }
 
 
+    @Test
+    void getUserHomeTest() {
+        ServiceController serviceController = ServiceController.getInstance();
+        System.out.println(serviceController.getUserHome());
+    }
 }

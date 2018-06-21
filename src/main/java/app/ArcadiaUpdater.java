@@ -45,6 +45,18 @@ public class ArcadiaUpdater
         options.addOption("B", "force-backout", false, "Cleanout backout directory before backout");
         options.addOption("n", "ignore-checkservices", false, "do not check services availability (Rabbitmq,Zookeeper).");
         options.addOption("r", "reinstall-services", false, "reinstall tomcat services.");
+        options.addOption(Option.builder("h").longOpt("host").hasArg(true)
+                .argName("dbhost").desc("Database host IP, by default localhost ")
+                .required(false).build());
+        options.addOption(Option.builder("p").longOpt("port").hasArg(true)
+                .argName("dbport").desc("Database port, by default 5432 ")
+                .required(false).build());
+        options.addOption(Option.builder("u").longOpt("user").hasArg(true)
+                .argName("dbuser").desc("Database username . ")
+                .required(false).build());
+        options.addOption(Option.builder("w").longOpt("password").hasArg(true)
+                .argName("dbpass").desc("Database username password. ")
+                .required(false).build());
 
         /*Option apps=new Option("A",true,"Apps to install e.g -A oc cbos");
         apps.setArgs(Option.UNLIMITED_VALUES);
@@ -62,7 +74,7 @@ public class ArcadiaUpdater
             commandLine = parser.parse(options, args);
 
             // validate that block-size has been set
-            if (commandLine.hasOption("h") || args.length == 0 || (!commandLine.hasOption("S") && !commandLine.hasOption("R"))) {
+            if (args.length == 0 || (!commandLine.hasOption("S") && !commandLine.hasOption("R"))) {
                 // display help
                 HelpFormatter formatter = new HelpFormatter();
                 formatter.printHelp("arcadia-updater", options);

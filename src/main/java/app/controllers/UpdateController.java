@@ -278,7 +278,7 @@ public class UpdateController {
             copyFilteredDir(
                     FileUtils.getFile(latestUpdatesVersionDir.toString(), "wars"),
                     FileUtils.getFile(installedAppDir.toString(), "webapps"),
-                    new NotFileFilter(new NameFileFilter("ArcadiaResources")));
+                    new NotFileFilter(new NameFileFilter("ArcadiaResources.war")));
         } catch (RuntimeException e) {
             logController.log.config("Cannot update wars");
             return false;
@@ -526,7 +526,25 @@ public class UpdateController {
                 app.getDatabaseName(),
                 app.getDatabaseName() + "_" + new SystemCommons().getToday());
         logController.log.warning(String.format("Backup'in database %s ", app.getDatabaseName()));
-        if (backupsController.databaseBackup(app.getDatabaseName(), targetBackupDir) > 0) {
+
+        String dbhost = "localhost";
+        String dbport = "5432";
+        String dbuser = "postgres";
+        //TODO cleartext password disclosure possible
+        String dbpass = "postavalon";
+
+        if (this.commandLine.hasOption("h")) dbhost = this.commandLine.getOptionValue("dbhost");
+        if (this.commandLine.hasOption("p")) dbhost = this.commandLine.getOptionValue("dbport");
+        if (this.commandLine.hasOption("u")) dbhost = this.commandLine.getOptionValue("dbuser");
+        if (this.commandLine.hasOption("w")) dbhost = this.commandLine.getOptionValue("dbpass");
+
+        if (backupsController.databaseBackup(
+                app.getDatabaseName(),
+                targetBackupDir,
+                dbhost,
+                dbport,
+                dbuser,
+                dbpass) > 0) {
             throw new RuntimeException("Error while backup'in database");
         }
         return FileUtils.sizeOfDirectory(targetBackupDir);

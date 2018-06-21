@@ -5,8 +5,11 @@ import app.models.Errorlevels;
 import app.models.ReturnValues;
 import app.models.SearchType;
 import org.apache.commons.configuration2.ex.ConfigurationException;
+import org.apache.commons.io.FileUtils;
 
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.PrintWriter;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -146,7 +149,6 @@ public class DbController {
         return adminPasswd;
     }
 
-
     @Override
     public String toString() {
         return "DbController{" +
@@ -159,5 +161,29 @@ public class DbController {
                 ", adminUser='" + adminUser + '\'' +
                 ", adminPasswd='" + adminPasswd +
                 '}';
+    }
+
+    /* Hacky way to pass password to postgres environment.
+     * Creating .pgpass file in home user directory
+     * NOTE This overwrites existent pgpass file */
+    public void setCredentials(String dbuser, String dbpass) {
+        ServiceController serviceController = ServiceController.getInstance();
+        String pgpass = serviceController.getUserHome() + File.separator + ".pgpass";
+
+        try {
+            PrintWriter writer = new PrintWriter(pgpass);
+            writer.println("*:5432:*:" + dbuser + ":" + dbpass);
+            writer.close();
+            // TODO chmod file to 0600 
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+    }
+
+    /* Cleanup credentials file after execution  */
+    public void unsetCredentials() {
+        ServiceController serviceController = ServiceController.getInstance();
+        String pgpass = serviceController.getUserHome() + File.separator + ".pgpass";
+        FileUtils.deleteQuietly(new File(pgpass));
     }
 }

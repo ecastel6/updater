@@ -59,16 +59,20 @@ public class BackupsController {
 
     }
 
-    public int databaseBackup(String database, File targetFolder) {
+    public int databaseBackup(String database, File targetFolder, String dbhost, String dbport, String dbuser, String dbpass) {
         DbController dbController = DbController.getInstance();
-
+        dbController.setCredentials(dbuser, dbpass);
         String[] command = new String[]{
-                dbController.getServerBin().toString() + File.separator +
-                        "pg_dump",
+                dbController.getServerBin().toString() + File.separator + "pg_dump",
                 "-U",
-                "postgres",
+                dbuser,
                 "-Fd",
                 "-b",
+                "-h",
+                dbhost,
+                "-p",
+                dbport,
+                "-w",
                 String.format("-j%s", new SystemCommons().getAvailableCores() / 2),
                 "-f",
                 targetFolder.toString(),
@@ -77,6 +81,7 @@ public class BackupsController {
         logController.log.config(String.format("Running command: %s", Arrays.toString(command)));
         ServiceController serviceController = ServiceController.getInstance();
         ReturnValues returnValues = serviceController.runCommand(command);
+        dbController.unsetCredentials();
         return (int) returnValues.t;
     }
 

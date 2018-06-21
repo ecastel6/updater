@@ -9,6 +9,7 @@ import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Properties;
 
 public class ServiceController {
     private static LogController logController = LogController.getInstance();
@@ -160,5 +161,12 @@ public class ServiceController {
             err.printStackTrace();
         }
         return false;
+    }
+
+    public String getUserHome() {
+        // baseline java7. This method requires java8
+        // return System.getProperty("user.home");
+        Properties props = System.getProperties();
+        return props.get("user.home").toString();
     }
 }
