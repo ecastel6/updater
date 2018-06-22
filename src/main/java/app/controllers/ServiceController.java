@@ -169,4 +169,8 @@ public class ServiceController {
         Properties props = System.getProperties();
         return props.get("user.home").toString();
     }
+
+    public String getAppdata() {
+        return System.getenv("APPDATA");
+    }
 }

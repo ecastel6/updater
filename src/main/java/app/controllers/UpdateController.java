@@ -443,8 +443,6 @@ public class UpdateController {
     public boolean rollbackLogBack() {
         logController.log.config("Rolling Back LogBack");
         try {
-            //FileUtils.copyFileToDirectory();deleteDirectory(FileUtils.getFile(installedAppDir.toString(), "webapps", "ArcadiaResources", "WEB-INF"));
-            //FileUtils.deleteDirectory(FileUtils.getFile(installedAppDir.toString(), "webapps", "ArcadiaResources", "commons"));
             FileUtils.copyFileToDirectory(
                     FileUtils.getFile(latestUpdatesVersionDir.toString(), "backout", "logback-common.xml"),
                     FileUtils.getFile(installedAppDir.toString(), "lib"));
@@ -533,11 +531,12 @@ public class UpdateController {
         //TODO cleartext password disclosure possible
         String dbpass = "postavalon";
 
-        if (this.commandLine.hasOption("h")) dbhost = this.commandLine.getOptionValue("dbhost");
-        if (this.commandLine.hasOption("p")) dbhost = this.commandLine.getOptionValue("dbport");
-        if (this.commandLine.hasOption("u")) dbhost = this.commandLine.getOptionValue("dbuser");
-        if (this.commandLine.hasOption("w")) dbhost = this.commandLine.getOptionValue("dbpass");
-
+        if (this.commandLine.hasOption("h")) dbhost = this.commandLine.getOptionValue("host");
+        if (this.commandLine.hasOption("p")) dbport = this.commandLine.getOptionValue("port");
+        if (this.commandLine.hasOption("u")) dbuser = this.commandLine.getOptionValue("user");
+        if (this.commandLine.hasOption("w")) dbpass = this.commandLine.getOptionValue("password");
+        logController.log.config(String.format("Host=%s Port=%s User=%s Password=%s",
+                dbhost, dbport, dbuser, dbpass));
         if (backupsController.databaseBackup(
                 app.getDatabaseName(),
                 targetBackupDir,

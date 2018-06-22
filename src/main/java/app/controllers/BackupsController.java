@@ -61,7 +61,8 @@ public class BackupsController {
 
     public int databaseBackup(String database, File targetFolder, String dbhost, String dbport, String dbuser, String dbpass) {
         DbController dbController = DbController.getInstance();
-        dbController.setCredentials(dbuser, dbpass);
+        File pgpass;
+        pgpass = dbController.setCredentials(dbuser, dbpass);
         String[] command = new String[]{
                 dbController.getServerBin().toString() + File.separator + "pg_dump",
                 "-U",
@@ -81,7 +82,8 @@ public class BackupsController {
         logController.log.config(String.format("Running command: %s", Arrays.toString(command)));
         ServiceController serviceController = ServiceController.getInstance();
         ReturnValues returnValues = serviceController.runCommand(command);
-        dbController.unsetCredentials();
+        dbController.unsetCredentials(pgpass);
+
         return (int) returnValues.t;
     }
 

@@ -2,6 +2,7 @@ package app.controllers;
 
 import app.core.FileBasedConfigurationHandler;
 import app.models.Errorlevels;
+import app.models.OS;
 import app.models.ReturnValues;
 import app.models.SearchType;
 import org.apache.commons.configuration2.ex.ConfigurationException;
@@ -9,6 +10,7 @@ import org.apache.commons.io.FileUtils;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -18,7 +20,16 @@ public class DbController {
     private static LogController logController = LogController.getInstance();
 
     private static DbController ourInstance = new DbController();
-
+    // Root database directory e.g. /opt/pgsql
+    Path serverDir;
+    String serverPort;
+    // Database status
+    boolean status;
+    ArrayList<String> databaseList;
+    Path serverConfFilename;
+    String serverVersion;
+    String adminUser;
+    String adminPasswd;
     private DbController() {
         if (getStatus()) {
             this.serverConfFilename = getServerConfFilename();
@@ -34,17 +45,6 @@ public class DbController {
             System.exit(Errorlevels.E8.getErrorLevel());
         }
     }
-
-    // Root database directory e.g. /opt/pgsql
-    Path serverDir;
-    String serverPort;
-    // Database status
-    boolean status;
-    ArrayList<String> databaseList;
-    Path serverConfFilename;
-    String serverVersion;
-    String adminUser;
-    String adminPasswd;
 
     public static DbController getInstance() {
         return ourInstance;
@@ -166,24 +166,46 @@ public class DbController {
     /* Hacky way to pass password to postgres environment.
      * Creating .pgpass file in home user directory
      * NOTE This overwrites existent pgpass file */
-    public void setCredentials(String dbuser, String dbpass) {
+    public File setCredentials(String dbuser, String dbpass) {
         ServiceController serviceController = ServiceController.getInstance();
-        String pgpass = serviceController.getUserHome() + File.separator + ".pgpass";
+        File pgpass;
+        if (serviceController.getOs() == OS.WINDOWS) {
+            pgpass = FileUtils.getFile(serviceController.getAppdata(), "postgresql", "pgpass.conf");
+            File pgpassdir = FileUtils.getFile(pgpass.getParent());
+            if (!pgpassdir.exists()) {
+                try {
+                    FileUtils.forceMkdir(pgpassdir);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        } else {
+            pgpass = FileUtils.getFile(serviceController.getUserHome(), ".pgpass");
+        }
 
         try {
             PrintWriter writer = new PrintWriter(pgpass);
+            logController.log.config("Rellenando pgpass");
             writer.println("*:5432:*:" + dbuser + ":" + dbpass);
             writer.close();
-            // TODO chmod file to 0600 
+            if (serviceController.getOs().equals(OS.LINUX)) setPermissions(pgpass);
         } catch (FileNotFoundException e) {
             e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
+        logController.log.config(String.format("Credentials file %s created", pgpass.toString()));
+        return pgpass;
+    }
+
+    private void setPermissions(File pgpass) {
+        logController.log.config(String.format("Changing permissions to 0600: %s", pgpass.toString()));
+        ServiceController.getInstance().runCommand(new String[]{"chmod", "0600", pgpass.toString()});
     }
 
     /* Cleanup credentials file after execution  */
-    public void unsetCredentials() {
-        ServiceController serviceController = ServiceController.getInstance();
-        String pgpass = serviceController.getUserHome() + File.separator + ".pgpass";
-        FileUtils.deleteQuietly(new File(pgpass));
+    public void unsetCredentials(File pgpass) {
+        FileUtils.deleteQuietly(pgpass);
+        logController.log.config(String.format("Credentials file %s deleted", pgpass.toString()));
     }
 }

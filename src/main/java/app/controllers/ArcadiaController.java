@@ -62,7 +62,7 @@ public class ArcadiaController {
         */
     private String getArcadiaAppPort(File configFile) {
 
-        logController.log.info(String.format("Parsing config %s", configFile));
+        logController.log.info(String.format("Parsing tomcat config %s", configFile));
         // get port from config
         try {
             Configurations configs = new Configurations();

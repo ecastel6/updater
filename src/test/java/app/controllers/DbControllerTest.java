@@ -3,6 +3,8 @@ package app.controllers;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.io.File;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -69,5 +71,15 @@ class DbControllerTest {
     void getServerBin() {
         DbController dbController = DbController.getInstance();
         System.out.println(dbController.getServerBin());
+    }
+
+    @Test
+    void setUnSetCredentialsTest() {
+        DbController dbController = DbController.getInstance();
+        File pgpass;
+        pgpass = dbController.setCredentials("postgres", "postavalon");
+        assertTrue(pgpass.exists());
+        dbController.unsetCredentials(pgpass);
+        assertTrue(!pgpass.exists());
     }
 }

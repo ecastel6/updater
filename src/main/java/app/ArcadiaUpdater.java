@@ -13,8 +13,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
 
-public class ArcadiaUpdater
-{
+public class ArcadiaUpdater {
     private static LogController logController = LogController.getInstance();
 
     //private static Map<String, ArcadiaAppData> installedApps = new HashMap<>();
