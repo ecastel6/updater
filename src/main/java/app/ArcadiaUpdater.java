@@ -56,6 +56,7 @@ public class ArcadiaUpdater {
         options.addOption(Option.builder("w").longOpt("password").hasArg(true)
                 .argName("dbpass").desc("Database username password. ")
                 .required(false).build());
+        options.addOption("x", "xml", false, "look for database parameters from tomcat server.xml.");
 
         /*Option apps=new Option("A",true,"Apps to install e.g -A oc cbos");
         apps.setArgs(Option.UNLIMITED_VALUES);
@@ -94,7 +95,7 @@ public class ArcadiaUpdater {
                     logController.log.severe(String.format("%s %s", Errorlevels.E7.getErrorDescription(), selectedApps));
                     System.exit(Errorlevels.E7.getErrorLevel());
                 } else {
-                    logController.log.warning(String.format("Selected to update %s", selectedApps));
+                    logController.log.warning(String.format("Selected update %s", selectedApps));
                 }
             } else selectedApps = arcadiaController.validArcadiaApps();
         } catch (ParseException e) {

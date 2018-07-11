@@ -6,16 +6,19 @@ import app.models.SearchType;
 import org.apache.commons.io.FileUtils;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Arrays;
 
 public class BackupsController {
     private static LogController logController = LogController.getInstance();
 
     private static BackupsController ourInstance = new BackupsController();
-    private File rootBackupsDir = null;
+    public boolean noRootBackupDirectory = false;
+    private File rootBackupsDir;
     private String today = null;
 
     private BackupsController() {
+        this.noRootBackupDirectory = false;
     }
 
     public static BackupsController getInstance() {
@@ -44,12 +47,12 @@ public class BackupsController {
         if (rootBackupsDir == null) {
             ArcadiaController arcadiaController = ArcadiaController.getInstance();
             // Simple shot, lowerDepthDirectory, guess system has daily
-            logController.log.info("Searching daily backups folder...");
+            logController.log.config("Searching daily backups folder...");
             FileFinderControllerStr fileFinderController = FileFinderControllerStr.doit("/", "/daily", SearchType.Directories);
             if (fileFinderController.getNumMatches() > 0) {
                 logController.log.config(String.format("Found %s backups folder. Selecting lowestdepth one", fileFinderController.getNumMatches()));
                 rootBackupsDir = arcadiaController.getLowerDepthDirectory(fileFinderController.results);
-            }
+            } else noRootBackupDirectory = true;
         }
         return rootBackupsDir;
     }
@@ -63,8 +66,15 @@ public class BackupsController {
         DbController dbController = DbController.getInstance();
         File pgpass;
         pgpass = dbController.setCredentials(dbuser, dbpass);
+        if (!targetFolder.getParentFile().exists()) {
+            try {
+                FileUtils.forceMkdirParent(targetFolder);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
         String[] command = new String[]{
-                dbController.getServerBin().toString() + File.separator + "pg_dump",
+                dbController.getPg_dump().toString(),
                 "-U",
                 dbuser,
                 "-Fd",

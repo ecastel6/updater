@@ -42,12 +42,13 @@ class BackupsControllerTest
     }
 
     @Test
-    void databaseBackup() {
+    void databaseBackupTest() {
         Path targetFolder = null;
         BackupsController backupsController = BackupsController.getInstance();
         try {
             targetFolder = Files.createTempDirectory(this.getClass().toString());
-            assertEquals(0, backupsController.databaseBackup("arcadia_cbos", targetFolder.toFile(), "localhost", "5432", "postgres", ""));
+            assertEquals(0, backupsController.databaseBackup("arcadia_cbos",
+                    targetFolder.toFile(), "localhost", "5432", "postgres", "postavalon"));
 
         } catch (IOException e) {
             e.printStackTrace();

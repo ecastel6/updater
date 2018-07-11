@@ -10,7 +10,9 @@ public enum Errorlevels {
     E6(6, "Invalid command line parameter entered"),
     E7(7, "Invalid application selected"),
     E8(8, "Postgres server stopped"),
-    E9(9, "Rollback error");
+    E9(9, "Rollback error"),
+    E10(10, "Malformed Tomcat configuration file"),
+    E11(11, "Unsupported database system");
 
     private int errorLevel;
     private String errorDescription;

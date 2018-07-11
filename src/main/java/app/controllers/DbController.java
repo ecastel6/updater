@@ -28,9 +28,13 @@ public class DbController {
     ArrayList<String> databaseList;
     Path serverConfFilename;
     String serverVersion;
-    String adminUser;
-    String adminPasswd;
+    File pg_dump;
+
     private DbController() {
+
+    }
+
+    /*private DbController() {
         if (getStatus()) {
             this.serverConfFilename = getServerConfFilename();
             this.serverDir = getServerDir();
@@ -38,13 +42,11 @@ public class DbController {
             this.status = true;
             this.databaseList = getDatabaseList();
             this.serverVersion = getServerVersion();
-            this.adminUser = getAdminUser();
-            this.adminPasswd = getAdminPasswd();
         } else {
             logController.log.severe("Postgres server not running unable to make backups. Hint run with -b command line option");
             System.exit(Errorlevels.E8.getErrorLevel());
         }
-    }
+    }*/
 
     public static DbController getInstance() {
         return ourInstance;
@@ -116,6 +118,7 @@ public class DbController {
         return serviceController.serviceAlive("postgres");
     }
 
+
     public ArrayList<String> getDatabaseList() {
         String[] command = new String[]{getServerBin().toString() + File.separator + "psql", "-U", "postgres", "-c", "SELECT datname AS result FROM pg_database;"};
         ArrayList<String> databaseList = new ArrayList<>();
@@ -141,12 +144,26 @@ public class DbController {
         return null;
     }
 
-    public String getAdminUser() {
-        return adminUser;
+    public File getPg_dump() {
+        //TODO check pg_dump version 9.6+
+
+        if (pg_dump != null)
+            return pg_dump;
+        else {
+            logController.log.config("Looking for pg_dump binary");
+            File pgdumpBinary;
+            if (ServiceController.getInstance().getOs().equals(OS.LINUX)) {
+                pgdumpBinary = FileFinderControllerStr.doit("/", "pg_dump", SearchType.Files).getResults().get(0).toFile();
+            } else {
+                pgdumpBinary = FileFinderControllerStr.doit("/", "pg_dump.exe", SearchType.Files).getResults().get(0).toFile();
+            }
+            this.pg_dump = pgdumpBinary;
+            return pg_dump;
+        }
     }
 
-    public String getAdminPasswd() {
-        return adminPasswd;
+    public void setPg_dump(File pg_dump) {
+        this.pg_dump = pg_dump;
     }
 
     @Override
@@ -158,8 +175,6 @@ public class DbController {
                 ", databaseList=" + databaseList +
                 ", serverConfFilename='" + serverConfFilename + '\'' +
                 ", serverVersion='" + serverVersion + '\'' +
-                ", adminUser='" + adminUser + '\'' +
-                ", adminPasswd='" + adminPasswd +
                 '}';
     }
 

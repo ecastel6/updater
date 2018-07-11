@@ -82,4 +82,12 @@ class DbControllerTest {
         dbController.unsetCredentials(pgpass);
         assertTrue(!pgpass.exists());
     }
+
+    @Test
+    void getPg_dumpTest() {
+        DbController dbController = DbController.getInstance();
+        File testPath = dbController.getPg_dump();
+        System.out.println(testPath.toString());
+        assertTrue(dbController.getPg_dump().exists());
+    }
 }

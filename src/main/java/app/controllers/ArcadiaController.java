@@ -3,6 +3,7 @@ package app.controllers;
 import app.core.Version;
 import app.models.ArcadiaApp;
 import app.models.ArcadiaAppData;
+import app.models.Errorlevels;
 import app.models.SearchType;
 import net.lingala.zip4j.core.ZipFile;
 import net.lingala.zip4j.exception.ZipException;
@@ -81,6 +82,63 @@ public class ArcadiaController {
             return null;
         }
         return null;
+    }
+
+    // Map <url, {username,password}>
+    public Map<String, String[]> getArcadiaDatabases(File configFile) {
+        Map<String, String[]> arcadiaDbs = new HashMap<>();
+        String url;
+        String username;
+        String password;
+
+        if (!configFile.exists()) {
+            logController.log.severe("Invalid tomcat server.xml config file");
+            System.exit(0);
+        }
+        try {
+            Configurations configs = new Configurations();
+            XMLConfiguration config = configs.xml(configFile.toString());
+            NodeList listNodes = config.getDocument().getElementsByTagName("Resource");
+
+            //Invalid arcadia tomcat config check
+            if (listNodes.getLength() == 0) {
+                logController.log.severe("Malformed tomcat configuration file.");
+                System.exit(Errorlevels.E10.getErrorLevel());
+            }
+            //Map<String,String> nodeValues = new HashMap<>();
+            for (int i = 0; i < listNodes.getLength(); i++) {
+                Node node = listNodes.item(i);
+                if (node.getAttributes().getNamedItem("name").getTextContent().contains("jdbc")) {
+                    url = node.getAttributes().getNamedItem("url").getTextContent();
+                    username = node.getAttributes().getNamedItem("username").getTextContent();
+                    password = node.getAttributes().getNamedItem("password").getTextContent();
+                    logController.log.config(String.format("server.xml database read: url=%s username=%s password=%s", url, username, password));
+                    if (!arcadiaDbs.containsKey(url)) {
+                        logController.log.config("New url adding it");
+                        arcadiaDbs.put(url, new String[]{username, password});
+                    }
+                }
+            }
+        } catch (ConfigurationException e) {
+            logController.log.severe(e.toString());
+            return null;
+        }
+        return arcadiaDbs;
+    }
+
+    /*  method to decode tomcat database urls */
+    public Map<String, String> getDBUrlDecoded(String url) {
+        Map<String, String> urlKeyValues = new HashMap<>();
+        final Pattern pattern = Pattern.compile("^jdbc:(.*?):\\/\\/(.*?):(.*?)\\/(.*?)$");
+        Matcher matcher = pattern.matcher(url);
+        if (matcher.matches()) {
+            logController.log.config(String.format("Group1:%s Group2:%s Group3:%s Group4:%s", matcher.group(1), matcher.group(2), matcher.group(3), matcher.group(4)));
+            urlKeyValues.put("sgbd", matcher.group(1));
+            urlKeyValues.put("host", matcher.group(2));
+            urlKeyValues.put("port", matcher.group(3));
+            urlKeyValues.put("dbname", matcher.group(4));
+        } else logController.log.config("Url No match");
+        return urlKeyValues;
     }
 
     /*

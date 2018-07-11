@@ -12,9 +12,7 @@ import org.apache.commons.io.filefilter.*;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
+import java.util.*;
 
 public class UpdateController {
     final static int dbThreshold = 3;
@@ -68,7 +66,7 @@ public class UpdateController {
         }
         stopAppServer(installedAppData.getApp());
         if (!this.commandLine.hasOption("b"))
-            backupDatabase(installedAppData.getApp());
+            preupdateBackup(installedAppData.getApp());
         if (this.commandLine.hasOption("B")) {
             try {
                 FileUtils.cleanDirectory(FileUtils.getFile(latestUpdatesVersionDir, "backout"));
@@ -234,13 +232,114 @@ public class UpdateController {
         logController.log.info(String.format("Service %s reinstalled", "tomcat_" + appData.getApp().getShortName()));
     }
 
-    private void backupDatabase(ArcadiaAppData app) throws RuntimeException {
-        checkDbServer();
-        Long lastBackupSize = backupsController.getLatestBackupSize(app.getApp());
-        Long databaseBackupDirSize = backupDatabase(app.getApp());
-        if (currentBackupSizeMismatch(lastBackupSize, databaseBackupDirSize) && !this.commandLine.hasOption("s"))
-            throw new RuntimeException("ERROR: Backup size mismatch!!!");
+    private void preupdateBackup(ArcadiaApp app) throws RuntimeException {
+        if (!commandLine.hasOption("x"))
+            parameterizedBackup(app);
+        else
+            tomcatConfigBackup(app);
         backupArcadiaResources();
+    }
+
+    /* data to fullfill backup taken from command line or default values, single database backup */
+    public void parameterizedBackup(ArcadiaApp app) {
+        //check valid backups directory
+        File targetBackupDir = FileUtils.getFile(getValidRootBackupDir(),
+                app.getDatabaseName(),
+                app.getDatabaseName() + "_" + new SystemCommons().getToday());
+
+        logController.log.warning(String.format("Backup'in database %s to %s directory", app.getDatabaseName(), targetBackupDir));
+        String dbhost = "localhost";
+        String dbport = "5432";
+        String dbuser = "postgres";
+        //TODO cleartext password disclosure possible
+        String dbpass = "postavalon";
+
+
+        if (this.commandLine.hasOption("h")) dbhost = this.commandLine.getOptionValue("host");
+        if (this.commandLine.hasOption("p")) dbport = this.commandLine.getOptionValue("port");
+        if (this.commandLine.hasOption("u")) dbuser = this.commandLine.getOptionValue("user");
+        if (this.commandLine.hasOption("w")) dbpass = this.commandLine.getOptionValue("password");
+
+        logController.log.config(String.format("Host=%s Port=%s User=%s Password=%s",
+                dbhost, dbport, dbuser, dbpass));
+
+        if (backupsController.databaseBackup(
+                app.getDatabaseName(),
+                targetBackupDir,
+                dbhost,
+                dbport,
+                dbuser,
+                dbpass) > 0) {
+            throw new RuntimeException("Error while backup'in database");
+        }
+        Long databaseBackupDirSize = FileUtils.sizeOfDirectory(targetBackupDir);
+        if (backupsController.getRootBackupsDir() != null) {
+            Long lastBackupSize = backupsController.getLatestBackupSize(app);
+            if (currentBackupSizeMismatch(lastBackupSize, databaseBackupDirSize) && !this.commandLine.hasOption("s"))
+                throw new RuntimeException("ERROR: Backup size mismatch!!!");
+        }
+    }
+
+    private File getValidRootBackupDir() {
+        File tempRootDir;
+        if (backupsController.noRootBackupDirectory)
+            return FileUtils.getFile(
+                    FileUtils.getUserDirectory(), "upgrade");
+        else if (backupsController.getRootBackupsDir() == null) {
+            logController.log.config("DB backup directory not found. Using user backup directory");
+            return FileUtils.getFile(
+                    FileUtils.getUserDirectory(), "upgrade");
+        } else return backupsController.getRootBackupsDir();
+    }
+
+    /* data to fullfill backup taken from xml tomcat config multiple database backup */
+    public void tomcatConfigBackup(ArcadiaApp app) throws RuntimeException {
+        logController.log.config(String.format("Doing tomcatConfigbackup of %s", app.getLongName()));
+        Map<String, String[]> arcadiaDbPools = new HashMap<>();
+
+        arcadiaDbPools = arcadiaController.getArcadiaDatabases(
+                FileUtils.getFile(this.installedAppDir,
+                        "conf", "server.xml"));
+        // Now process every database for backup using pool values
+        File targetBackupDir;
+        File rootBackupDir = getValidRootBackupDir();
+        String dbname;
+        String dbhost;
+        String dbport;
+        String dbuser;
+        String dbpass;
+        for (Map.Entry<String, String[]> entry : arcadiaDbPools.entrySet()) {
+            //url=jdbc:postgresql://localhost:5432/arcadia_cbos
+            //entry.getValue[0]=username
+            //entry.getValue[1]=password
+            Map<String, String> urlDecoded = arcadiaController.getDBUrlDecoded(entry.getKey());
+            // check for non postgresql database server
+            if (!urlDecoded.get("sgbd").equals("postgresql")) {
+                logController.log.severe("Unsupported database system");
+                System.exit(Errorlevels.E11.getErrorLevel());
+            }
+            dbname = urlDecoded.get("dbname");
+            dbhost = urlDecoded.get("host");
+            dbport = urlDecoded.get("port");
+            dbuser = entry.getValue()[0];
+            dbpass = entry.getValue()[1];
+
+            targetBackupDir = FileUtils.getFile(
+                    rootBackupDir,
+                    dbname,
+                    dbname + "_" + new SystemCommons().getToday());
+            logController.log.config(String.format("Backup'in Host=%s Port=%s User=%s Password=%s Database=%s to directory %s",
+                    dbhost, dbport, dbuser, dbpass, dbname, targetBackupDir));
+            if (backupsController.databaseBackup(
+                    dbname,
+                    targetBackupDir,
+                    dbhost,
+                    dbport,
+                    dbuser,
+                    dbpass) > 0) {
+                throw new RuntimeException(String.format("Error while backup'in database %s", dbname));
+            }
+        }
     }
 
     private boolean currentBackupSizeMismatch(Long lastBackupSize, Long databaseBackupDirSize) {
@@ -503,51 +602,18 @@ public class UpdateController {
 
     private void backupArcadiaResources() {
         // Backup ArcadiaResources
+        String targetDir = FileUtils.getFile(getValidRootBackupDir(),
+                String.format("ArcadiaResources.%s_%s.zip", installedAppData.getApp().getShortName(), new SystemCommons().getToday())).toString();
+        logController.log.config(String.format("Zipping ArcadiaResources from %s to targetdir: %s", installedAppDir, targetDir));
         String separator = File.separator;
         ZipHandler zipHandler = new ZipHandler();
+        // TODO migrate to zip4j
         zipHandler.zip(
                 FileUtils.getFile(installedAppDir, "webapps", "ArcadiaResources").toString(),
-                FileUtils.getFile(backupsController.getRootBackupsDir(),
-                        String.format("ArcadiaResources.%s_%s", installedAppData.getApp().getShortName(), new SystemCommons().getToday())).toString(),
+                targetDir,
                 CompresionLevel.UNCOMPRESSED);
-
-        // todo migrate to zip4j
     }
 
-    private Long backupDatabase(ArcadiaApp app) throws RuntimeException {
-        //check valid backups directory
-        if (backupsController.getRootBackupsDir() == null)
-            throw new RuntimeException("ERROR: invalid database backup directory");
-        // Backup database
-        File targetBackupDir = FileUtils.getFile(
-                backupsController.getRootBackupsDir(),
-                app.getDatabaseName(),
-                app.getDatabaseName() + "_" + new SystemCommons().getToday());
-        logController.log.warning(String.format("Backup'in database %s ", app.getDatabaseName()));
-
-        String dbhost = "localhost";
-        String dbport = "5432";
-        String dbuser = "postgres";
-        //TODO cleartext password disclosure possible
-        String dbpass = "postavalon";
-
-        if (this.commandLine.hasOption("h")) dbhost = this.commandLine.getOptionValue("host");
-        if (this.commandLine.hasOption("p")) dbport = this.commandLine.getOptionValue("port");
-        if (this.commandLine.hasOption("u")) dbuser = this.commandLine.getOptionValue("user");
-        if (this.commandLine.hasOption("w")) dbpass = this.commandLine.getOptionValue("password");
-        logController.log.config(String.format("Host=%s Port=%s User=%s Password=%s",
-                dbhost, dbport, dbuser, dbpass));
-        if (backupsController.databaseBackup(
-                app.getDatabaseName(),
-                targetBackupDir,
-                dbhost,
-                dbport,
-                dbuser,
-                dbpass) > 0) {
-            throw new RuntimeException("Error while backup'in database");
-        }
-        return FileUtils.sizeOfDirectory(targetBackupDir);
-    }
 
     public void stopAppServer(ArcadiaApp app) throws RuntimeException {
         // Stop tomcat service

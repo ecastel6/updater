@@ -8,8 +8,7 @@ import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.*;
 
 class ArcadiaControllerTest {
 
@@ -69,14 +68,27 @@ class ArcadiaControllerTest {
 
     }
 
-    /*@Test
-    void getArcadiaVersionFromFileTest() {
-        ArcadiaController arcadiaController=ArcadiaController.getInstance();
-
-        for (Map.Entry<String, ArcadiaAppData> app : arcadiaController.getInstalledApps().entrySet()) {
-            System.out.printf("Installed apps found: %s version: %s\n", app.getKey(),
-                    arcadiaController.getArcadiaVersionFromFile(app.getValue().getApp().));
+    @Test
+    void getArcadiaDatabasesTest() {
+        ArcadiaController arcadiaController = ArcadiaController.getInstance();
+        Map<String, String[]> testdbs;
+        testdbs = arcadiaController.getArcadiaDatabases(new File("D:\\opt\\tomcat_cbos\\conf\\server.xml"));
+        for (Map.Entry<String, String[]> entry : testdbs.entrySet()) {
+            System.out.printf("Clave:%s user:%s pass:%s\n", entry.getKey(), entry.getValue()[0], entry.getValue()[1]);
         }
-        //System.out.printf ("Versión arcadiaController.getArcadiaVersionFromFile(ArcadiaApp.CBOS);
-    }*/
+    }
+
+    @Test
+    void getDBUrlDecodedTest() {
+        ArcadiaController arcadiaController = ArcadiaController.getInstance();
+        Map<String, String> testUrl;
+        testUrl = arcadiaController.getDBUrlDecoded("jdbc:postgresql://localhost:5432/arcadia_cbos");
+        System.out.println(testUrl.toString());
+        assertEquals(testUrl.get("sgbd"), "postgresql");
+        assertEquals(testUrl.get("host"), "localhost");
+        assertEquals(testUrl.get("port"), "5432");
+        assertEquals(testUrl.get("dbname"), "arcadia_cbos");
+    }
+
+
 }

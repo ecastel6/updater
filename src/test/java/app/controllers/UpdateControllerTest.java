@@ -1,5 +1,6 @@
 package app.controllers;
 
+import app.models.ArcadiaApp;
 import app.models.ReturnValues;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
@@ -39,4 +40,17 @@ class UpdateControllerTest {
         System.out.println(String.format("Create retValue=%s retMsg=%s", retCreate.t, retCreate.u));
     }
 
+    @Test
+    void parameterizedBackupTest() {
+        UpdateController updateController = new UpdateController();
+        updateController.setInstalledAppDir(new File("D:\\opt\\tomcat_cbos"));
+        updateController.parameterizedBackup(ArcadiaApp.CBOS);
+    }
+
+    @Test
+    void tomcatConfigBackupTest() {
+        UpdateController updateController = new UpdateController();
+        updateController.setInstalledAppDir(new File("D:\\opt\\tomcat_cbos"));
+        updateController.tomcatConfigBackup(ArcadiaApp.CBOS);
+    }
 }
