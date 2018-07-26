@@ -149,7 +149,13 @@ public class ServiceController {
                 p = Runtime.getRuntime().exec
                         (System.getenv("windir") + "\\system32\\" + "tasklist.exe /SVC");
             } else {
-                p = Runtime.getRuntime().exec("ps -ef");
+                if ((serviceName.contains("tomcat"))) {
+                    String[] cmd = {"/bin/sh", "-c", "ps -ax | grep 'java' | grep -v 'grep'"};
+                    p = Runtime.getRuntime().exec(cmd);
+                    p.waitFor();
+                } else {
+                    p = Runtime.getRuntime().exec("ps -ax");
+                }
             }
             BufferedReader input =
                     new BufferedReader(new InputStreamReader(p.getInputStream()));
