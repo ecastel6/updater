@@ -257,6 +257,16 @@ public class ArcadiaController {
         // tomcat_ for application
         // arcadiaVersions
 
+        // guess directory
+        File guessedDir = null;
+        for (String drive : ServiceController.getInstance().driveList) {
+            guessedDir = FileUtils.getFile(drive, tomcatAppDir);
+            if (guessedDir.exists()) {
+                logController.log.config(String.format("getTomcatDir guessed directory %s \n", guessedDir));
+                return guessedDir;
+            }
+        }
+        logController.log.config(String.format("No (guessed) direct match for %s", tomcatAppDir));
         FileFinderControllerStr arcadiaDir = FileFinderControllerStr.doit("/", tomcatAppDir, SearchType.Directories);
         if (arcadiaDir.getNumMatches() > 1) {
             // if multiple directories found, the node with less depth is returned

@@ -14,15 +14,6 @@ public class SystemCommons
 {
     private static LogController logController = LogController.getInstance();
 
-    public static void main(String[] args) {
-        ServiceController.getInstance().serviceAction("tomcat_cbos", "stop");
-        try {
-            timedServiceStop(60000, "tomcat_cbos");
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-    }
-
     /*
         check with timeout every 2 seconds
     */

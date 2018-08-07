@@ -32,22 +32,7 @@ public class FileFinderControllerStr extends SimpleFileVisitor<Path> {
 
     }
 
-    public static ArrayList<String> getDriveList() {
-        ArrayList<String> driveList = new ArrayList<>();
-        for (Path root : FileSystems.getDefault().getRootDirectories()) {
-            if (Files.isWritable(root)) {
-                try {
-                    FileStore fileStore = Files.getFileStore(root);
-                    if ((!fileStore.isReadOnly()) && (!fileStore.getAttribute("volume:isRemovable").equals(true))) {
-                        driveList.add(root.toString());
-                    }
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-        return driveList;
-    }
+
 
     public static FileFinderControllerStr doit(String startPath, String pattern, SearchType searchType) {
         // what =0 all
@@ -61,7 +46,7 @@ public class FileFinderControllerStr extends SimpleFileVisitor<Path> {
             //List<String> driveList = Arrays.asList("");
             driveList = Collections.singletonList("");
         } else {
-            driveList = getDriveList();
+            driveList = serviceController.driveList;
         }
         for (String everyDrive : driveList) {
             logController.log.config(String.format("Searching drive %s for pattern %s ...", everyDrive, pattern));

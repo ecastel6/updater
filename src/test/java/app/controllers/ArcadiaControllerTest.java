@@ -16,7 +16,17 @@ class ArcadiaControllerTest {
     void getArcadiaAppDirTest() {
         ArcadiaController ac = ArcadiaController.getInstance();
         for (ArcadiaApp app : ArcadiaApp.values()) {
-            File o = ac.getTomcatDir("tomcat_" + app.getShortName());
+            File o = ac.getTomcatDir("opt/tomcat_" + app.getShortName());
+            if (o != null) {
+                System.out.printf("%s instalada: %s\n", app.getLongName(), o.toString());
+                assertNotNull(o);
+            } else {
+                System.out.printf("%s no instalada\n", app.getLongName());
+                assertNull(o);
+            }
+        }
+        for (ArcadiaApp app : ArcadiaApp.values()) {
+            File o = ac.getTomcatDir("testopt/tomcat_" + app.getShortName());
             if (o != null) {
                 System.out.printf("%s instalada: %s\n", app.getLongName(), o.toString());
                 assertNotNull(o);

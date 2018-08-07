@@ -6,6 +6,10 @@ import app.models.ReturnValues;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.file.FileStore;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -21,10 +25,31 @@ public class ServiceController {
     }
 
     public OS os;
+    public ArrayList<String> driveList;
 
     private ServiceController() {
         this.os = getOs();
+        this.driveList = getDriveList();
         logController.log.info(String.format("Detected OS: %s", osToString(os)));
+    }
+
+    private ArrayList<String> getDriveList() {
+        ArrayList<String> driveList = new ArrayList<>();
+        if (driveList.isEmpty()) {
+            for (Path root : FileSystems.getDefault().getRootDirectories()) {
+                if (Files.isWritable(root)) {
+                    try {
+                        FileStore fileStore = Files.getFileStore(root);
+                        if ((!fileStore.isReadOnly()) && (!fileStore.getAttribute("volume:isRemovable").equals(true))) {
+                            driveList.add(root.toString());
+                        }
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }
+        return driveList;
     }
 
     public OS getOs() {
@@ -179,4 +204,6 @@ public class ServiceController {
     public String getAppdata() {
         return System.getenv("APPDATA");
     }
+
+
 }
