@@ -16,7 +16,7 @@ import java.util.*;
 
 public class UpdateController {
     final static int dbThreshold = 3;
-    final static long defaultTimeout = 20000;
+    final static long defaultTimeout = 300000;
 
     //Instance LogController
     private static LogController logController = LogController.getInstance();
@@ -296,7 +296,7 @@ public class UpdateController {
 
     /* data to fullfill backup taken from xml tomcat config multiple database backup */
     public void tomcatConfigBackup(ArcadiaApp app) throws RuntimeException {
-        logController.log.config(String.format("tomcatConfigbackup of %s. Getting values from tomcat configfile", app.getLongName()));
+        logController.log.info(String.format("tomcatConfigbackup of %s. Getting values from tomcat configfile", app.getLongName()));
         Map<String, String[]> arcadiaDbPools = new HashMap<>();
 
         arcadiaDbPools = arcadiaController.getArcadiaDatabases(

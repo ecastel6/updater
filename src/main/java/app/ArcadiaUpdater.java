@@ -37,10 +37,10 @@ public class ArcadiaUpdater {
                 .argName("repodir").desc("Update repository e.g. ./updates or /opt/arcadiaVersions")
                 .required(false).build());
         options.addOption(Option.builder("t").longOpt("timeout").hasArg(true)
-                .argName("time").desc("set stop tomcat services timeout (ms)")
+                .argName("time").desc("set stop tomcat services timeout (ms). Default (300000)")
                 .required(false).build());
         //options.addOption("s", "ignore-backups-size", false, "do not check backups size");
-        options.addOption("b", "override-backups", false, "Don't do security backups");
+        options.addOption("b", "bypass-backups", false, "Don't do security backups");
         options.addOption("B", "force-backout", false, "Cleanout backout directory before backout");
         options.addOption("n", "ignore-checkservices", false, "do not check services availability (Rabbitmq,Zookeeper).");
         options.addOption("r", "reinstall-services", false, "reinstall tomcat services.");
@@ -65,7 +65,7 @@ public class ArcadiaUpdater {
         options.addOption(apps);
 */
         options.addOption(Option.builder("A").longOpt("apps").hasArg(true)
-                .argName("apps").desc("Apps to install e.g. --apps oc cbos").numberOfArgs(Option.UNLIMITED_VALUES)
+                .argName("apps").desc("Apps to install e.g. --apps oc cbos. Otherwise update all available").numberOfArgs(Option.UNLIMITED_VALUES)
                 .required(false).build());
 
         List<String> selectedApps = null;

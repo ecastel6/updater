@@ -19,22 +19,23 @@ public class ServiceController {
     private static LogController logController = LogController.getInstance();
 
     private static ServiceController ourInstance = new ServiceController();
+    public OS os;
+    public ArrayList<String> driveList = new ArrayList<>();
+
+    private ServiceController() {
+        this.os = getOs();
+        logController.log.info(String.format("Detected OS: %s", osToString(os)));
+        if (this.os.equals(OS.WINDOWS))
+            this.driveList = getDriveList();
+        else
+            driveList.add("/");
+    }
 
     public static ServiceController getInstance() {
         return ourInstance;
     }
 
-    public OS os;
-    public ArrayList<String> driveList;
-
-    private ServiceController() {
-        this.os = getOs();
-        this.driveList = getDriveList();
-        logController.log.info(String.format("Detected OS: %s", osToString(os)));
-    }
-
     private ArrayList<String> getDriveList() {
-        ArrayList<String> driveList = new ArrayList<>();
         if (driveList.isEmpty()) {
             for (Path root : FileSystems.getDefault().getRootDirectories()) {
                 if (Files.isWritable(root)) {
