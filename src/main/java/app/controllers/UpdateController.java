@@ -233,15 +233,17 @@ public class UpdateController {
     }
 
     private void preupdateBackup(ArcadiaApp app) throws RuntimeException {
-        if (!commandLine.hasOption("x"))
-            parameterizedBackup(app);
-        else
+        if ((commandLine.hasOption("x")) || serviceController.serviceAlive("postgres") == false)
             tomcatConfigBackup(app);
+        else {
+            parameterizedBackup(app);
+        }
         backupArcadiaResources();
     }
 
     /* data to fullfill backup taken from command line or default values, single database backup */
     public void parameterizedBackup(ArcadiaApp app) {
+        logController.log.config("ParameterizedBackup. Getting default or command line data");
         //check valid backups directory
         File targetBackupDir = FileUtils.getFile(getValidRootBackupDir(),
                 app.getDatabaseName(),
@@ -276,7 +278,7 @@ public class UpdateController {
         if (backupsController.getRootBackupsDir() != null) {
             Long lastBackupSize = backupsController.getLatestBackupSize(app);
             if (currentBackupSizeMismatch(lastBackupSize, databaseBackupDirSize))
-                logController.log.warning(String.format("Database backup size %s doesn't match with latest one\n", databaseBackupDirSize));
+                logController.log.warning(String.format("Database backup size %s doesn't match with latest one", databaseBackupDirSize));
         }
     }
 
@@ -294,7 +296,7 @@ public class UpdateController {
 
     /* data to fullfill backup taken from xml tomcat config multiple database backup */
     public void tomcatConfigBackup(ArcadiaApp app) throws RuntimeException {
-        logController.log.config(String.format("Doing tomcatConfigbackup of %s", app.getLongName()));
+        logController.log.config(String.format("tomcatConfigbackup of %s. Getting values from tomcat configfile", app.getLongName()));
         Map<String, String[]> arcadiaDbPools = new HashMap<>();
 
         arcadiaDbPools = arcadiaController.getArcadiaDatabases(

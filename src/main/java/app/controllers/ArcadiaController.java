@@ -93,7 +93,7 @@ public class ArcadiaController {
 
         if (!configFile.exists()) {
             logController.log.severe("Invalid tomcat server.xml config file");
-            System.exit(0);
+            System.exit(Errorlevels.E10.getErrorLevel());
         }
         try {
             Configurations configs = new Configurations();
