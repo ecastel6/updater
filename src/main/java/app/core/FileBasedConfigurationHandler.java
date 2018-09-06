@@ -93,7 +93,7 @@ public class FileBasedConfigurationHandler {
 
         // Deleting deprecated properties
         for (int i = 0; i < propertiesToDelete.size(); i++) {
-            logController.log.info(String.format("Borrando: " + propertiesToDelete.get(i)));
+            logController.log.config(String.format("Borrando: " + propertiesToDelete.get(i)));
             combined.clearProperty(propertiesToDelete.get(i));
             this.getConfig().clearProperty(propertiesToDelete.get(i));
         }
