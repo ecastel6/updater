@@ -275,7 +275,7 @@ public class UpdateController {
             throw new RuntimeException("Error while backup'in database");
         }
         Long databaseBackupDirSize = FileUtils.sizeOfDirectory(targetBackupDir);
-        if (backupsController.getRootBackupsDir() != null) {
+        if ((backupsController.getRootBackupsDir() != null) && (!this.commandLine.hasOption("s"))) {
             Long lastBackupSize = backupsController.getLatestBackupSize(app);
             if (currentBackupSizeMismatch(lastBackupSize, databaseBackupDirSize))
                 logController.log.warning(String.format("Database backup size %s doesn't match with latest one", databaseBackupDirSize));

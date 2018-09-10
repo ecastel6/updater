@@ -179,9 +179,9 @@ public class ServiceController {
                     String[] cmd = {"/bin/sh", "-c", "ps -ax | grep 'java' | grep -v 'grep'"};
                     p = Runtime.getRuntime().exec(cmd);
                     p.waitFor();
-                } else {
+                } else if ((serviceName.contains("postgres"))) {
                     p = Runtime.getRuntime().exec("ps -axco pid,command");
-                }
+                } else p = Runtime.getRuntime().exec("ps -ax");
             }
             BufferedReader input =
                     new BufferedReader(new InputStreamReader(p.getInputStream()));

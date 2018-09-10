@@ -32,6 +32,7 @@ public class ArcadiaUpdater {
         Options options = new Options();
 
         options.addOption("S", "standalone", false, "Standalone run. Search local updates repository");
+        options.addOption("s", "bypass-backup-size", false, "dont check previous backup size");
         options.addOption("F", "force", false, "Forced update. do not check servers for version");
         options.addOption(Option.builder("R").longOpt("repository").hasArg(true)
                 .argName("repodir").desc("Update repository e.g. ./updates or /opt/arcadiaVersions")

@@ -40,7 +40,8 @@ public class BackupsController {
 
         // app backups directory empty
         if (listDirectories.length == 0) return null;
-        return new SystemCommons().sortDirectoriesByDate(listDirectories)[0];
+        File latestDir = new SystemCommons().sortDirectoriesByDate(listDirectories)[1];
+        return latestDir;
     }
 
     public File getRootBackupsDir() {
