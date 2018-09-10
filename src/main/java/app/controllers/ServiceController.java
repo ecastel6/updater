@@ -180,7 +180,7 @@ public class ServiceController {
                     p = Runtime.getRuntime().exec(cmd);
                     p.waitFor();
                 } else {
-                    p = Runtime.getRuntime().exec("ps -ax");
+                    p = Runtime.getRuntime().exec("ps -axco pid,command");
                 }
             }
             BufferedReader input =
